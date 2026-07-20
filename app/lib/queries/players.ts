@@ -1,5 +1,5 @@
 import { createClient as createServerClient } from "../supabase/server";
-import { createClient } from "../supabase/client";
+import { createClient } from "../supabase/server";
 
 
 export async function getAllPlayers() {
@@ -36,7 +36,7 @@ export async function getCurrentUserRole(): Promise<string | null> {
 }
 
 export async function getPlayerById(id: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("player_details")
@@ -51,4 +51,4 @@ export async function getPlayerById(id: string) {
 
   if (error || !data) return null;
   return data;
-}
+}
