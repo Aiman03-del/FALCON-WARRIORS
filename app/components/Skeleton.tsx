@@ -1,13 +1,15 @@
+type Shape = "rounded" | "pill" | "circle";
+
 type SkeletonProps = {
   className?: string;
   width?: string;
   height?: string;
   count?: number;
-  shape?: "rounded" | "pill" | "circle";
+  shape?: Shape;
   style?: React.CSSProperties;
 };
 
-const shapeClasses: Record<SkeletonProps["shape"], string> = {
+const shapeClasses: Record<Shape, string> = {
   rounded: "rounded-lg",
   pill: "rounded-full",
   circle: "rounded-full",

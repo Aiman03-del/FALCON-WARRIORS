@@ -26,6 +26,8 @@ export const navItems = [
 
 type DashboardSidebarProps = {
   role: string;
+  className?: string;
+  onClose?: () => void;
 };
 
 function isActiveRoute(pathname: string, href: string) {
@@ -36,11 +38,15 @@ function isActiveRoute(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export default function DashboardSidebar({ role }: DashboardSidebarProps) {
+export default function DashboardSidebar({ role, className = "", onClose }: DashboardSidebarProps) {
   const pathname = usePathname();
 
+  const defaultClasses = className
+    ? `${className} w-64 shrink-0 border-r border-border bg-surface`
+    : "hidden w-64 shrink-0 border-r border-border bg-surface md:block";
+
   return (
-    <aside className="hidden w-64 shrink-0 border-r border-border bg-surface md:block">
+    <aside className={defaultClasses}>
       <div className="flex items-center gap-2 border-b border-border px-6 py-4">
         <Image
           src="/logo.jpg"
