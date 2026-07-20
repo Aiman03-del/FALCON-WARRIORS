@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { LogOut, LayoutDashboard, Menu, X, UserCircle2 } from "lucide-react";
 import FillButton from "./FillButton";
 import SearchBar from "@/app/components/SearchBar";
+import Skeleton from "./Skeleton";
 import { createClient } from "../lib/supabase/client";
 
 const navLinks = [
@@ -146,7 +147,7 @@ export default function Navbar() {
 
           <div className="flex items-center gap-2 sm:gap-3">
             {loading ? (
-              <div className="h-8 w-20 animate-pulse rounded-lg bg-surface" />
+              <Skeleton width="5rem" height="2rem" className="hidden sm:block rounded-lg" />
             ) : profile ? (
               <div className="relative hidden sm:block" data-user-menu>
                 <button

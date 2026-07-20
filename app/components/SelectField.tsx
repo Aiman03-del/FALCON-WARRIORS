@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { ChevronDown, Search, X, Check } from "lucide-react";
 
 export type SelectOption = {
   value: string;
-  label: string;
+  label: ReactNode;
+  searchLabel?: string;
 };
 
 type SelectFieldProps = {
@@ -41,7 +42,11 @@ export default function SelectField({
   const selected = options.find((o) => o.value === value);
 
   const filtered = searchable
-    ? options.filter((o) => o.label.toLowerCase().includes(search.toLowerCase()))
+    ? options.filter((o) =>
+        (o.searchLabel ?? String(o.label))
+          .toLowerCase()
+          .includes(search.toLowerCase())
+      )
     : options;
 
   useEffect(() => {
@@ -68,7 +73,7 @@ export default function SelectField({
   }
 
   return (
-    <div ref={containerRef} className={className}>
+    <div ref={containerRef} className={`relative min-w-0 ${className}`}>
       {label && <label className="mb-1 block text-xs font-medium text-muted">{label}</label>}
 
       <button
@@ -77,7 +82,7 @@ export default function SelectField({
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center justify-between rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-left text-sm outline-none focus:border-white/30 disabled:opacity-50"
       >
-        <span className={selected ? "text-white" : "text-muted"}>
+        <span className={`block text-sm ${selected ? "text-white" : "text-muted"}`}>
           {selected ? selected.label : placeholder}
         </span>
         <div className="flex items-center gap-1">
@@ -101,7 +106,7 @@ export default function SelectField({
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-lg border border-border bg-surface shadow-xl">
+        <div className="absolute left-0 right-0 z-50 mt-2 w-full min-w-0 overflow-hidden rounded-lg border border-border bg-surface shadow-xl">
           {searchable && (
             <div className="flex items-center gap-2 border-b border-border px-3 py-2">
               <Search size={14} className="text-muted" />
@@ -128,8 +133,10 @@ export default function SelectField({
                     opt.value === value ? "text-gold" : "text-white/90"
                   }`}
                 >
-                  {opt.label}
-                  {opt.value === value && <Check size={14} />}
+                  <span className="flex items-center gap-2">
+                    {opt.label}
+                    {opt.value === value && <Check size={14} />}
+                  </span>
                 </button>
               ))
             )}

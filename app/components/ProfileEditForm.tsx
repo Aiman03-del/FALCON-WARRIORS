@@ -2,33 +2,35 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Gamepad, Laptop, Smartphone } from "lucide-react";
 import { createClient } from "@/app/lib/supabase/client";
+import FillButton from "@/app/components/FillButton";
 import ImageUploadInput from "@/app/components/ImageUploadInput";
-import SearchableSelect from "@/app/components/SearchableSelect";
+import SelectField from "@/app/components/SelectField";
 import { COUNTRIES, getCitiesForCountry } from "@/app/lib/data/countries";
 import { FOOTBALL_CLUBS, NATIONAL_TEAMS } from "@/app/lib/data/clubs";
 
 const POSITIONS = [
-  { value: "GK", label: "🧤 GK — Goalkeeper" },
-  { value: "CB", label: "🛡️ CB — Centre Back" },
+  { value: "GK", label: "GK — Goalkeeper" },
+  { value: "CB", label: "CB — Centre Back" },
   { value: "LB", label: "LB — Left Back" },
   { value: "RB", label: "RB — Right Back" },
-  { value: "DMF", label: "🔒 DMF — Defensive Midfielder" },
-  { value: "CMF", label: "⚙️ CMF — Centre Midfielder" },
+  { value: "DMF", label: "DMF — Defensive Midfielder" },
+  { value: "CMF", label: "CMF — Centre Midfielder" },
   { value: "LMF", label: "LMF — Left Midfielder" },
   { value: "RMF", label: "RMF — Right Midfielder" },
-  { value: "AMF", label: "🎯 AMF — Attacking Midfielder" },
+  { value: "AMF", label: "AMF — Attacking Midfielder" },
   { value: "LW", label: "LW — Left Winger" },
   { value: "RW", label: "RW — Right Winger" },
   { value: "SS", label: "SS — Second Striker" },
   { value: "CF", label: "CF — Centre Forward" },
-  { value: "ST", label: "⚡ ST — Striker" },
+  { value: "ST", label: "ST — Striker" },
 ];
 
 const PLATFORMS = [
-  { value: "mobile", label: "📱 Mobile" },
-  { value: "pc", label: "💻 PC" },
-  { value: "console", label: "🎮 Console" },
+  { value: "mobile", label: "Mobile" },
+  { value: "pc", label: "PC" },
+  { value: "console", label: "Console" },
 ];
 
 type PlayerDetails = {
@@ -144,18 +146,20 @@ export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card mt-6 flex flex-col gap-7 p-6">
+    <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-5">
       {/* Profile Picture */}
       <div>
         <p className="mb-3 font-display text-xs font-bold uppercase tracking-widest text-gold">
           Profile Picture
         </p>
-        <ImageUploadInput
-          label=""
-          folder="/falcon-warriors/avatars"
-          value={avatarUrl}
-          onUploaded={setAvatarUrl}
-        />
+        <div className="flex justify-center">
+          <ImageUploadInput
+            label="Profile Picture (optional)"
+            folder="/falcon-warriors/avatars"
+            value={avatarUrl}
+            onUploaded={setAvatarUrl}
+          />
+        </div>
       </div>
 
       {/* Real-Life Info */}
@@ -204,14 +208,16 @@ export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
           Location
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
-          <SearchableSelect
+          <SelectField
             label="Country"
             value={form.country}
             onChange={handleCountryChange}
             options={COUNTRIES}
             placeholder="Select your country"
+            searchable
+            className="w-full"
           />
-          <SearchableSelect
+          <SelectField
             label="City"
             value={form.city}
             onChange={(v) => update("city", v)}
@@ -223,6 +229,7 @@ export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
                   : []
             }
             placeholder={form.country ? "Select your city" : "Select country first"}
+            className="w-full"
           />
         </div>
       </div>
@@ -233,19 +240,23 @@ export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
           Football
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
-          <SearchableSelect
+          <SelectField
             label="Supported Club"
             value={form.supported_club}
             onChange={(v) => update("supported_club", v)}
             options={FOOTBALL_CLUBS}
             placeholder="Select your club"
+            searchable
+            className="w-full"
           />
-          <SearchableSelect
+          <SelectField
             label="National Team"
             value={form.national_team}
             onChange={(v) => update("national_team", v)}
             options={NATIONAL_TEAMS}
             placeholder="Select national team"
+            searchable
+            className="w-full"
           />
         </div>
       </div>
@@ -256,19 +267,21 @@ export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
           Gaming
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
-          <SearchableSelect
+          <SelectField
             label="Platform"
             value={form.platform}
             onChange={(v) => update("platform", v)}
             options={PLATFORMS}
             placeholder="Select platform"
+            className="w-full"
           />
-          <SearchableSelect
+          <SelectField
             label="Preferred Position"
             value={form.preferred_position}
             onChange={(v) => update("preferred_position", v)}
             options={POSITIONS}
             placeholder="Select position"
+            className="w-full"
           />
         </div>
       </div>
@@ -279,13 +292,13 @@ export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
         </p>
       )}
 
-      <button
+      <FillButton
         type="submit"
         disabled={loading}
-        className="btn-primary w-fit disabled:opacity-50"
+        className="w-full disabled:opacity-50"
       >
         {loading ? "Saving..." : "Save Changes"}
-      </button>
+      </FillButton>
     </form>
   );
 }
@@ -311,7 +324,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-gold"
+        className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm outline-none transition-colors focus:border-white/30 hover:border-border/80"
       />
     </div>
   );

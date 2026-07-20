@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "../lib/supabase/client";
+import FillButton from "@/app/components/FillButton";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,8 +13,20 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        router.replace("/");
+      } else {
+        setCheckingAuth(false);
+      }
+    });
+  }, [router, supabase]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -35,9 +49,19 @@ export default function LoginPage() {
     router.refresh();
   }
 
+  if (checkingAuth) {
+    return null;
+  }
+
   return (
     <main>
       <section className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12 sm:px-6 sm:py-16">
+        <div className="mb-6">
+          <Link href="/" className="inline-flex items-center gap-3 text-sm font-semibold text-white transition hover:text-gold">
+            <img src="/logo.jpg" alt="Falcon Warriors" className="h-8 w-8 rounded-full object-cover" />
+            Falcon Warriors
+          </Link>
+        </div>
         <h1 className="font-display text-2xl font-bold uppercase tracking-wide text-gold sm:text-3xl">
           Welcome Back
         </h1>
@@ -55,7 +79,7 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm outline-none focus:border-gold"
+              className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm outline-none transition-colors focus:border-white/30 hover:border-border/80"
               placeholder="you@example.com"
             />
           </div>
@@ -64,14 +88,24 @@ export default function LoginPage() {
             <label className="mb-1 block text-xs font-medium text-muted">
               Password
             </label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm outline-none focus:border-gold"
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 pr-10 text-sm outline-none transition-colors focus:border-white/30 hover:border-border/80"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted transition hover:text-white"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           {error && (
@@ -80,13 +114,13 @@ export default function LoginPage() {
             </p>
           )}
 
-          <button
+          <FillButton
             type="submit"
             disabled={loading}
-            className="btn-primary mt-2 disabled:opacity-50"
+            className="mt-2 w-full disabled:opacity-50"
           >
             {loading ? "Logging in..." : "Login"}
-          </button>
+          </FillButton>
         </form>
 
         <p className="mt-6 text-center text-sm text-muted">
