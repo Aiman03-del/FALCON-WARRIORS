@@ -25,7 +25,7 @@ export default function MatchesSkeleton() {
               ))}
             </div>
 
-            {Array.from({ length: 5 }).map((rowIndex) => (
+            {Array.from({ length: 5 }).map((_, rowIndex) => (
               <div
                 key={rowIndex}
                 className="grid grid-cols-[1.5fr_1fr_0.9fr_0.9fr_0.9fr_0.7fr] gap-4 rounded-xl border border-border bg-surface-2 px-4 py-4"

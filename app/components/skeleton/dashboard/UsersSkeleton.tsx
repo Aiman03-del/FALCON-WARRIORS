@@ -25,7 +25,7 @@ export default function UsersSkeleton() {
               ))}
             </div>
 
-            {Array.from({ length: 5 }).map((rowIndex) => (
+            {Array.from({ length: 5 }).map((_, rowIndex) => (
               <div
                 key={rowIndex}
                 className="grid grid-cols-[1.6fr_0.8fr_0.8fr_0.8fr_0.8fr] gap-4 rounded-xl border border-border bg-surface-2 px-4 py-4"
