@@ -1,0 +1,318 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/app/lib/supabase/client";
+import ImageUploadInput from "@/app/components/ImageUploadInput";
+import SearchableSelect from "@/app/components/SearchableSelect";
+import { COUNTRIES, getCitiesForCountry } from "@/app/lib/data/countries";
+import { FOOTBALL_CLUBS, NATIONAL_TEAMS } from "@/app/lib/data/clubs";
+
+const POSITIONS = [
+  { value: "GK", label: "🧤 GK — Goalkeeper" },
+  { value: "CB", label: "🛡️ CB — Centre Back" },
+  { value: "LB", label: "LB — Left Back" },
+  { value: "RB", label: "RB — Right Back" },
+  { value: "DMF", label: "🔒 DMF — Defensive Midfielder" },
+  { value: "CMF", label: "⚙️ CMF — Centre Midfielder" },
+  { value: "LMF", label: "LMF — Left Midfielder" },
+  { value: "RMF", label: "RMF — Right Midfielder" },
+  { value: "AMF", label: "🎯 AMF — Attacking Midfielder" },
+  { value: "LW", label: "LW — Left Winger" },
+  { value: "RW", label: "RW — Right Winger" },
+  { value: "SS", label: "SS — Second Striker" },
+  { value: "CF", label: "CF — Centre Forward" },
+  { value: "ST", label: "⚡ ST — Striker" },
+];
+
+const PLATFORMS = [
+  { value: "mobile", label: "📱 Mobile" },
+  { value: "pc", label: "💻 PC" },
+  { value: "console", label: "🎮 Console" },
+];
+
+type PlayerDetails = {
+  id: string;
+  profile_id?: string | null;
+  efootball_username: string;
+  real_name: string | null;
+  age: number | null;
+  country: string | null;
+  city: string | null;
+  supported_club: string | null;
+  national_team: string | null;
+  favorite_player: string | null;
+  education: string | null;
+  profession: string | null;
+  platform: string | null;
+  preferred_position: string | null;
+  avatar_url: string | null;
+};
+
+export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
+  const supabase = createClient();
+  const router = useRouter();
+
+  const [form, setForm] = useState({
+    real_name: player.real_name ?? "",
+    age: player.age?.toString() ?? "",
+    country: player.country ?? "",
+    city: player.city ?? "",
+    supported_club: player.supported_club ?? "",
+    national_team: player.national_team ?? "",
+    favorite_player: player.favorite_player ?? "",
+    education: player.education ?? "",
+    profession: player.profession ?? "",
+    platform: player.platform ?? "",
+    preferred_position: player.preferred_position ?? "",
+  });
+  const [avatarUrl, setAvatarUrl] = useState(player.avatar_url ?? "");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  function update<K extends keyof typeof form>(key: K, value: string) {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function handleCountryChange(val: string) {
+    update("country", val);
+    update("city", ""); // reset city when country changes
+  }
+
+  const cityOptions = getCitiesForCountry(form.country);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      setLoading(false);
+      setError("Please log in again to update your profile.");
+      return;
+    }
+
+    const payload = {
+      efootball_username: player.efootball_username || user.email?.split("@")[0] || "Player",
+      real_name: form.real_name || null,
+      age: form.age ? Number(form.age) : null,
+      country: form.country || null,
+      city: form.city || null,
+      supported_club: form.supported_club || null,
+      national_team: form.national_team || null,
+      favorite_player: form.favorite_player || null,
+      education: form.education || null,
+      profession: form.profession || null,
+      platform: form.platform || null,
+      preferred_position: form.preferred_position || null,
+      avatar_url: avatarUrl || null,
+    };
+
+    // Update auth user_metadata (keeps metadata in sync)
+    const { error: updateUserError } = await supabase.auth.updateUser({
+      data: payload,
+    });
+
+    if (updateUserError) {
+      setLoading(false);
+      setError(updateUserError.message);
+      return;
+    }
+
+    // Upsert into player_details so the profile page always reads fresh data
+    const { error: upsertError } = await supabase
+      .from("player_details")
+      .upsert(
+        { ...payload, profile_id: user.id },
+        { onConflict: "profile_id" }
+      );
+
+    setLoading(false);
+
+    if (upsertError) {
+      setError(upsertError.message);
+      return;
+    }
+
+    router.push("/profile");
+    router.refresh();
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="card mt-6 flex flex-col gap-7 p-6">
+      {/* Profile Picture */}
+      <div>
+        <p className="mb-3 font-display text-xs font-bold uppercase tracking-widest text-gold">
+          Profile Picture
+        </p>
+        <ImageUploadInput
+          label=""
+          folder="/falcon-warriors/avatars"
+          value={avatarUrl}
+          onUploaded={setAvatarUrl}
+        />
+      </div>
+
+      {/* Real-Life Info */}
+      <div>
+        <p className="mb-3 font-display text-xs font-bold uppercase tracking-widest text-gold">
+          Personal Info
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field
+            label="Real Name"
+            value={form.real_name}
+            onChange={(v) => update("real_name", v)}
+            placeholder="John Doe"
+          />
+          <Field
+            label="Age"
+            value={form.age}
+            onChange={(v) => update("age", v)}
+            type="number"
+            placeholder="22"
+          />
+          <Field
+            label="Favorite Player"
+            value={form.favorite_player}
+            onChange={(v) => update("favorite_player", v)}
+            placeholder="Messi, Ronaldo..."
+          />
+          <Field
+            label="Profession"
+            value={form.profession}
+            onChange={(v) => update("profession", v)}
+            placeholder="Student, Engineer..."
+          />
+          <Field
+            label="Education"
+            value={form.education}
+            onChange={(v) => update("education", v)}
+            placeholder="BSc Computer Science..."
+          />
+        </div>
+      </div>
+
+      {/* Location */}
+      <div>
+        <p className="mb-3 font-display text-xs font-bold uppercase tracking-widest text-gold">
+          Location
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <SearchableSelect
+            label="Country"
+            value={form.country}
+            onChange={handleCountryChange}
+            options={COUNTRIES}
+            placeholder="Select your country"
+          />
+          <SearchableSelect
+            label="City"
+            value={form.city}
+            onChange={(v) => update("city", v)}
+            options={
+              cityOptions.length > 0
+                ? cityOptions
+                : form.country
+                  ? [{ value: form.city || "Other", label: form.city || "Other" }]
+                  : []
+            }
+            placeholder={form.country ? "Select your city" : "Select country first"}
+          />
+        </div>
+      </div>
+
+      {/* Football Info */}
+      <div>
+        <p className="mb-3 font-display text-xs font-bold uppercase tracking-widest text-gold">
+          Football
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <SearchableSelect
+            label="Supported Club"
+            value={form.supported_club}
+            onChange={(v) => update("supported_club", v)}
+            options={FOOTBALL_CLUBS}
+            placeholder="Select your club"
+          />
+          <SearchableSelect
+            label="National Team"
+            value={form.national_team}
+            onChange={(v) => update("national_team", v)}
+            options={NATIONAL_TEAMS}
+            placeholder="Select national team"
+          />
+        </div>
+      </div>
+
+      {/* Gaming Info */}
+      <div>
+        <p className="mb-3 font-display text-xs font-bold uppercase tracking-widest text-gold">
+          Gaming
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <SearchableSelect
+            label="Platform"
+            value={form.platform}
+            onChange={(v) => update("platform", v)}
+            options={PLATFORMS}
+            placeholder="Select platform"
+          />
+          <SearchableSelect
+            label="Preferred Position"
+            value={form.preferred_position}
+            onChange={(v) => update("preferred_position", v)}
+            options={POSITIONS}
+            placeholder="Select position"
+          />
+        </div>
+      </div>
+
+      {error && (
+        <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">
+          {error}
+        </p>
+      )}
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="btn-primary w-fit disabled:opacity-50"
+      >
+        {loading ? "Saving..." : "Save Changes"}
+      </button>
+    </form>
+  );
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  type = "text",
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-medium text-muted">{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-gold"
+      />
+    </div>
+  );
+}
