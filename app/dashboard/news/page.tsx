@@ -1,6 +1,6 @@
 import FillButton from "@/app/components/FillButton";
 import Link from "next/link";
-import { Plus, Pencil } from "lucide-react";
+import { Edit3, Plus } from "lucide-react";
 import { requireStaff } from "@/app/lib/queries/dashboard";
 import { createClient } from "@/app/lib/supabase/server";
 import DeleteNewsButton from "@/app/components/dashboard/DeleteNewsButton";
@@ -52,10 +52,10 @@ export default async function NewsListPage() {
                   <div className="flex items-center justify-end gap-3">
                     <Link
                       href={`/dashboard/news/${n.id}`}
-                      className="flex items-center gap-1 text-xs font-medium text-gold hover:text-gold-light"
+                      className="inline-flex items-center justify-center rounded-lg p-2 text-gold transition hover:bg-gold/10 hover:text-gold-light"
+                      aria-label="Edit news post"
                     >
-                      <Pencil size={13} />
-                      Edit
+                      <Edit3 size={16} />
                     </Link>
                     <DeleteNewsButton id={n.id} />
                   </div>

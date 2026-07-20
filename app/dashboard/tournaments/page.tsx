@@ -1,6 +1,7 @@
 import FillButton from "@/app/components/FillButton";
+import DeleteTournamentButton from "@/app/components/dashboard/DeleteTournamentButton";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Edit3, Plus } from "lucide-react";
 import { requireStaff } from "@/app/lib/queries/dashboard";
 import { createClient } from "@/app/lib/supabase/client";
 
@@ -51,7 +52,14 @@ export default async function TournamentsPage() {
           <tbody>
             {(tournaments ?? []).map((t) => (
               <tr key={t.id} className="border-b border-border last:border-0">
-                <td className="px-4 py-3 font-medium">{t.name}</td>
+                <td className="px-4 py-3 font-medium">
+                  <Link
+                    href={`/dashboard/tournaments/${t.id}`}
+                    className="text-gold transition hover:text-gold-light"
+                  >
+                    {t.name}
+                  </Link>
+                </td>
                 <td className="px-4 py-3 text-muted capitalize">{t.type}</td>
                 <td className="px-4 py-3 text-muted capitalize">{t.format ?? "—"}</td>
                 <td className="px-4 py-3 text-muted">
@@ -66,12 +74,16 @@ export default async function TournamentsPage() {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <Link
-                    href={`/dashboard/tournaments/${t.id}`}
-                    className="text-xs font-medium text-gold hover:text-gold-light"
-                  >
-                    Manage →
-                  </Link>
+                  <div className="flex items-center justify-end gap-3">
+                    <Link
+                      href={`/dashboard/tournaments/${t.id}/edit`}
+                      className="inline-flex items-center justify-center rounded-lg p-2 text-gold transition hover:bg-gold/10 hover:text-gold-light"
+                      aria-label="Edit tournament"
+                    >
+                      <Edit3 size={16} />
+                    </Link>
+                    <DeleteTournamentButton id={t.id} />
+                  </div>
                 </td>
               </tr>
             ))}

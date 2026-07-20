@@ -87,12 +87,8 @@ export default function TournamentForm({ mode, tournamentId, initial }: Tourname
   return (
     <>
       <BackLink
-        href={
-          mode === "create"
-            ? "/dashboard/tournaments"
-            : `/dashboard/tournaments/${tournamentId}`
-        }
-        label={mode === "create" ? "Back to Tournaments" : "Back to Tournament"}
+        href={mode === "create" ? "/dashboard/tournaments" : undefined}
+        label={mode === "create" ? "Back to Tournaments" : "Back"}
       />
 
       <form onSubmit={handleSubmit} className="card mt-6 flex flex-col gap-4 p-6">

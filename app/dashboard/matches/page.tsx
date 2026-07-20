@@ -1,6 +1,7 @@
 import FillButton from "@/app/components/FillButton";
+import DeleteMatchButton from "@/app/components/dashboard/DeleteMatchButton";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Edit3, Plus } from "lucide-react";
 import { requireStaff } from "@/app/lib/queries/dashboard";
 import { createClient } from "@/app/lib/supabase/server";
 
@@ -49,7 +50,14 @@ export default async function MatchesPage() {
           <tbody>
             {(matches ?? []).map((m) => (
               <tr key={m.id} className="border-b border-border last:border-0">
-                <td className="px-4 py-3 font-medium">{m.opponent_name}</td>
+                <td className="px-4 py-3 font-medium">
+                  <Link
+                    href={`/dashboard/matches/${m.id}`}
+                    className="text-gold transition hover:text-gold-light"
+                  >
+                    {m.opponent_name}
+                  </Link>
+                </td>
                 <td className="px-4 py-3 text-muted">{m.competition ?? "—"}</td>
                 <td className="px-4 py-3 text-muted">
                   {new Date(m.match_date).toLocaleDateString()}
@@ -65,12 +73,16 @@ export default async function MatchesPage() {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <Link
-                    href={`/dashboard/matches/${m.id}`}
-                    className="text-xs font-medium text-gold hover:text-gold-light"
-                  >
-                    Manage →
-                  </Link>
+                  <div className="flex items-center justify-end gap-3">
+                    <Link
+                      href={`/dashboard/matches/${m.id}`}
+                      className="inline-flex items-center justify-center rounded-lg p-2 text-gold transition hover:bg-gold/10 hover:text-gold-light"
+                      aria-label="Edit match"
+                    >
+                      <Edit3 size={16} />
+                    </Link>
+                    <DeleteMatchButton id={m.id} />
+                  </div>
                 </td>
               </tr>
             ))}
