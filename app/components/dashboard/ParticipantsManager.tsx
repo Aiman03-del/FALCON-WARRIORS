@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, Check, X } from "lucide-react";
-import { createClient } from "@/app/lib/supabase/client"; 
+import { createClient } from "@/app/lib/supabase/client";
+import SelectField from "@/app/components/SelectField";
+import FillButton from "@/app/components/FillButton";
 
 type PlayerOption = { id: string; efootball_username: string };
 
@@ -132,30 +134,29 @@ export default function ParticipantsManager({
 
       {/* Direct Add (staff bypass) */}
       <div className="card flex flex-wrap items-end gap-3 p-4">
-        <div className="flex-1 min-w-[200px]">
-          <label className="mb-1 block text-xs font-medium text-muted">
-            Add Participant Directly (auto-approved)
-          </label>
-          <select
+        <div className="flex-1 min-w-50">
+          <SelectField
+            label="Add Participant Directly (auto-approved)"
             value={selectedPlayer}
-            onChange={(e) => setSelectedPlayer(e.target.value)}
-            className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-gold"
-          >
-            <option value="">— Select player —</option>
-            {availablePlayers.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.efootball_username}
-              </option>
-            ))}
-          </select>
+            onChange={setSelectedPlayer}
+            options={availablePlayers.map((p) => ({
+              value: p.id,
+              label: p.efootball_username,
+            }))}
+            placeholder="— Select player —"
+            searchable
+            clearable
+            className="w-full"
+          />
         </div>
-        <button
-          onClick={handleAddDirect}
+        <FillButton
+          type="button"
           disabled={loading || !selectedPlayer}
-          className="btn-primary text-sm disabled:opacity-50"
+          className="px-4 py-2 text-sm disabled:opacity-50"
+          onClick={handleAddDirect}
         >
           Add
-        </button>
+        </FillButton>
       </div>
 
       {/* Approved Participants / Points Table */}

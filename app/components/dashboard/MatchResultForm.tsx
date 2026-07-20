@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import SelectField from "@/app/components/SelectField";
+import FillButton from "@/app/components/FillButton";
 import { createClient } from "@/app/lib/supabase/client";
 
 type PlayerOption = { id: string; efootball_username: string };
@@ -110,16 +112,17 @@ export default function MatchResultForm({
   return (
     <form onSubmit={handleSave} className="card mt-6 flex flex-col gap-4 p-6">
       <div>
-        <label className="mb-1 block text-xs font-medium text-muted">Status</label>
-        <select
+        <SelectField
+          label="Status"
           value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-gold"
-        >
-          <option value="upcoming">Upcoming</option>
-          <option value="live">Live</option>
-          <option value="completed">Completed</option>
-        </select>
+          onChange={setStatus}
+          options={[
+            { value: "upcoming", label: "Upcoming" },
+            { value: "live", label: "Live" },
+            { value: "completed", label: "Completed" },
+          ]}
+          className="w-full"
+        />
       </div>
 
       {status !== "upcoming" && (
@@ -152,39 +155,33 @@ export default function MatchResultForm({
       {status === "completed" && (
         <>
           <div>
-            <label className="mb-1 block text-xs font-medium text-muted">
-              Add Goal Scorer (optional)
-            </label>
-            <select
+            <SelectField
+              label="Add Goal Scorer (optional)"
               value={scorerId}
-              onChange={(e) => setScorerId(e.target.value)}
-              className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-gold"
-            >
-              <option value="">— None —</option>
-              {players.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.efootball_username}
-                </option>
-              ))}
-            </select>
+              onChange={setScorerId}
+              options={[
+                { value: "", label: "— None —" },
+                ...players.map((p) => ({ value: p.id, label: p.efootball_username })),
+              ]}
+              placeholder="— None —"
+              clearable
+              className="w-full"
+            />
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-muted">
-              Man of the Match (optional)
-            </label>
-            <select
+            <SelectField
+              label="Man of the Match (optional)"
               value={motmId}
-              onChange={(e) => setMotmId(e.target.value)}
-              className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-gold"
-            >
-              <option value="">— None —</option>
-              {players.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.efootball_username}
-                </option>
-              ))}
-            </select>
+              onChange={setMotmId}
+              options={[
+                { value: "", label: "— None —" },
+                ...players.map((p) => ({ value: p.id, label: p.efootball_username })),
+              ]}
+              placeholder="— None —"
+              clearable
+              className="w-full"
+            />
           </div>
         </>
       )}
@@ -193,9 +190,9 @@ export default function MatchResultForm({
         <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</p>
       )}
 
-      <button type="submit" disabled={loading} className="btn-primary mt-2 disabled:opacity-50">
+      <FillButton type="submit" disabled={loading} className="mt-2 disabled:opacity-50">
         {loading ? "Saving..." : "Save Result"}
-      </button>
+      </FillButton>
     </form>
   );
 }

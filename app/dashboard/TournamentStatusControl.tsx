@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import SelectField from "@/app/components/SelectField";
 import { createClient } from "../lib/supabase/client";
 
 export default function TournamentStatusControl({
@@ -28,16 +29,17 @@ export default function TournamentStatusControl({
   }
 
   return (
-    <select
+    <SelectField
       value={status}
+      onChange={handleChange}
       disabled={loading}
-      onChange={(e) => handleChange(e.target.value)}
-      className="rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm outline-none focus:border-gold disabled:opacity-50"
-    >
-      <option value="upcoming">Upcoming</option>
-      <option value="ongoing">Ongoing</option>
-      <option value="completed">Completed</option>
-      <option value="cancelled">Cancelled</option>
-    </select>
+      options={[
+        { value: "upcoming", label: "Upcoming" },
+        { value: "ongoing", label: "Ongoing" },
+        { value: "completed", label: "Completed" },
+        { value: "cancelled", label: "Cancelled" },
+      ]}
+      className="min-w-[140px]"
+    />
   );
 }
