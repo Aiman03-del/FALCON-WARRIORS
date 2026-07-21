@@ -22,7 +22,7 @@ export default async function MatchesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold uppercase tracking-wide">
             Matches
@@ -35,22 +35,25 @@ export default async function MatchesPage() {
         </FillButton>
       </div>
 
-      <div className="card mt-6 overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-border text-xs uppercase text-muted">
-            <tr>
-              <th className="px-4 py-3">Opponent</th>
-              <th className="px-4 py-3">Competition</th>
-              <th className="px-4 py-3">Date</th>
-              <th className="px-4 py-3">Score</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3"></th>
+      <div className="card mt-6 overflow-x-auto min-w-0">
+        <table className="min-w-full w-full text-left text-sm">
+          <thead className="hidden border-b border-border text-xs uppercase text-muted md:table-header-group">
+            <tr className="md:table-row">
+              <th className="hidden px-4 py-3 md:table-cell">Opponent</th>
+              <th className="hidden px-4 py-3 md:table-cell">Competition</th>
+              <th className="hidden px-4 py-3 md:table-cell">Date</th>
+              <th className="hidden px-4 py-3 md:table-cell">Score</th>
+              <th className="hidden px-4 py-3 md:table-cell">Status</th>
+              <th className="hidden px-4 py-3 md:table-cell"></th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="md:table-row-group">
             {(matches ?? []).map((m) => (
-              <tr key={m.id} className="border-b border-border last:border-0">
-                <td className="px-4 py-3 font-medium">
+              <tr key={m.id} className="block border-b border-border last:border-0 md:table-row">
+                <td className="block px-4 py-3 md:table-cell">
+                  <span className="mb-2 block text-[10px] uppercase tracking-wide text-muted md:hidden">
+                    Opponent
+                  </span>
                   <Link
                     href={`/dashboard/matches/${m.id}`}
                     className="text-gold transition hover:text-gold-light"
@@ -58,22 +61,39 @@ export default async function MatchesPage() {
                     {m.opponent_name}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-muted">{m.competition ?? "—"}</td>
-                <td className="px-4 py-3 text-muted">
+                <td className="block px-4 py-3 text-muted md:table-cell">
+                  <span className="mb-2 block text-[10px] uppercase tracking-wide text-muted md:hidden">
+                    Competition
+                  </span>
+                  {m.competition ?? "—"}
+                </td>
+                <td className="block px-4 py-3 text-muted md:table-cell">
+                  <span className="mb-2 block text-[10px] uppercase tracking-wide text-muted md:hidden">
+                    Date
+                  </span>
                   {new Date(m.match_date).toLocaleDateString()}
                 </td>
-                <td className="px-4 py-3">
+                <td className="block px-4 py-3 md:table-cell">
+                  <span className="mb-2 block text-[10px] uppercase tracking-wide text-muted md:hidden">
+                    Score
+                  </span>
                   {m.score_home !== null ? `${m.score_home} - ${m.score_away}` : "—"}
                 </td>
-                <td className="px-4 py-3">
+                <td className="block px-4 py-3 md:table-cell">
+                  <span className="mb-2 block text-[10px] uppercase tracking-wide text-muted md:hidden">
+                    Status
+                  </span>
                   <span
                     className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${statusStyles[m.status]}`}
                   >
                     {m.status}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-right">
-                  <div className="flex items-center justify-end gap-3">
+                <td className="block px-4 py-3 text-right md:table-cell">
+                  <span className="mb-2 block text-[10px] uppercase tracking-wide text-muted md:hidden">
+                    Actions
+                  </span>
+                  <div className="flex flex-wrap items-center justify-end gap-2 md:justify-end">
                     <Link
                       href={`/dashboard/matches/${m.id}`}
                       className="inline-flex items-center justify-center rounded-lg p-2 text-gold transition hover:bg-gold/10 hover:text-gold-light"
@@ -87,7 +107,7 @@ export default async function MatchesPage() {
               </tr>
             ))}
             {(matches ?? []).length === 0 && (
-              <tr>
+              <tr className="block md:table-row">
                 <td colSpan={6} className="px-4 py-8 text-center text-muted">
                   No matches yet. Create your first fixture.
                 </td>

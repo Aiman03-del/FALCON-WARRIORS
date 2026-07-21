@@ -67,6 +67,7 @@ export default function DashboardSidebar({ role, className = "", onClose }: Dash
             <Link
               key={item.href}
               href={item.href}
+              onClick={onClose}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
                 active
                   ? "bg-surface-2 text-gold"
