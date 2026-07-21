@@ -180,7 +180,7 @@ export default function Navbar() {
             type="button"
             aria-label="Search"
             onClick={() => setSearchOpen((open) => !open)}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-white/60 hover:bg-surface-2 hover:text-gold"
+            className="hidden xl:flex h-8 w-8 items-center justify-center rounded-full text-white/60 hover:bg-surface-2 hover:text-gold"
           >
             <Search size={15} />
           </button>
