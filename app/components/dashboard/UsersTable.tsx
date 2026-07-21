@@ -47,8 +47,8 @@ export default function UsersTable({
   }
 
   return (
-    <div className="card mt-6 overflow-x-auto">
-      <table className="w-full text-left text-sm">
+    <div className="card mt-6 overflow-x-auto min-w-0">
+      <table className="min-w-full w-full text-left text-sm">
         <thead className="border-b border-border text-xs uppercase text-muted">
           <tr>
             <th className="px-4 py-3">Username</th>

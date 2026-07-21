@@ -22,7 +22,7 @@ export default function DashboardShell({ role, children }: DashboardShellProps) 
         }`}
       />
 
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between border-b border-border bg-bg px-4 py-3 md:hidden">
           <button
             type="button"
