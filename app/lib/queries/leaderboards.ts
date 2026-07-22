@@ -80,6 +80,10 @@ export async function getTopAssists(limit = 10): Promise<LeaderboardEntry[]> {
       username: s.username,
       avatarUrl: s.avatarUrl,
       value: s.assists,
+      matches: s.matches,
+      wins: s.wins,
+      draws: s.draws,
+      losses: s.losses,
       secondary: `${s.matches} matches`,
     }));
 }
@@ -96,6 +100,11 @@ export async function getTopWinRate(limit = 10, minMatches = 3): Promise<Leaderb
       username: s.username,
       avatarUrl: s.avatarUrl,
       value: s.winRate,
+      matches: s.matches,
+      wins: s.wins,
+      draws: s.draws,
+      losses: s.losses,
+      winRate: s.winRate,
       secondary: `${s.wins}/${s.matches} wins`,
     }));
 }
@@ -111,6 +120,11 @@ export async function getTopMotm(limit = 10): Promise<LeaderboardEntry[]> {
       username: s.username,
       avatarUrl: s.avatarUrl,
       value: s.motm,
+      matches: s.matches,
+      wins: s.wins,
+      draws: s.draws,
+      losses: s.losses,
+      motm: s.motm,
       secondary: `${s.matches} matches`,
     }));
 }
