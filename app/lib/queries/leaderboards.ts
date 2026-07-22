@@ -6,6 +6,13 @@ export type LeaderboardEntry = {
   username: string;
   avatarUrl: string | null;
   value: number;
+  matches: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  points?: number;
+  winRate?: number;
+  motm?: number;
   secondary?: string;
 };
 
@@ -32,6 +39,7 @@ async function getBaseStats() {
         assists: row.assists ?? 0,
         matches: row.matches ?? 0,
         wins: row.wins ?? 0,
+        draws: row.draws ?? 0,
         motm: row.motm_count ?? 0,
       };
     })
@@ -49,6 +57,13 @@ export async function getTopScorers(limit = 10): Promise<LeaderboardEntry[]> {
       username: s.username,
       avatarUrl: s.avatarUrl,
       value: s.goals,
+      matches: s.matches,
+      wins: s.wins,
+      draws: s.draws,
+      losses: s.losses,
+      points: s.wins * 3 + s.draws,
+      winRate: s.matches > 0 ? Math.round((s.wins / s.matches) * 100) : 0,
+      motm: s.motm,
       secondary: `${s.matches} matches`,
     }));
 }

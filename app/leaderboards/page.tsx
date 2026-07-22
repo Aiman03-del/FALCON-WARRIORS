@@ -2,15 +2,10 @@ import Footer from "../components/Footer";
 import LeaderboardTabs from "../components/LeaderboardTabs";
 import Navbar from "../components/Navbar";
 import PeriodPerformerCard from "../components/PeriodPerformerCard";
-import { getTopAssists, getTopMotm, getTopScorers, getTopWinRate } from "../lib/queries/leaderboards";
+import { getTopScorers } from "../lib/queries/leaderboards";
 
 export default async function LeaderboardsPage() {
-  const [goals, assists, winrate, motm] = await Promise.all([
-    getTopScorers(),
-    getTopAssists(),
-    getTopWinRate(),
-    getTopMotm(),
-  ]);
+  const goals = await getTopScorers();
 
   return (
     <main>
@@ -29,7 +24,7 @@ export default async function LeaderboardsPage() {
         </div>
 
         <div className="mt-8">
-          <LeaderboardTabs data={{ goals, assists, winrate, motm }} />
+          <LeaderboardTabs data={{ goals }} />
         </div>
       </section>
       <Footer />

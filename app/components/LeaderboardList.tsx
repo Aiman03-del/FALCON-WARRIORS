@@ -5,11 +5,9 @@ import { LeaderboardEntry } from "../lib/queries/leaderboards";
 
 export default function LeaderboardList({
   entries,
-  valueLabel,
   emptyMessage = "No data available yet.",
 }: {
   entries: LeaderboardEntry[];
-  valueLabel: string;
   emptyMessage?: string;
 }) {
   if (entries.length === 0) {
@@ -17,45 +15,67 @@ export default function LeaderboardList({
   }
 
   return (
-    <div className="card overflow-hidden">
-      {entries.map((entry, idx) => (
-        <Link
-          key={entry.playerId}
-          href={`/players/${entry.playerId}`}
-          className="flex items-center gap-3 border-b border-border p-4 last:border-0 hover:bg-surface-2"
-        >
-          <div className="flex w-7 shrink-0 items-center justify-center">
-            {idx < 3 ? (
-              <Trophy
-                size={16}
-                className={idx === 0 ? "text-gold" : idx === 1 ? "text-white/60" : "text-gold-dark"}
-              />
-            ) : (
-              <span className="text-sm font-bold text-muted">{idx + 1}</span>
-            )}
-          </div>
-
-          <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-surface-2">
-            {entry.avatarUrl ? (
-              <Image src={entry.avatarUrl} alt={entry.username} fill className="object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-gold">
-                {entry.username.slice(0, 2).toUpperCase()}
-              </div>
-            )}
-          </div>
-
-          <div className="flex-1 min-w-0">
-            <p className="truncate text-sm font-semibold">{entry.username}</p>
-            {entry.secondary && <p className="text-xs text-muted">{entry.secondary}</p>}
-          </div>
-
-          <div className="text-right">
-            <span className="font-display text-lg font-bold text-gold">{entry.value}</span>
-            <p className="text-[10px] uppercase text-muted">{valueLabel}</p>
-          </div>
-        </Link>
-      ))}
+    <div className="card overflow-x-auto">
+      <table className="min-w-full w-full text-left text-sm">
+        <thead className="border-b border-border text-xs uppercase text-muted">
+          <tr>
+            <th className="px-3 py-3">#</th>
+            <th className="px-3 py-3">Player</th>
+            <th className="px-2 py-3 text-center">P</th>
+            <th className="px-2 py-3 text-center">W</th>
+            <th className="px-2 py-3 text-center">D</th>
+            <th className="px-2 py-3 text-center">GF</th>
+            <th className="px-2 py-3 text-center">Win%</th>
+            <th className="px-2 py-3 text-center">MOTM</th>
+            <th className="px-3 py-3 text-right">Pts</th>
+          </tr>
+        </thead>
+        <tbody>
+          {entries.map((entry, idx) => (
+            <tr key={entry.playerId} className="border-b border-border last:border-0 hover:bg-surface-2">
+              <td className="px-3 py-3">
+                <div className="flex items-center gap-1.5">
+                  {idx < 3 ? (
+                    <Trophy
+                      size={13}
+                      className={idx === 0 ? "text-gold" : idx === 1 ? "text-white/60" : "text-gold-dark"}
+                    />
+                  ) : null}
+                  <span className="font-display font-bold">{idx + 1}</span>
+                </div>
+              </td>
+              <td className="px-3 py-3">
+                <div className="flex items-center gap-3">
+                  <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-surface-2">
+                    {entry.avatarUrl ? (
+                      <Image src={entry.avatarUrl} alt={entry.username} fill className="object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-gold">
+                        {entry.username.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <Link href={`/players/${entry.playerId}`} className="block truncate font-medium text-white">
+                    {entry.username}
+                  </Link>
+                </div>
+              </td>
+              <td className="px-2 py-3 text-center text-muted">{entry.matches}</td>
+              <td className="px-2 py-3 text-center text-muted">{entry.wins}</td>
+              <td className="px-2 py-3 text-center text-muted">{entry.draws}</td>
+              <td className="px-2 py-3 text-center text-muted">{entry.value}</td>
+              <td className="px-2 py-3 text-center text-muted">{entry.winRate ?? 0}%</td>
+              <td className="px-2 py-3 text-center text-muted">{entry.motm ?? 0}</td>
+              <td className="px-3 py-3 text-right">
+                <span className="font-display text-lg font-bold text-gold">{entry.points ?? 0}</span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="border-t border-border px-4 py-2 text-[10px] text-muted">
+        P = Played, W = Won, D = Drawn, GF = Goals For, Pts = Points (Win 3 · Draw 1 · Loss 0)
+      </p>
     </div>
   );
 }

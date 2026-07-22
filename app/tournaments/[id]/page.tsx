@@ -71,38 +71,20 @@ export default async function TournamentDetailPage({
 
         <div className="mt-8">
           <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-gold">
-            {tournament.format === "knockout" ? "Bracket" : "Points Table"}
+            Fixtures & Bracket
           </h2>
-
-          {tournament.format === "knockout" ? (
-            <BracketView matches={matches as any} />
-          ) : (
-            <PointsTable participants={participants} />
-          )}
+          <BracketView
+            matches={matches as any}
+            mode={tournament.format === "knockout" ? "knockout" : "league"}
+          />
         </div>
 
-        {matches.length > 0 && (
-          <div className="mt-10">
+        {tournament.format !== "knockout" && (
+          <div className="mt-8">
             <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-gold">
-              Fixtures & Results
+              Points Table
             </h2>
-            <div className="flex flex-col gap-3">
-              {matches.map((m: any) => (
-                <div key={m.id} className="card flex items-center justify-between p-4">
-                  <p className="text-sm">
-                    {m.player1?.efootball_username ?? "BYE"} <span className="text-muted">vs</span>{" "}
-                    {m.player2?.efootball_username ?? "BYE"}
-                  </p>
-                  {m.status === "completed" ? (
-                    <span className="font-display font-bold text-gold">
-                      {m.player1_score} - {m.player2_score}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-muted uppercase">{m.status}</span>
-                  )}
-                </div>
-              ))}
-            </div>
+            <PointsTable participants={participants} />
           </div>
         )}
       </section>

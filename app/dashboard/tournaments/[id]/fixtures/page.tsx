@@ -66,7 +66,7 @@ export default async function FixturesPage({
         />
       </div>
 
-      {tournament.format === "knockout" && rounds.length > 0 && (
+      {rounds.length > 0 && (
         <div className="mt-8">
           <h2 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-gold">
             Bracket Preview
@@ -81,6 +81,7 @@ export default async function FixturesPage({
                 ? { efootball_username: participants.find((p) => p.id === m.player2_id)!.username }
                 : null,
             }))}
+            mode={tournament.format === "knockout" ? "knockout" : "league"}
           />
         </div>
       )}
