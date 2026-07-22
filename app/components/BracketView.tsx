@@ -30,7 +30,13 @@ const roundLabel = (round: number, totalRounds: number) => {
 
 const MATCH_HEIGHT = 76;
 
-export default function BracketView({ matches }: { matches: BracketMatch[] }) {
+export default function BracketView({
+  matches,
+  mode,
+}: {
+  matches: BracketMatch[];
+  mode: "knockout" | "league";
+}) {
   if (matches.length === 0) {
     return (
       <div className="card p-8 text-center text-sm text-muted">
