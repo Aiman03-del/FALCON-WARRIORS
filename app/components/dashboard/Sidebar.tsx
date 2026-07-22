@@ -20,6 +20,7 @@ export const navItems = [
   { label: "Users", href: "/dashboard/users", icon: Users },
   { label: "Matches", href: "/dashboard/matches", icon: Swords },
   { label: "Tournaments", href: "/dashboard/tournaments", icon: Trophy },
+  { label: "Leaderboard", href: "/dashboard/leaderboard", icon: Trophy },
   { label: "Achievements", href: "/dashboard/achievements", icon: Award },
   { label: "Ballon d'Or", href: "/dashboard/ballon-dor", icon: Star },
   { label: "News", href: "/dashboard/news", icon: Newspaper },
