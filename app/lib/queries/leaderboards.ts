@@ -40,6 +40,7 @@ async function getBaseStats() {
         matches: row.matches ?? 0,
         wins: row.wins ?? 0,
         draws: row.draws ?? 0,
+        losses: row.losses ?? 0,
         motm: row.motm_count ?? 0,
       };
     })
