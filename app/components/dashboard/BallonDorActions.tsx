@@ -13,7 +13,7 @@ export default function BallonDorActions({ id, isWinner }: { id: string; isWinne
   async function handleSetWinner() {
     setLoading(true);
 
-    // ওই বছরের বাকি সবাইকে আগে non-winner করে দিন (একজনই বিজয়ী হবে)
+    // mark the rest of this year's nominees as non-winners first so only one winner remains
     const { data: current } = await supabase
       .from("ballon_dor_nominees")
       .select("year")

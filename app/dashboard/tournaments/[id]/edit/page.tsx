@@ -15,7 +15,7 @@ export default async function EditTournamentPage({
 
   const { data: tournament } = await supabase
     .from("tournaments")
-    .select("id, name, type, format, start_date, end_date, max_participants, registration_deadline")
+    .select("id, name, type, format, double_round, start_date, end_date, max_participants, registration_deadline")
     .eq("id", id)
     .single();
 

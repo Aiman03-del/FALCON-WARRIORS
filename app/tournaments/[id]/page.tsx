@@ -1,3 +1,5 @@
+
+import BracketView from "@/app/components/BracketView";
 import Footer from "@/app/components/Footer";
 import JoinTournamentButton from "@/app/components/JoinTournamentButton";
 import Navbar from "@/app/components/Navbar";
@@ -69,9 +71,14 @@ export default async function TournamentDetailPage({
 
         <div className="mt-8">
           <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-gold">
-            {tournament.format === "knockout" ? "Standings" : "Points Table"}
+            {tournament.format === "knockout" ? "Bracket" : "Points Table"}
           </h2>
-          <PointsTable participants={participants} />
+
+          {tournament.format === "knockout" ? (
+            <BracketView matches={matches as any} />
+          ) : (
+            <PointsTable participants={participants} />
+          )}
         </div>
 
         {matches.length > 0 && (

@@ -5,7 +5,7 @@ import DatePicker from "./DatePicker";
 
 type DateTimePickerProps = {
   label?: string;
-  value: string; // "YYYY-MM-DDTHH:mm" ফরম্যাটে
+  value: string; // format: "YYYY-MM-DDTHH:mm"
   onChange: (value: string) => void;
   minDate?: string;
 };

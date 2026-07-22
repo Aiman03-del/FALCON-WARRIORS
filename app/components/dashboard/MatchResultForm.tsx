@@ -1,27 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import SelectField from "@/app/components/SelectField";
 import FillButton from "@/app/components/FillButton";
 import { createClient } from "@/app/lib/supabase/client";
+import SelectField from "../SelectField";
+import { recalcAllPlayerStats } from "@/app/lib/matches/recalcPlayerStats";
 
 type PlayerOption = { id: string; efootball_username: string };
 
 type Props = {
   matchId: string;
+  matchType: "external" | "internal";
   currentStatus: string;
   currentScoreHome: number | null;
   currentScoreAway: number | null;
+  player1Id?: string;
+  player2Id?: string;
+  player1Name?: string;
+  player2Name?: string;
   players: PlayerOption[];
+  tournamentSquad: PlayerOption[] | null;
 };
 
 export default function MatchResultForm({
   matchId,
+  matchType,
   currentStatus,
   currentScoreHome,
   currentScoreAway,
+  player1Id,
+  player2Id,
+  player1Name,
+  player2Name,
   players,
+  tournamentSquad,
 }: Props) {
   const supabase = createClient();
   const router = useRouter();
@@ -31,8 +44,20 @@ export default function MatchResultForm({
   const [scoreAway, setScoreAway] = useState(currentScoreAway ?? 0);
   const [scorerId, setScorerId] = useState("");
   const [motmId, setMotmId] = useState("");
+  const [playedById, setPlayedById] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (matchType !== "external") return;
+
+    supabase
+      .from("match_squad")
+      .select("player_id")
+      .eq("match_id", matchId)
+      .maybeSingle()
+      .then(({ data }) => setPlayedById(data?.player_id ?? ""));
+  }, [matchId, matchType, supabase]);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -54,60 +79,47 @@ export default function MatchResultForm({
       return;
     }
 
-    // Optional: goal scorer entry
-    if (status === "completed" && scorerId) {
-      await supabase.from("match_events").insert({
-        match_id: matchId,
-        scorer_id: scorerId,
-        event_type: "goal",
-      });
+    if (matchType === "internal" && status === "completed") {
+      await supabase.from("match_events").delete().eq("match_id", matchId).eq("event_type", "motm");
 
-      // Update player_stats (goals +1, not incrementing matches here —
-      // matches/wins/losses will be handled in the bulk stat update below)
-      const { data: statRow } = await supabase
-        .from("player_stats")
-        .select("id, goals")
-        .eq("player_id", scorerId)
-        .single();
+      let winnerId: string | null = null;
+      if (scoreHome > scoreAway) winnerId = player1Id ?? null;
+      else if (scoreAway > scoreHome) winnerId = player2Id ?? null;
 
-      if (statRow) {
-        await supabase
-          .from("player_stats")
-          .update({ goals: statRow.goals + 1 })
-          .eq("id", statRow.id);
-      } else {
-        await supabase.from("player_stats").insert({ player_id: scorerId, goals: 1 });
+      if (winnerId) {
+        await supabase.from("match_events").insert({
+          match_id: matchId,
+          scorer_id: winnerId,
+          event_type: "motm",
+        });
       }
     }
 
-    // Optional: Man of the Match entry
-    if (status === "completed" && motmId) {
-      await supabase.from("match_events").insert({
-        match_id: matchId,
-        scorer_id: motmId,
-        event_type: "motm",
-      });
+    if (matchType === "external") {
+      await supabase.from("match_squad").delete().eq("match_id", matchId);
+      await supabase.from("match_goal_entries").delete().eq("match_id", matchId);
 
-      const { data: statRow } = await supabase
-        .from("player_stats")
-        .select("id, motm_count")
-        .eq("player_id", motmId)
-        .single();
+      if (playedById) {
+        await supabase.from("match_squad").insert({ match_id: matchId, player_id: playedById });
 
-      if (statRow) {
-        await supabase
-          .from("player_stats")
-          .update({ motm_count: statRow.motm_count + 1 })
-          .eq("id", statRow.id);
-      } else {
-        await supabase.from("player_stats").insert({ player_id: motmId, motm_count: 1 });
+        if (status === "completed" && scoreHome > 0) {
+          await supabase.from("match_goal_entries").insert({
+            match_id: matchId,
+            player_id: playedById,
+            goals: scoreHome,
+          });
+        }
       }
     }
+
+    await recalcAllPlayerStats(supabase);
 
     setLoading(false);
     router.push("/dashboard/matches");
     router.refresh();
   }
+
+  const roster = tournamentSquad ?? players;
 
   return (
     <form onSubmit={handleSave} className="card mt-6 flex flex-col gap-4 p-6">
@@ -128,9 +140,7 @@ export default function MatchResultForm({
       {status !== "upcoming" && (
         <div className="flex gap-4">
           <div className="flex-1">
-            <label className="mb-1 block text-xs font-medium text-muted">
-              Falcon Warriors Score
-            </label>
+            <label className="mb-1 block text-xs font-medium text-muted">Falcon Warriors Score</label>
             <input
               type="number"
               min={0}
@@ -152,7 +162,21 @@ export default function MatchResultForm({
         </div>
       )}
 
-      {status === "completed" && (
+      {matchType === "external" && (
+        <SelectField
+          label="Played By (Falcon Warriors player)"
+          value={playedById}
+          onChange={setPlayedById}
+          searchable={roster.length > 6}
+          placeholder="— Select player —"
+          options={roster.map((player) => ({
+            value: player.id,
+            label: player.efootball_username,
+          }))}
+        />
+      )}
+
+      {matchType !== "external" && status === "completed" && (
         <>
           <div>
             <SelectField
@@ -161,7 +185,7 @@ export default function MatchResultForm({
               onChange={setScorerId}
               options={[
                 { value: "", label: "— None —" },
-                ...players.map((p) => ({ value: p.id, label: p.efootball_username })),
+                ...players.map((player) => ({ value: player.id, label: player.efootball_username })),
               ]}
               placeholder="— None —"
               clearable
@@ -176,7 +200,7 @@ export default function MatchResultForm({
               onChange={setMotmId}
               options={[
                 { value: "", label: "— None —" },
-                ...players.map((p) => ({ value: p.id, label: p.efootball_username })),
+                ...players.map((player) => ({ value: player.id, label: player.efootball_username })),
               ]}
               placeholder="— None —"
               clearable
@@ -186,9 +210,24 @@ export default function MatchResultForm({
         </>
       )}
 
-      {error && (
-        <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</p>
+      {status === "completed" && (
+        <div>
+          <SelectField
+            label="Man of the Match (optional)"
+            value={motmId}
+            onChange={setMotmId}
+            options={[
+              { value: "", label: "— None —" },
+              ...players.map((player) => ({ value: player.id, label: player.efootball_username })),
+            ]}
+            placeholder="— None —"
+            clearable
+            className="w-full"
+          />
+        </div>
       )}
+
+      {error && <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</p>}
 
       <FillButton type="submit" disabled={loading} className="mt-2 disabled:opacity-50">
         {loading ? "Saving..." : "Save Result"}

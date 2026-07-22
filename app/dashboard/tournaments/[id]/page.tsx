@@ -54,19 +54,32 @@ export default async function ManageTournamentPage({
         <Pencil size={14} />
         Edit Details
       </OutlineButton>
-      <OutlineButton href={`/dashboard/tournaments/${tournament.id}/fixtures`} className="flex items-center gap-2 text-sm">
-        Fixtures
-      </OutlineButton>
+      {tournament.type === "internal" && (
+        <OutlineButton href={`/dashboard/tournaments/${tournament.id}/fixtures`} className="flex items-center gap-2 text-sm">
+          Fixtures
+        </OutlineButton>
+      )}
       <TournamentStatusControl tournamentId={tournament.id} currentStatus={tournament.status} />
     </div>
   </div>
 
-      <ParticipantsManager
-        tournamentId={tournament.id}
-        participants={participants ?? []}
-        allPlayers={allPlayers ?? []}
-        maxParticipants={tournament.max_participants}
-      />
+      {tournament.type === "internal" ? (
+        <ParticipantsManager
+          tournamentId={tournament.id}
+          participants={participants ?? []}
+          allPlayers={allPlayers ?? []}
+          maxParticipants={tournament.max_participants}
+        />
+      ) : (
+        <div className="mt-6">
+          <a
+            href={`/dashboard/tournaments/${tournament.id}/matches`}
+            className="btn-primary inline-flex items-center gap-2 text-sm"
+          >
+            Manage Matches
+          </a>
+        </div>
+      )}
     </div>
   );
 }

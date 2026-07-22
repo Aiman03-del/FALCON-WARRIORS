@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 type BackLinkProps = {
-  href?: string; // দিলে সরাসরি সেই রুটে যাবে, না দিলে browser back ব্যবহার হবে
+  href?: string; // direct route if provided, otherwise use browser back
   label?: string;
 };
 

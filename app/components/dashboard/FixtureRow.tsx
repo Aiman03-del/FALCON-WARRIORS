@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Shuffle } from "lucide-react";
 import { createClient } from "@/app/lib/supabase/client";
 import { recalcStandings } from "@/app/lib/fixtures/recalcStandings";
+import { recalcAllPlayerStats } from "@/app/lib/matches/recalcPlayerStats";
 
 type PlayerOption = { id: string; username: string };
 
@@ -75,6 +76,7 @@ export default function FixtureRow({
       .eq("id", match.id);
 
     await recalcStandings(supabase, tournamentId);
+    await recalcAllPlayerStats(supabase);
 
     setLoading(false);
     router.refresh();

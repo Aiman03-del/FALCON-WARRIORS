@@ -8,6 +8,7 @@ import { generateKnockoutRound1, generateRoundRobin } from "@/app/lib/fixtures/g
 type Props = {
   tournamentId: string;
   format: string;
+  doubleRound: boolean;
   participants: { id: string; username: string }[];
   alreadyGenerated: boolean;
 };
@@ -15,6 +16,7 @@ type Props = {
 export default function FixtureGenerator({
   tournamentId,
   format,
+  doubleRound,
   participants,
   alreadyGenerated,
 }: Props) {
@@ -46,7 +48,10 @@ export default function FixtureGenerator({
     const drafts =
       format === "knockout"
         ? generateKnockoutRound1(participants.map((p) => ({ id: p.id, username: p.username })))
-        : generateRoundRobin(participants.map((p) => ({ id: p.id, username: p.username })));
+        : generateRoundRobin(
+            participants.map((p) => ({ id: p.id, username: p.username })),
+            doubleRound
+          );
 
     const rows = drafts.map((d) => ({
       tournament_id: tournamentId,
@@ -81,6 +86,8 @@ export default function FixtureGenerator({
           ? "Generating..."
           : alreadyGenerated
           ? "Re-generate Fixtures"
+          : format === "league" && doubleRound
+          ? "Generate Fixtures (Double Round)"
           : "Generate Fixtures Randomly"}
       </button>
       {error && <p className="mt-2 text-xs text-red-400">{error}</p>}

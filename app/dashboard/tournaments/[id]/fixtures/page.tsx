@@ -1,3 +1,5 @@
+
+import BracketView from "@/app/components/BracketView";
 import FixtureGenerator from "@/app/components/dashboard/FixtureGenerator";
 import FixtureRow from "@/app/components/dashboard/FixtureRow";
 import NextRoundGenerator from "@/app/components/dashboard/NextRoundGenerator";
@@ -17,7 +19,7 @@ export default async function FixturesPage({
 
   const { data: tournament } = await supabase
     .from("tournaments")
-    .select("id, name, format")
+    .select("id, name, format, double_round")
     .eq("id", id)
     .single();
 
@@ -58,10 +60,30 @@ export default async function FixturesPage({
         <FixtureGenerator
           tournamentId={tournament.id}
           format={tournament.format}
+          doubleRound={tournament.double_round}
           participants={participants}
           alreadyGenerated={(matches ?? []).length > 0}
         />
       </div>
+
+      {tournament.format === "knockout" && rounds.length > 0 && (
+        <div className="mt-8">
+          <h2 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-gold">
+            Bracket Preview
+          </h2>
+          <BracketView
+            matches={(matches ?? []).map((m: any) => ({
+              ...m,
+              player1: participants.find((p) => p.id === m.player1_id)
+                ? { efootball_username: participants.find((p) => p.id === m.player1_id)!.username }
+                : null,
+              player2: participants.find((p) => p.id === m.player2_id)
+                ? { efootball_username: participants.find((p) => p.id === m.player2_id)!.username }
+                : null,
+            }))}
+          />
+        </div>
+      )}
 
       {rounds.length === 0 ? (
         <p className="mt-10 text-center text-sm text-muted">

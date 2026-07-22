@@ -61,8 +61,11 @@ export function generateKnockoutNextRound(
   return generateKnockoutRound1(winners).map((m) => ({ ...m, round: nextRound }));
 }
 
-// League: Round-robin (circle method) — everyone plays everyone once
-export function generateRoundRobin(participants: ParticipantForDraw[]): MatchDraft[] {
+// League: Round-robin (circle method) — everyone plays everyone once (or twice)
+export function generateRoundRobin(
+  participants: ParticipantForDraw[],
+  doubleRound: boolean = false
+): MatchDraft[] {
   const list = [...participants];
   const hasBye = list.length % 2 !== 0;
   if (hasBye) list.push({ id: "__BYE__", username: "BYE" });
@@ -70,7 +73,7 @@ export function generateRoundRobin(participants: ParticipantForDraw[]): MatchDra
   const n = list.length;
   const totalRounds = n - 1;
   const half = n / 2;
-  const matches: MatchDraft[] = [];
+  const firstLegMatches: MatchDraft[] = [];
 
   let arr = shuffle(list);
 
@@ -82,7 +85,7 @@ export function generateRoundRobin(participants: ParticipantForDraw[]): MatchDra
 
       if (p1.id === "__BYE__" || p2.id === "__BYE__") {
         const real = p1.id === "__BYE__" ? p2 : p1;
-        matches.push({
+        firstLegMatches.push({
           round,
           match_order: order++,
           player1_id: real.id,
@@ -92,7 +95,7 @@ export function generateRoundRobin(participants: ParticipantForDraw[]): MatchDra
         continue;
       }
 
-      matches.push({
+      firstLegMatches.push({
         round,
         match_order: order++,
         player1_id: p1.id,
@@ -108,5 +111,24 @@ export function generateRoundRobin(participants: ParticipantForDraw[]): MatchDra
     arr = [fixed, ...rotating];
   }
 
-  return matches;
+  if (!doubleRound) {
+    return firstLegMatches;
+  }
+
+  // second leg — same pairs, but reversed home/away
+  const secondLegMatches: MatchDraft[] = firstLegMatches
+    .filter((m) => m.status !== "bye")
+    .map((m) => ({
+      round: m.round + totalRounds,
+      match_order: m.match_order,
+      player1_id: m.player2_id,
+      player2_id: m.player1_id,
+      status: "scheduled" as const,
+    }));
+
+  const byeMatches = firstLegMatches
+    .filter((m) => m.status === "bye")
+    .map((m) => ({ ...m, round: m.round + totalRounds }));
+
+  return [...firstLegMatches, ...secondLegMatches, ...byeMatches];
 }

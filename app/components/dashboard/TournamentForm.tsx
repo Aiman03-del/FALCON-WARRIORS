@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import BackLink from "@/app/components/BackLink";
 import DatePicker from "../DatePicker";
 import FillButton from "../FillButton";
 import SelectField from "@/app/components/SelectField";
+import SquadSelector from "@/components/dashboard/SquadSelector";
 import { createClient } from "../../lib/supabase/client";
 
 type TournamentFormProps = {
@@ -16,12 +17,15 @@ type TournamentFormProps = {
     name: string;
     type: string;
     format: string;
+    double_round: boolean;
     start_date: string | null;
     end_date: string | null;
     max_participants: number | null;
     registration_deadline: string | null;
   };
 };
+
+type PlayerOption = { id: string; efootball_username: string };
 
 function toDateInputValue(value: string | null) {
   if (!value) return "";
@@ -40,6 +44,7 @@ export default function TournamentForm({ mode, tournamentId, initial }: Tourname
   const [name, setName] = useState(initial?.name ?? "");
   const [type, setType] = useState(initial?.type ?? "internal");
   const [format, setFormat] = useState(initial?.format ?? "league");
+  const [doubleRound, setDoubleRound] = useState(initial?.double_round ?? false);
   const [startDate, setStartDate] = useState(toDateInputValue(initial?.start_date ?? null));
   const [endDate, setEndDate] = useState(toDateInputValue(initial?.end_date ?? null));
   const [maxParticipants, setMaxParticipants] = useState(
@@ -48,8 +53,27 @@ export default function TournamentForm({ mode, tournamentId, initial }: Tourname
   const [registrationDeadline, setRegistrationDeadline] = useState(
     toDateTimeInputValue(initial?.registration_deadline ?? null)
   );
+  const [players, setPlayers] = useState<PlayerOption[]>([]);
+  const [squadIds, setSquadIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    supabase
+      .from("player_details")
+      .select("id, efootball_username")
+      .order("efootball_username")
+      .then(({ data }) => setPlayers(data ?? []));
+
+    if (mode === "edit" && tournamentId) {
+      supabase
+        .from("tournament_squad")
+        .select("player_id")
+        .eq("tournament_id", tournamentId)
+        .then(({ data }) => setSquadIds((data ?? []).map((row) => row.player_id)));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -60,27 +84,55 @@ export default function TournamentForm({ mode, tournamentId, initial }: Tourname
       name,
       type,
       format,
+      double_round: doubleRound,
       start_date: startDate || null,
       end_date: endDate || null,
-      max_participants: maxParticipants ? Number(maxParticipants) : null,
-      registration_deadline: registrationDeadline || null,
+      max_participants: type === "official" ? null : maxParticipants ? Number(maxParticipants) : null,
+      registration_deadline: type === "official" ? null : registrationDeadline || null,
     };
 
-    const { error: dbError } =
-      mode === "create"
-        ? await supabase.from("tournaments").insert({ ...payload, status: "upcoming" })
-        : await supabase.from("tournaments").update(payload).eq("id", tournamentId);
+    let savedId = tournamentId;
+
+    if (mode === "create") {
+      const { data, error: dbError } = await supabase
+        .from("tournaments")
+        .insert({ ...payload, status: "upcoming" })
+        .select("id")
+        .single();
+
+      if (dbError || !data) {
+        setLoading(false);
+        setError(dbError?.message ?? "Failed to create");
+        return;
+      }
+      savedId = data.id;
+    } else {
+      if (!tournamentId) {
+        setLoading(false);
+        setError("Tournament ID is missing");
+        return;
+      }
+
+      const { error: dbError } = await supabase.from("tournaments").update(payload).eq("id", tournamentId);
+      if (dbError) {
+        setLoading(false);
+        setError(dbError.message);
+        return;
+      }
+    }
+
+    if (type === "official" && savedId) {
+      await supabase.from("tournament_squad").delete().eq("tournament_id", savedId);
+      if (squadIds.length > 0) {
+        await supabase.from("tournament_squad").insert(
+          squadIds.map((playerId) => ({ tournament_id: savedId, player_id: playerId }))
+        );
+      }
+    }
 
     setLoading(false);
 
-    if (dbError) {
-      setError(dbError.message);
-      return;
-    }
-
-    router.push(
-      mode === "create" ? "/dashboard/tournaments" : `/dashboard/tournaments/${tournamentId}`
-    );
+    router.push(mode === "create" ? `/dashboard/tournaments/${savedId}` : `/dashboard/tournaments/${tournamentId}`);
     router.refresh();
   }
 
@@ -126,6 +178,18 @@ export default function TournamentForm({ mode, tournamentId, initial }: Tourname
         />
       </div>
 
+      {format === "league" && (
+        <label className="flex items-center gap-2.5 rounded-lg border border-border bg-surface-2 px-4 py-3 text-sm">
+          <input
+            type="checkbox"
+            checked={doubleRound}
+            onChange={(e) => setDoubleRound(e.target.checked)}
+            className="h-4 w-4 rounded border-border accent-gold"
+          />
+          <span>Double Round (each opponent is played twice in a 2-leg system)</span>
+        </label>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2">
         <DatePicker
           label="Start Date"
@@ -143,30 +207,38 @@ export default function TournamentForm({ mode, tournamentId, initial }: Tourname
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="flex-1">
-          <label className="mb-1 block text-xs font-medium text-muted">
-            Max Participants (optional)
-          </label>
-          <input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            value={maxParticipants}
-            onChange={(e) => setMaxParticipants(e.target.value)}
-            className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-white/30"
-            placeholder="16"
+      {type === "internal" ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="flex-1">
+            <label className="mb-1 block text-xs font-medium text-muted">
+              Max Participants (optional)
+            </label>
+            <input
+              type="number"
+              min="1"
+              step="1"
+              inputMode="numeric"
+              value={maxParticipants}
+              onChange={(e) => {
+                const next = e.target.value.replace(/\D/g, "");
+                setMaxParticipants(next);
+              }}
+              className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-white/30"
+              placeholder="16"
+            />
+          </div>
+          <DatePicker
+            label="Registration Deadline (optional)"
+            value={registrationDeadline}
+            onChange={setRegistrationDeadline}
+            type="datetime-local"
+            className="flex-1"
+            description="Double check that the year is correct — for example, not 2006 instead of 2026."
           />
         </div>
-        <DatePicker
-          label="Registration Deadline (optional)"
-          value={registrationDeadline}
-          onChange={setRegistrationDeadline}
-          type="datetime-local"
-          className="flex-1"
-          description="Double check that the year is correct — for example, not 2006 instead of 2026."
-        />
-      </div>
+      ) : (
+        <SquadSelector players={players} selected={squadIds} onChange={setSquadIds} />
+      )}
 
       {error && (
         <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</p>

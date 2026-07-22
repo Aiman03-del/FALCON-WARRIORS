@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, Check, X } from "lucide-react";
 import { createClient } from "@/app/lib/supabase/client";
-import SelectField from "@/app/components/SelectField";
+import { MultiSelectField } from "@/app/components/SelectField.multi";
 import FillButton from "@/app/components/FillButton";
 
 type PlayerOption = { id: string; efootball_username: string };
@@ -46,7 +46,7 @@ export default function ParticipantsManager({
 }) {
   const supabase = createClient();
   const router = useRouter();
-  const [selectedPlayer, setSelectedPlayer] = useState("");
+  const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   const pending = participants.filter((p) => p.status === "pending");
@@ -64,18 +64,31 @@ export default function ParticipantsManager({
   }
 
   async function handleAddDirect() {
-    if (!selectedPlayer) return;
+    if (selectedPlayers.length === 0) return;
+
+    const remainingSlots = maxParticipants ? maxParticipants - approved.length : null;
+    if (remainingSlots !== null && remainingSlots <= 0) {
+      alert("Slots are already full. Reject some pending requests or increase max participants.");
+      return;
+    }
+
     setLoading(true);
 
-    await supabase.from("tournament_participants").insert({
-      tournament_id: tournamentId,
-      player_id: selectedPlayer,
-      points: 0,
-      status: "approved",
-    });
+    const playersToAdd = remainingSlots === null
+      ? selectedPlayers
+      : selectedPlayers.slice(0, remainingSlots);
+
+    await supabase.from("tournament_participants").insert(
+      playersToAdd.map((playerId) => ({
+        tournament_id: tournamentId,
+        player_id: playerId,
+        points: 0,
+        status: "approved",
+      }))
+    );
 
     setLoading(false);
-    setSelectedPlayer("");
+    setSelectedPlayers([]);
     router.refresh();
   }
 
@@ -135,27 +148,26 @@ export default function ParticipantsManager({
       {/* Direct Add (staff bypass) */}
       <div className="card flex flex-wrap items-end gap-3 p-4">
         <div className="flex-1 min-w-50">
-          <SelectField
+          <MultiSelectField
             label="Add Participant Directly (auto-approved)"
-            value={selectedPlayer}
-            onChange={setSelectedPlayer}
+            value={selectedPlayers}
+            onChange={setSelectedPlayers}
             options={availablePlayers.map((p) => ({
               value: p.id,
               label: p.efootball_username,
             }))}
-            placeholder="— Select player —"
+            placeholder="Select players"
             searchable
-            clearable
             className="w-full"
           />
         </div>
         <FillButton
           type="button"
-          disabled={loading || !selectedPlayer}
+          disabled={loading || selectedPlayers.length === 0}
           className="px-4 py-2 text-sm disabled:opacity-50"
           onClick={handleAddDirect}
         >
-          Add
+          Add Selected
         </FillButton>
       </div>
 
