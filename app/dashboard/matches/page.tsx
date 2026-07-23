@@ -20,6 +20,8 @@ export default async function MatchesPage() {
     .select("id, opponent_name, opponent_logo_url, competition, match_date, status, score_home, score_away")
     .order("match_date", { ascending: false });
 
+  console.log("Dashboard matches data:", matches);
+
   return (
     <div>
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">

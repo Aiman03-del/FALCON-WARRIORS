@@ -13,6 +13,8 @@ import {
   Award,
   ArrowLeft,
   Star,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 export const navItems = [
@@ -31,6 +33,8 @@ type DashboardSidebarProps = {
   role: string;
   className?: string;
   onClose?: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 };
 
 function isActiveRoute(pathname: string, href: string) {
@@ -41,43 +45,75 @@ function isActiveRoute(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export default function DashboardSidebar({ role, className = "", onClose }: DashboardSidebarProps) {
+export default function DashboardSidebar({
+  role,
+  className = "",
+  onClose,
+  collapsed = false,
+  onToggleCollapse,
+}: DashboardSidebarProps) {
   const pathname = usePathname();
 
   const defaultClasses = className
-    ? `${className} w-64 shrink-0 border-r border-border bg-surface`
-    : "hidden w-64 shrink-0 border-r border-border bg-surface md:block";
+    ? `${className} shrink-0 border-r border-border bg-surface`
+    : "hidden shrink-0 border-r border-border bg-surface md:block";
 
   return (
     <aside className={defaultClasses}>
-      <div className="flex items-center gap-2 border-b border-border px-6 py-4">
-        <Image
-          src="/logo.jpg"
-          alt="Falcon Warriors"
-          width={32}
-          height={32}
-          className="rounded-full"
-        />
-        <span className="font-display text-sm font-bold text-gold">FALCON WARRIORS</span>
+      <div className="flex items-center justify-between border-b border-border px-3 py-4">
+        <div className="flex min-w-0 items-center gap-2 overflow-hidden">
+          <Image
+            src="/logo.jpg"
+            alt="Falcon Warriors"
+            width={32}
+            height={32}
+            className="rounded-full"
+          />
+          {!collapsed && (
+            <span className="truncate font-display text-sm font-bold text-gold">FALCON WARRIORS</span>
+          )}
+        </div>
+
+        {onToggleCollapse && (
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            className="hidden rounded-lg p-1 text-muted transition hover:bg-surface-2 hover:text-gold md:inline-flex"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          </button>
+        )}
       </div>
 
-      <nav className="flex flex-col gap-1 p-4">
+      <nav className="flex flex-col gap-1 p-3">
         {navItems.map((item) => {
           const active = isActiveRoute(pathname, item.href);
+          const Icon = item.icon;
+
           return (
             <Link
               key={item.href}
               href={item.href}
               onClick={onClose}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+              aria-label={item.label}
+              aria-current={active ? "page" : undefined}
+              className={`group relative flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+                collapsed ? "justify-center" : "gap-3"
+              } ${
                 active
                   ? "bg-surface-2 text-gold"
                   : "text-white/80 hover:bg-surface-2 hover:text-gold"
               }`}
-              aria-current={active ? "page" : undefined}
             >
-              <item.icon size={17} />
-              {item.label}
+              <Icon size={17} />
+              {!collapsed && <span>{item.label}</span>}
+
+              {collapsed && (
+                <span className="pointer-events-none absolute left-full top-1/2 ml-2 -translate-y-1/2 rounded-md border border-border bg-bg px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition group-hover:opacity-100">
+                  {item.label}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -86,16 +122,25 @@ export default function DashboardSidebar({ role, className = "", onClose }: Dash
 
         <Link
           href="/"
-          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted hover:bg-surface-2 hover:text-white"
+          aria-label="Back to Site"
+          className={`group relative flex items-center rounded-lg px-3 py-2.5 text-sm font-medium text-muted transition hover:bg-surface-2 hover:text-white ${
+            collapsed ? "justify-center" : "gap-3"
+          }`}
         >
           <ArrowLeft size={17} />
-          Back to Site
+          {!collapsed && <span>Back to Site</span>}
+
+          {collapsed && (
+            <span className="pointer-events-none absolute left-full top-1/2 ml-2 -translate-y-1/2 rounded-md border border-border bg-bg px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition group-hover:opacity-100">
+              Back to Site
+            </span>
+          )}
         </Link>
       </nav>
 
-      <div className="absolute bottom-4 left-4">
-        <span className="rounded-full bg-gold/15 px-2.5 py-1 text-[10px] font-bold uppercase text-gold">
-          {role}
+      <div className="absolute bottom-4 left-4 right-4">
+        <span className={`rounded-full bg-gold/15 px-2.5 py-1 text-[10px] font-bold uppercase text-gold ${collapsed ? "block text-center" : "inline-block"}`}>
+          {collapsed ? role.slice(0, 1).toUpperCase() : role}
         </span>
       </div>
     </aside>

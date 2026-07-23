@@ -27,6 +27,7 @@ export default function MatchForm() {
       opponent_tag: opponentTag || null,
       competition: competition || null,
       match_date: matchDate,
+      match_type: "internal",
       status: "upcoming",
       moderator_id: userData.user?.id ?? null,
     });
