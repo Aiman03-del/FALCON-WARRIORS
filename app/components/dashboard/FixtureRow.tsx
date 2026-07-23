@@ -36,6 +36,8 @@ export default function FixtureRow({
   const [p2, setP2] = useState(match.player2_id ?? "");
   const [s1, setS1] = useState(match.player1_score?.toString() ?? "");
   const [s2, setS2] = useState(match.player2_score?.toString() ?? "");
+  const [r1, setR1] = useState("");
+  const [r2, setR2] = useState("");
   const [loading, setLoading] = useState(false);
   const [editingOpponents, setEditingOpponents] = useState(false);
 
@@ -74,6 +76,18 @@ export default function FixtureRow({
         status: "completed",
       })
       .eq("id", match.id);
+
+    await supabase.from("match_ratings").delete().eq("tournament_match_id", match.id);
+    const ratingsToInsert = [] as Array<{ tournament_match_id: string; player_id: string; rating: number }>;
+    if (r1 && match.player1_id) {
+      ratingsToInsert.push({ tournament_match_id: match.id, player_id: match.player1_id, rating: Number(r1) });
+    }
+    if (r2 && match.player2_id) {
+      ratingsToInsert.push({ tournament_match_id: match.id, player_id: match.player2_id, rating: Number(r2) });
+    }
+    if (ratingsToInsert.length > 0) {
+      await supabase.from("match_ratings").insert(ratingsToInsert);
+    }
 
     await recalcStandings(supabase, tournamentId);
     await recalcAllPlayerStats(supabase);
@@ -171,6 +185,26 @@ export default function FixtureRow({
               onChange={(e) => setS2(e.target.value)}
               className="w-14 rounded-lg border border-border bg-surface-2 px-2 py-1.5 text-center text-sm outline-none focus:border-gold"
               placeholder="0"
+            />
+            <input
+              type="number"
+              min={1}
+              max={10}
+              step="0.1"
+              value={r1}
+              onChange={(e) => setR1(e.target.value)}
+              className="w-16 rounded-lg border border-border bg-surface-2 px-2 py-1.5 text-center text-xs outline-none focus:border-gold"
+              placeholder="rating"
+            />
+            <input
+              type="number"
+              min={1}
+              max={10}
+              step="0.1"
+              value={r2}
+              onChange={(e) => setR2(e.target.value)}
+              className="w-16 rounded-lg border border-border bg-surface-2 px-2 py-1.5 text-center text-xs outline-none focus:border-gold"
+              placeholder="rating"
             />
             <button
               onClick={handleSaveResult}

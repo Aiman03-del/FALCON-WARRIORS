@@ -38,7 +38,47 @@ export async function getTournamentDetail(id: string) {
     .order("round")
     .order("match_order");
 
-  return { tournament, participants: participants ?? [], matches: matches ?? [] };
+  const { data: squadRows } = await supabase
+    .from("tournament_squad")
+    .select("player_details(id, efootball_username, avatar_url)")
+    .eq("tournament_id", id);
+
+  const squad = (squadRows ?? [])
+    .map((s: any) => (Array.isArray(s.player_details) ? s.player_details[0] : s.player_details))
+    .filter(Boolean);
+
+  const formMap: Record<string, ("W" | "D" | "L")[]> = {};
+
+  const sortedMatches = [...(matches ?? [])]
+    .filter((m: any) => m.status === "completed" && m.player1_score !== null && m.player2_score !== null)
+    .sort((a: any, b: any) => b.round - a.round || b.match_order - a.match_order);
+
+  for (const m of sortedMatches as any[]) {
+    if (!m.player1_id || !m.player2_id) continue;
+
+    const s1 = m.player1_score;
+    const s2 = m.player2_score;
+    let r1: "W" | "D" | "L";
+    let r2: "W" | "D" | "L";
+
+    if (s1 > s2) {
+      r1 = "W";
+      r2 = "L";
+    } else if (s2 > s1) {
+      r1 = "L";
+      r2 = "W";
+    } else {
+      r1 = "D";
+      r2 = "D";
+    }
+
+    if (!formMap[m.player1_id]) formMap[m.player1_id] = [];
+    if (!formMap[m.player2_id]) formMap[m.player2_id] = [];
+    if (formMap[m.player1_id].length < 5) formMap[m.player1_id].push(r1);
+    if (formMap[m.player2_id].length < 5) formMap[m.player2_id].push(r2);
+  }
+
+  return { tournament, participants: participants ?? [], matches: matches ?? [], formMap, squad };
 }
 
 export async function getMyJoinStatus(tournamentId: string) {

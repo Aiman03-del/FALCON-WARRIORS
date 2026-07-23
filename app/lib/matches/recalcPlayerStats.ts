@@ -9,10 +9,11 @@ type Stat = {
   goals_for: number;
   goals_against: number;
   motm_count: number;
+  avg_rating: number | null;
 };
 
 function emptyStat(): Stat {
-  return { goals: 0, matches: 0, wins: 0, draws: 0, losses: 0, goals_for: 0, goals_against: 0, motm_count: 0 };
+  return { goals: 0, matches: 0, wins: 0, draws: 0, losses: 0, goals_for: 0, goals_against: 0, motm_count: 0, avg_rating: null };
 }
 
 export async function recalcAllPlayerStats(supabase: SupabaseClient) {
@@ -120,6 +121,20 @@ export async function recalcAllPlayerStats(supabase: SupabaseClient) {
     if (e.scorer_id && statsMap[e.scorer_id]) {
       statsMap[e.scorer_id].motm_count++;
     }
+  }
+
+  const { data: allRatings } = await supabase.from("match_ratings").select("player_id, rating");
+
+  const ratingSums: Record<string, { total: number; count: number }> = {};
+  for (const r of allRatings ?? []) {
+    if (!ratingSums[r.player_id]) ratingSums[r.player_id] = { total: 0, count: 0 };
+    ratingSums[r.player_id].total += Number(r.rating);
+    ratingSums[r.player_id].count += 1;
+  }
+
+  for (const [playerId, stat] of Object.entries(statsMap)) {
+    const r = ratingSums[playerId];
+    (stat as any).avg_rating = r ? Math.round((r.total / r.count) * 10) / 10 : null;
   }
 
   // 5. Save results

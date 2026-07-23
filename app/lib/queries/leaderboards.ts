@@ -129,6 +129,40 @@ export async function getTopMotm(limit = 10): Promise<LeaderboardEntry[]> {
     }));
 }
 
+export async function getTopRating(limit = 10, minMatches = 3): Promise<LeaderboardEntry[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("player_stats")
+    .select(
+      "player_id, avg_rating, matches, player_details(id, efootball_username, avatar_url, membership_status)"
+    );
+
+  if (error || !data) return [];
+
+  const rows: LeaderboardEntry[] = data.flatMap((row: any) => {
+    const pd = Array.isArray(row.player_details) ? row.player_details[0] : row.player_details;
+    if (!pd || pd.membership_status !== "active" || !row.avg_rating || row.matches < minMatches) {
+      return [];
+    }
+
+    return [
+      {
+        playerId: pd.id,
+        username: pd.efootball_username,
+        avatarUrl: pd.avatar_url,
+        value: row.avg_rating,
+        matches: row.matches ?? 0,
+        wins: 0,
+        draws: 0,
+        losses: 0,
+        secondary: `${row.matches} matches`,
+      },
+    ];
+  });
+
+  return rows.sort((a, b) => b.value - a.value).slice(0, limit);
+}
+
 export type Period = "weekly" | "monthly" | "yearly";
 
 function getPeriodStart(period: Period): Date {

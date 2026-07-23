@@ -3,8 +3,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { Pencil, MapPin, Briefcase, GraduationCap, Shirt, Flag, Star } from "lucide-react";
 import { getMyProfile } from "../lib/queries/profile";
+import { getPlayerForm } from "@/app/lib/queries/playerForm";
 import Navbar from "../components/Navbar";
 import PlayerStatsGrid from "../components/PlayerStatsGrid";
+import RecentFormStrip from "@/app/components/RecentFormStrip";
 import Footer from "../components/Footer";
 
 
@@ -15,6 +17,7 @@ function normalizeStats(stats: any) {
 
 export default async function MyProfilePage() {
   const player = await getMyProfile();
+  const form = await getPlayerForm(player.id);
   const stats = normalizeStats(player.player_stats);
 
   const infoRows = [
@@ -87,6 +90,14 @@ export default async function MyProfilePage() {
             Performance
           </h2>
           <PlayerStatsGrid stats={stats} />
+        </div>
+
+        <div className="mt-10">
+          <div className="section-divider" />
+          <h2 className="mb-4 font-display text-xl font-bold uppercase tracking-wide">
+            Recent Form
+          </h2>
+          <RecentFormStrip form={form} />
         </div>
 
         {/* About */}

@@ -2,8 +2,10 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import { MapPin, Briefcase, GraduationCap, Shirt, Flag, Star, ArrowLeft } from "lucide-react";
 import { getPlayerById } from "@/app/lib/queries/players";
+import { getPlayerForm } from "@/app/lib/queries/playerForm";
 import Navbar from "@/app/components/Navbar";
 import PlayerStatsGrid from "@/app/components/PlayerStatsGrid";
+import RecentFormStrip from "@/app/components/RecentFormStrip";
 import Footer from "@/app/components/Footer";
 import BackLink from "@/app/components/BackLink";
 
@@ -21,8 +23,9 @@ export default async function PlayerProfilePage({
   const { id } = await params;
 
   const player = await getPlayerById(id);
-
   if (!player) notFound();
+
+  const form = await getPlayerForm(player.id);
 
   const stats = normalizeStats(player.player_stats);
 
@@ -95,6 +98,14 @@ export default async function PlayerProfilePage({
             Performance
           </h2>
           <PlayerStatsGrid stats={stats} />
+        </div>
+
+        <div className="mt-10">
+          <div className="section-divider" />
+          <h2 className="mb-4 font-display text-xl font-bold uppercase tracking-wide">
+            Recent Form
+          </h2>
+          <RecentFormStrip form={form} />
         </div>
 
         {/* About */}

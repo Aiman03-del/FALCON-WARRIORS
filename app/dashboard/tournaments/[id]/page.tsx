@@ -3,6 +3,7 @@ import { createClient } from "@/app/lib/supabase/server";
 import { notFound } from "next/navigation";
 import TournamentStatusControl from "../../TournamentStatusControl";
 import ParticipantsManager from "@/app/components/dashboard/ParticipantsManager";
+import OfficialTournamentOverview from "@/app/components/dashboard/OfficialTournamentOverview";
 import OutlineButton from "@/app/components/OutlineButton";
 import BackLink from "@/app/components/BackLink";
 import { Pencil } from "lucide-react";
@@ -71,14 +72,7 @@ export default async function ManageTournamentPage({
           maxParticipants={tournament.max_participants}
         />
       ) : (
-        <div className="mt-6">
-          <a
-            href={`/dashboard/tournaments/${tournament.id}/matches`}
-            className="btn-primary inline-flex items-center gap-2 text-sm"
-          >
-            Manage Matches
-          </a>
-        </div>
+        <OfficialTournamentOverview tournamentId={tournament.id} />
       )}
     </div>
   );

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Trophy } from "lucide-react";
+import FormBadges from "./FormBadges";
 
 type Participant = {
   id: string;
@@ -21,7 +22,13 @@ function getPlayer(p: Participant) {
   return p.player_details;
 }
 
-export default function PointsTable({ participants }: { participants: Participant[] }) {
+export default function PointsTable({
+  participants,
+  formMap = {},
+}: {
+  participants: Participant[];
+  formMap?: Record<string, ("W" | "D" | "L")[]>;
+}) {
   const sorted = [...participants].sort((a, b) => {
     if (b.points !== a.points) return b.points - a.points;
     const gdA = a.goals_for - a.goals_against;
@@ -45,12 +52,12 @@ export default function PointsTable({ participants }: { participants: Participan
           <tr>
             <th className="px-3 py-3">#</th>
             <th className="px-3 py-3">Player</th>
+            <th className="px-2 py-3 text-center">Form</th>
             <th className="px-2 py-3 text-center">P</th>
             <th className="px-2 py-3 text-center">W</th>
             <th className="px-2 py-3 text-center">D</th>
             <th className="px-2 py-3 text-center">L</th>
-            <th className="px-2 py-3 text-center">GF</th>
-            <th className="px-2 py-3 text-center">GA</th>
+            <th className="px-2 py-3 text-center">Goals</th>
             <th className="px-2 py-3 text-center">GD</th>
             <th className="px-3 py-3 text-right">Pts</th>
           </tr>
@@ -60,6 +67,7 @@ export default function PointsTable({ participants }: { participants: Participan
             const player = getPlayer(p);
             const isTop3 = idx < 3;
             const gd = p.goals_for - p.goals_against;
+            const form = player ? formMap[player.id] ?? [] : [];
 
             return (
               <tr key={p.id} className="border-b border-border last:border-0">
@@ -71,7 +79,7 @@ export default function PointsTable({ participants }: { participants: Participan
                 </td>
                 <td className="px-3 py-3">
                   <div className="flex items-center gap-2.5">
-                    <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full bg-surface-2">
+                    <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-surface-2">
                       {player?.avatar_url ? (
                         <Image
                           src={player.avatar_url}
@@ -80,7 +88,7 @@ export default function PointsTable({ participants }: { participants: Participan
                           className="object-cover"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-[9px] font-bold text-gold">
+                        <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-gold">
                           {player?.efootball_username.slice(0, 2).toUpperCase() ?? "?"}
                         </div>
                       )}
@@ -90,12 +98,16 @@ export default function PointsTable({ participants }: { participants: Participan
                     </span>
                   </div>
                 </td>
+                <td className="px-2 py-3">
+                  <FormBadges form={form} />
+                </td>
                 <td className="px-2 py-3 text-center text-muted">{p.matches_played}</td>
                 <td className="px-2 py-3 text-center text-muted">{p.wins}</td>
                 <td className="px-2 py-3 text-center text-muted">{p.draws}</td>
                 <td className="px-2 py-3 text-center text-muted">{p.losses}</td>
-                <td className="px-2 py-3 text-center text-muted">{p.goals_for}</td>
-                <td className="px-2 py-3 text-center text-muted">{p.goals_against}</td>
+                <td className="px-2 py-3 text-center text-muted">
+                  {p.goals_for}:{p.goals_against}
+                </td>
                 <td className="px-2 py-3 text-center text-muted">
                   {gd > 0 ? `+${gd}` : gd}
                 </td>
@@ -108,8 +120,7 @@ export default function PointsTable({ participants }: { participants: Participan
         </tbody>
       </table>
       <p className="border-t border-border px-4 py-2 text-[10px] text-muted">
-        P = Played, W = Won, D = Drawn, L = Lost, GF = Goals For, GA = Goals Against, GD = Goal
-        Difference, Pts = Points (Win 3 · Draw 1 · Loss 0)
+        P = Played, W = Won, D = Drawn, L = Lost, GD = Goal Difference, Pts = Points (Win 3 · Draw 1 · Loss 0)
       </p>
     </div>
   );

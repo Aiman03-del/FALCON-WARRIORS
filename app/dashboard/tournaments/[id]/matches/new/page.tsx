@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import RoundStageSelect from "@/app/components/dashboard/RoundStageSelect";
 import DatePicker from "@/app/components/DatePicker";
 import BackLink from "@/app/components/BackLink";
+import ImageUploadInput from "@/app/components/ImageUploadInput";
 import { createClient } from "@/app/lib/supabase/client";
 
 export default function NewOfficialMatchPage() {
@@ -14,6 +15,7 @@ export default function NewOfficialMatchPage() {
   const tournamentId = params.id;
 
   const [opponentName, setOpponentName] = useState("");
+  const [opponentLogoUrl, setOpponentLogoUrl] = useState("");
   const [roundStage, setRoundStage] = useState("");
   const [matchDate, setMatchDate] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +32,7 @@ export default function NewOfficialMatchPage() {
       match_type: "external",
       tournament_id: tournamentId,
       opponent_name: opponentName,
+      opponent_logo_url: opponentLogoUrl || null,
       round_stage: roundStage || null,
       match_date: matchDate,
       status: "upcoming",
@@ -63,6 +66,13 @@ export default function NewOfficialMatchPage() {
             placeholder="Mastannagar Club"
           />
         </div>
+
+        <ImageUploadInput
+          label="Opponent Club Logo (optional)"
+          folder="/falcon-warriors/opponent-logos"
+          value={opponentLogoUrl}
+          onUploaded={setOpponentLogoUrl}
+        />
 
         <RoundStageSelect value={roundStage} onChange={setRoundStage} />
 

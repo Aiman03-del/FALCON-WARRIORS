@@ -17,7 +17,7 @@ export default async function MatchesPage() {
 
   const { data: matches } = await supabase
     .from("matches")
-    .select("id, opponent_name, competition, match_date, status, score_home, score_away")
+    .select("id, opponent_name, opponent_logo_url, competition, match_date, status, score_home, score_away")
     .order("match_date", { ascending: false });
 
   return (

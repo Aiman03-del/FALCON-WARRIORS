@@ -7,7 +7,7 @@ import BackLink from "@/app/components/BackLink";
 import DatePicker from "../DatePicker";
 import FillButton from "../FillButton";
 import SelectField from "@/app/components/SelectField";
-import SquadSelector from "@/components/dashboard/SquadSelector";
+import SquadSelector from "@/app/components/dashboard/SquadSelector";
 import { createClient } from "../../lib/supabase/client";
 
 type TournamentFormProps = {

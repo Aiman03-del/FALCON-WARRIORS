@@ -1,11 +1,19 @@
+import ClubRecordCard from "../components/ClubRecordCard";
 import Footer from "../components/Footer";
 import LeaderboardTabs from "../components/LeaderboardTabs";
 import Navbar from "../components/Navbar";
 import PeriodPerformerCard from "../components/PeriodPerformerCard";
-import { getTopScorers } from "../lib/queries/leaderboards";
+import { getClubRecord } from "../lib/queries/clubRecord";
+import { getTopScorers, getTopWinRate, getTopMotm, getTopRating } from "../lib/queries/leaderboards";
 
 export default async function LeaderboardsPage() {
-  const goals = await getTopScorers();
+  const [clubRecord, goals, winrate, motm, rating] = await Promise.all([
+    getClubRecord(),
+    getTopScorers(),
+    getTopWinRate(),
+    getTopMotm(),
+    getTopRating(),
+  ]);
 
   return (
     <main>
@@ -24,7 +32,14 @@ export default async function LeaderboardsPage() {
         </div>
 
         <div className="mt-8">
-          <LeaderboardTabs data={{ goals }} />
+          <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-gold">
+            Club Record (Official Matches)
+          </h2>
+          <ClubRecordCard record={clubRecord} />
+        </div>
+
+        <div className="mt-8">
+          <LeaderboardTabs data={{ goals, winrate, motm, rating }} />
         </div>
       </section>
       <Footer />
