@@ -1,14 +1,17 @@
 "use client";
 
+import { ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import ConfirmActionButton from "./ConfirmActionButton";
 
 export default function ConfirmableDeleteButton({
   onDelete,
   label,
+  children,
 }: {
   onDelete: () => Promise<void>;
   label: string;
+  children?: ReactNode;
 }) {
   return (
     <ConfirmActionButton
@@ -23,7 +26,7 @@ export default function ConfirmableDeleteButton({
       ariaLabel={`Delete ${label}`}
       buttonClassName="text-gold hover:text-red-300 disabled:opacity-50"
     >
-      <Trash2 size={14} />
+      {children ?? <Trash2 size={14} />}
     </ConfirmActionButton>
   );
 }
