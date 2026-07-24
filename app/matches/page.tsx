@@ -4,7 +4,6 @@ import { createClient } from "@/app/lib/supabase/server";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import MatchResultRow from "@/app/components/MatchResultRow";
-import MatchesFilterBar from "@/app/components/MatchesFilterBar";
 import { Swords, Calendar, CheckCircle2, Clock } from "lucide-react";
 import { getMatches } from "@/app/lib/queries/matches";
 
