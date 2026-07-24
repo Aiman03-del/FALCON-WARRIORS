@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Rajdhani, Inter } from "next/font/google";
 import "./globals.css";
+import { ToastProvider } from "./providers/ToastProvider";
 
 const display = Rajdhani({
   subsets: ["latin"],
