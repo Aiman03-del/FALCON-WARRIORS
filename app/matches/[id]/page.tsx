@@ -20,7 +20,17 @@ export default async function MatchDetailPage({
   const data = await getMatchDetail(id);
 
   if (!data) notFound();
-  const { match, playedBy, goalEntries, motmName } = data;
+  const {
+    match,
+    playedBy,
+    goalEntries,
+    motmName,
+  } = data as {
+    match: any;
+    playedBy: any | null;
+    goalEntries: { player_id: string; goals: number; efootball_username: string }[];
+    motmName: string | null;
+  };
 
   const isInternal = match.match_type === "internal";
   const p1 = unwrap(match.player1 as any);
