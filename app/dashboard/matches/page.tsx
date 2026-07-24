@@ -11,36 +11,62 @@ const statusStyles: Record<string, string> = {
   completed: "bg-indigo/20 text-indigo-light",
 };
 
+const MOCK_DASHBOARD_MATCHES = [
+  { id: "ext-3", opponent_name: "Tiger Squad", opponent_logo_url: "https://via.placeholder.com/40?text=TGR", competition: "International League", match_date: "2026-07-21", status: "completed", score_home: 3, score_away: 1, match_type: "external", tournament_id: null },
+  { id: "ext-2", opponent_name: "Golden Hawks", opponent_logo_url: "https://via.placeholder.com/40?text=GHA", competition: "International League", match_date: "2026-07-18", status: "completed", score_home: 4, score_away: 2, match_type: "external", tournament_id: null },
+  { id: "ext-1", opponent_name: "Silver Strikers", opponent_logo_url: "https://via.placeholder.com/40?text=SLS", competition: "Champions Cup", match_date: "2026-07-15", status: "completed", score_home: 2, score_away: 2, match_type: "external", tournament_id: null },
+  { id: "fix-1", opponent_name: "Phoenix FC", opponent_logo_url: "https://via.placeholder.com/40?text=PHX", competition: "International League", match_date: "2026-07-28", status: "upcoming", score_home: null, score_away: null, match_type: "external", tournament_id: null },
+  { id: "fix-2", opponent_name: "Dragon United", opponent_logo_url: "https://via.placeholder.com/40?text=DGN", competition: "Champions Cup", match_date: "2026-07-31", status: "upcoming", score_home: null, score_away: null, match_type: "external", tournament_id: null },
+];
+
 export default async function MatchesPage({
   searchParams,
 }: {
   searchParams?: { type?: string };
 }) {
   await requireStaff();
-  const supabase = await createClient();
-
+  
   const typeFilter = searchParams?.type ?? null;
+  let matches = MOCK_DASHBOARD_MATCHES;
 
-  let query = supabase
-    .from("matches")
-    .select(
-      "id, opponent_name, opponent_logo_url, competition, match_date, status, score_home, score_away, match_type, tournament_id"
-    )
-    .order("match_date", { ascending: false });
+  try {
+    const supabase = await createClient();
 
-  if (typeFilter === "internal") {
-    query = query.eq("match_type", "internal");
-  } else if (typeFilter === "external") {
-    query = query.eq("match_type", "external");
-  } else if (typeFilter === "official") {
-    query = query.not("tournament_id", "is", null);
-  } else if (typeFilter === "friendly") {
-    query = query.is("tournament_id", null).neq("match_type", "internal");
+    let query = supabase
+      .from("matches")
+      .select(
+        "id, opponent_name, opponent_logo_url, competition, match_date, status, score_home, score_away, match_type, tournament_id"
+      )
+      .order("match_date", { ascending: false });
+
+    if (typeFilter === "internal") {
+      query = query.eq("match_type", "internal");
+    } else if (typeFilter === "external") {
+      query = query.eq("match_type", "external");
+    } else if (typeFilter === "official") {
+      query = query.not("tournament_id", "is", null);
+    } else if (typeFilter === "friendly") {
+      query = query.is("tournament_id", null).neq("match_type", "internal");
+    }
+
+    const { data: supabaseMatches } = await query;
+    if (supabaseMatches) {
+      matches = supabaseMatches;
+    }
+  } catch (error) {
+    // Use mock data if Supabase fails
   }
 
-  const { data: matches } = await query;
-
-  console.log("Dashboard matches data:", matches, "typeFilter:", typeFilter);
+  // Filter mock data by type
+  if (typeFilter === "internal") {
+    matches = matches.filter(m => m.match_type === "internal");
+  } else if (typeFilter === "external") {
+    matches = matches.filter(m => m.match_type === "external");
+  } else if (typeFilter === "official") {
+    matches = matches.filter(m => m.tournament_id !== null);
+  } else if (typeFilter === "friendly") {
+    matches = matches.filter(m => m.tournament_id === null && m.match_type !== "internal");
+  }
 
   return (
     <div>

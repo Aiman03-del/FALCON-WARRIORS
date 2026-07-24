@@ -251,7 +251,7 @@ export default function NewRoundForm({
       </div>
 
       {error && (
-        <p className="mt-4 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</p>
+        <p className="mt-4 rounded-lg bg-gold/15 px-3 py-2 text-sm text-gold">{error}</p>
       )}
 
       <button

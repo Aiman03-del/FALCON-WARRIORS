@@ -51,7 +51,7 @@ export default function FixturesAndPerformers({ fixtures, performers }: Props) {
 
                   <span
                     className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold sm:px-3 ${
-                      f.live ? "bg-red-500/15 text-red-400" : "bg-white/10 text-muted"
+                      f.live ? "bg-gold/15 text-gold" : "bg-white/10 text-muted"
                     }`}
                   >
                     {f.status}

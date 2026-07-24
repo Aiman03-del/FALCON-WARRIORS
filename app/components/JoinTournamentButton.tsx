@@ -17,6 +17,7 @@ type Props = {
   maxParticipants: number | null;
   registrationDeadline: string | null;
   tournamentStatus: string;
+  tournamentType?: "internal" | "external";
 };
 
 export default function JoinTournamentButton({
@@ -29,6 +30,7 @@ export default function JoinTournamentButton({
   maxParticipants,
   registrationDeadline,
   tournamentStatus,
+  tournamentType = "internal",
 }: Props) {
   const supabase = createClient();
   const router = useRouter();
@@ -52,6 +54,24 @@ export default function JoinTournamentButton({
     return null;
   }
 
+  // External tournaments: no join requests allowed
+  if (tournamentType === "external") {
+    if (myRequestStatus === "approved") {
+      return (
+        <span className="flex items-center gap-2 rounded-lg bg-indigo/20 px-4 py-2.5 text-sm font-semibold text-indigo-light">
+          <CheckCircle2 size={16} />
+          Registered (Admin Only)
+        </span>
+      );
+    }
+    return (
+      <span className="flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2.5 text-sm font-semibold text-muted">
+        <Lock size={16} />
+        Admin Managed Tournament
+      </span>
+    );
+  }
+
   if (myRequestStatus === "approved") {
     return (
       <span className="flex items-center gap-2 rounded-lg bg-indigo/20 px-4 py-2.5 text-sm font-semibold text-indigo-light">
@@ -72,7 +92,7 @@ export default function JoinTournamentButton({
 
   if (myRequestStatus === "rejected") {
     return (
-      <span className="flex items-center gap-2 rounded-lg bg-red-500/15 px-4 py-2.5 text-sm font-semibold text-red-400">
+      <span className="flex items-center gap-2 rounded-lg bg-gold/15 px-4 py-2.5 text-sm font-semibold text-gold">
         <XCircle size={16} />
         Request Rejected
       </span>
@@ -131,7 +151,7 @@ export default function JoinTournamentButton({
       <button onClick={handleJoin} disabled={loading} className="btn-primary text-sm disabled:opacity-50">
         {loading ? "Sending Request..." : "Request to Join"}
       </button>
-      {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
+      {error && <p className="mt-2 text-xs text-gold">{error}</p>}
     </div>
   );
 }

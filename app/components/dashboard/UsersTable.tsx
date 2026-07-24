@@ -76,7 +76,7 @@ export default function UsersTable({
                     className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
                       p.membership_status === "active"
                         ? "bg-indigo/20 text-indigo-light"
-                        : "bg-red-500/15 text-red-400"
+                        : "bg-red-500/15 text-gold"
                     }`}
                   >
                     {p.membership_status}

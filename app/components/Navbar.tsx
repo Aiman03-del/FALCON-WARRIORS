@@ -263,7 +263,7 @@ export default function Navbar() {
       </div>
 
       {searchOpen && (
-        <div className="hidden border-t border-border px-6 py-3 xl:block">
+        <div className="hidden border-t border-border px-3 sm:px-4 md:px-6 py-3 xl:block">
           <div className="mx-auto max-w-7xl">
             <SearchBar />
           </div>

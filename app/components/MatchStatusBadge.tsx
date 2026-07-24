@@ -1,6 +1,6 @@
 const styles: Record<string, string> = {
   upcoming: "bg-white/10 text-muted",
-  live: "bg-red-500/15 text-red-400",
+  live: "bg-gold/15 text-gold",
   completed: "bg-indigo/20 text-indigo-light",
 };
 

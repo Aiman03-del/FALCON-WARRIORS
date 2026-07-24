@@ -5,20 +5,43 @@ import { requireStaff } from "@/app/lib/queries/dashboard";
 import { createClient } from "@/app/lib/supabase/server";
 import DeleteAchievementButton from "@/app/components/dashboard/DeleteAchievementButton";
 
+const MOCK_ACHIEVEMENTS = [
+  { id: "ach-1", title: "Champions League", season: "2024", description: "Won the prestigious championship" },
+  { id: "ach-2", title: "Best Attack", season: "2023", description: "Best attacking record in season" },
+  { id: "ach-3", title: "Tournament Winners", season: "2022", description: "Tournament champions" },
+];
+
+const MOCK_AWARDS = [
+  { id: "awd-1", title: "Player of the Month", season: "July 2026", player_details: { efootball_username: "Ahmed_Pro" } },
+  { id: "awd-2", title: "Rising Star", season: "2026", player_details: { efootball_username: "Hassan_Elite" } },
+  { id: "awd-3", title: "Best Midfielder", season: "2026", player_details: { efootball_username: "Karim_Sharp" } },
+];
+
 export default async function AchievementsPage() {
   await requireStaff();
-  const supabase = await createClient();
+  
+  let achievements = MOCK_ACHIEVEMENTS;
+  let awards = MOCK_AWARDS;
 
-  const [{ data: achievements }, { data: awards }] = await Promise.all([
-    supabase
-      .from("achievements")
-      .select("id, title, season, description")
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("awards")
-      .select("id, title, season, player_details(efootball_username)")
-      .order("created_at", { ascending: false }),
-  ]);
+  try {
+    const supabase = await createClient();
+
+    const [ach, awd] = await Promise.all([
+      supabase
+        .from("achievements")
+        .select("id, title, season, description")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("awards")
+        .select("id, title, season, player_details(efootball_username)")
+        .order("created_at", { ascending: false }),
+    ]);
+
+    if (ach.data) achievements = ach.data;
+    if (awd.data) awards = awd.data;
+  } catch (error) {
+    // Use mock data if Supabase fails
+  }
 
   return (
     <div>

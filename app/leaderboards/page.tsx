@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import ClubRecordCard from "../components/ClubRecordCard";
 import Footer from "../components/Footer";
 import LeaderboardTabs from "../components/LeaderboardTabs";
@@ -5,6 +6,11 @@ import Navbar from "../components/Navbar";
 import PeriodPerformerCard from "../components/PeriodPerformerCard";
 import { getClubRecord } from "../lib/queries/clubRecord";
 import { getTopScorers, getTopWinRate, getTopMotm, getTopRating } from "../lib/queries/leaderboards";
+
+export const metadata: Metadata = {
+  title: "Leaderboards | Falcon Warriors - Player Rankings",
+  description: "Player leaderboards and rankings - top scorers, win rates, man of the match, and ratings.",
+};
 
 export default async function LeaderboardsPage() {
   const [clubRecord, goals, winrate, motm, rating] = await Promise.all([

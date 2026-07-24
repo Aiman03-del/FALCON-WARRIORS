@@ -4,7 +4,7 @@ import { FormEntry } from "../lib/queries/playerForm";
 const styles: Record<"W" | "D" | "L", string> = {
   W: "bg-indigo/25 text-indigo-light border-indigo/40",
   D: "bg-white/10 text-muted border-white/20",
-  L: "bg-red-500/20 text-red-400 border-red-500/30",
+  L: "bg-gold/20 text-gold border-gold/30",
 };
 
 export default function RecentFormStrip({ form }: { form: FormEntry[] }) {

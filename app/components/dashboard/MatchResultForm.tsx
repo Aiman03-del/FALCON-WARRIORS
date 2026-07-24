@@ -235,7 +235,7 @@ export default function MatchResultForm({
       {status !== "upcoming" && (
         <div>
           <p className="mb-2 text-xs font-medium text-muted">Final Score</p>
-          <div className="flex items-center justify-center gap-4 rounded-lg border border-border bg-surface-2 px-6 py-5">
+          <div className="flex items-center justify-center gap-4 rounded-lg border border-border bg-surface-2 px-3 sm:px-4 md:px-6 py-5">
             <div className="flex flex-col items-center gap-1">
               <span className="text-xs text-muted">
                 {matchType === "internal" ? player1Name ?? "Home" : "Falcon Warriors"}
@@ -323,7 +323,7 @@ export default function MatchResultForm({
       )}
 
       {error && (
-        <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</p>
+        <p className="rounded-lg bg-gold/15 px-3 py-2 text-sm text-gold">{error}</p>
       )}
 
       <button type="submit" disabled={loading} className="btn-primary disabled:opacity-50">

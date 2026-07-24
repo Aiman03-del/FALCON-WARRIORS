@@ -64,7 +64,7 @@ export default function StartNewRoundForm({
       </p>
 
       {error && (
-        <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</p>
+        <p className="rounded-lg bg-gold/15 px-3 py-2 text-sm text-gold">{error}</p>
       )}
 
       <button onClick={handleStart} disabled={loading} className="btn-primary w-fit disabled:opacity-50">

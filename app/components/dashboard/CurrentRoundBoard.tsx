@@ -288,7 +288,7 @@ export default function CurrentRoundBoard({
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-surface">
       {/* ===== Header ===== */}
-      <div className="relative bg-gradient-to-b from-gold/10 via-surface to-surface px-6 pb-6 pt-6">
+      <div className="relative bg-gradient-to-b from-gold/10 via-surface to-surface px-3 sm:px-4 md:px-6 pb-6 pt-6">
         <div className="mx-auto flex w-full max-w-md items-center justify-between gap-3">
           {/* Falcon Warriors — ফিক্সড লোগো */}
           <div className="flex flex-1 flex-col items-center gap-2">
@@ -399,7 +399,7 @@ export default function CurrentRoundBoard({
       {/* ===== Footer ===== */}
       <div className="border-t border-border p-4 sm:p-6">
         {error && (
-          <p className="mb-3 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</p>
+          <p className="mb-3 rounded-lg bg-gold/15 px-3 py-2 text-sm text-gold">{error}</p>
         )}
         <button
           onClick={handleSubmit}

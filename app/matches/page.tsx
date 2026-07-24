@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/app/lib/supabase/server";
 import Navbar from "@/app/components/Navbar";
@@ -6,15 +7,19 @@ import MatchResultRow from "@/app/components/MatchResultRow";
 import { Swords, Calendar, CheckCircle2, Clock } from "lucide-react";
 import { getMatches } from "@/app/lib/queries/matches";
 
-export const metadata = {
-  title: "Matches | Falcon Warriors",
-  description: "All match results, upcoming fixtures and live games for Falcon Warriors eFootball club.",
+export const metadata: Metadata = {
+  title: "Matches | Falcon Warriors - Results & Fixtures",
+  description: "View all Falcon Warriors match results, upcoming fixtures, and live games. Filter by type and status.",
+  openGraph: {
+    title: "Matches | Falcon Warriors",
+    description: "View all Falcon Warriors match results and upcoming fixtures.",
+  },
 };
 
 const resultStyles = {
   WIN: "bg-indigo/20 text-indigo-light border-indigo/40",
   DRAW: "bg-white/10 text-muted border-white/20",
-  LOSS: "bg-red-500/15 text-red-400 border-red-500/30",
+  LOSS: "bg-gold/15 text-gold border-gold/30",
 };
 
 function getResult(home: number, away: number): "WIN" | "DRAW" | "LOSS" {
@@ -61,6 +66,11 @@ export default async function MatchesPage({
           {completed.length} results · {upcoming.length} upcoming fixtures
         </p>
 
+        {/* Filter Bar */}
+        <div className="mt-6">
+          <MatchesFilterBar />
+        </div>
+
         {/* Upcoming / Live */}
         {upcoming.length > 0 && (
           <div className="mt-8">
@@ -89,8 +99,8 @@ export default async function MatchesPage({
                         </div>
                       </div>
                       {isLive ? (
-                        <span className="inline-flex w-fit animate-pulse items-center gap-1.5 rounded-full bg-red-500/15 px-3 py-1 text-xs font-bold text-red-400">
-                          <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+                        <span className="inline-flex w-fit animate-pulse items-center gap-1.5 rounded-full bg-gold/15 px-3 py-1 text-xs font-bold text-gold">
+                          <span className="h-1.5 w-1.5 rounded-full bg-gold" />
                           LIVE NOW
                         </span>
                       ) : (

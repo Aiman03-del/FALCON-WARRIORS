@@ -71,7 +71,7 @@ export default function GalleryUploadForm() {
           />
         </div>
 
-        {error && <p className="text-xs text-red-400">{error}</p>}
+        {error && <p className="text-xs text-gold">{error}</p>}
 
         <button
           type="button"

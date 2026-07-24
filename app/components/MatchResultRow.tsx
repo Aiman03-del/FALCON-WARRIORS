@@ -18,7 +18,7 @@ type Props = {
 const resultStyles: Record<Props["result"], string> = {
   WIN: "bg-indigo/20 text-indigo-light",
   DRAW: "bg-white/10 text-muted",
-  LOSS: "bg-red-500/15 text-red-400",
+  LOSS: "bg-gold/15 text-gold",
 };
 
 function TeamBlock({
@@ -63,7 +63,7 @@ export default function MatchResultRow({
 }: Props) {
   const typeBadge =
     matchType === "internal"
-      ? { label: "Internal", className: "bg-purple-500/15 text-purple-300" }
+      ? { label: "Internal", className: "bg-indigo/15 text-indigo-light" }
       : tournamentId
       ? { label: "Official", className: "bg-gold/15 text-gold" }
       : { label: "Friendly", className: "bg-white/10 text-muted" };

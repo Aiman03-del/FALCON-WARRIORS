@@ -22,7 +22,7 @@ export default function DeleteNewsButton({ id }: { id: string }) {
     <button
       onClick={handleDelete}
       disabled={loading}
-      className="inline-flex items-center justify-center rounded-lg p-2 text-red-400 transition hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50"
+      className="inline-flex items-center justify-center rounded-lg p-2 text-gold transition hover:bg-gold/15 hover:text-red-300 disabled:opacity-50"
       aria-label="Delete news post"
     >
       <Trash2 size={16} />
