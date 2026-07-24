@@ -1,11 +1,18 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+// Demo mode - set to true to allow access without authentication
+const DEMO_MODE = true;
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   // Check if Supabase credentials are available
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    // If no Supabase credentials and demo mode is on, allow all protected paths
+    if (DEMO_MODE) {
+      return response;
+    }
     return response;
   }
 
@@ -40,14 +47,21 @@ export async function middleware(request: NextRequest) {
       request.nextUrl.pathname.startsWith(p)
     );
 
+    // Allow dashboard access in demo mode
+    if (DEMO_MODE && isProtected) {
+      return response;
+    }
+
     if (isProtected && !user) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       return NextResponse.redirect(url);
     }
   } catch (error) {
-    // If Supabase fails, continue without auth
-    console.error("Middleware auth error:", error);
+    // If Supabase fails, continue without auth (demo mode)
+    if (DEMO_MODE) {
+      return response;
+    }
   }
 
   return response;

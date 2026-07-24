@@ -6,14 +6,30 @@ import { createClient } from "@/app/lib/supabase/server";
 import DeleteNewsButton from "@/app/components/dashboard/DeleteNewsButton";
 
 
+const MOCK_DASHBOARD_NEWS = [
+  { id: "news-1", title: "Falcon Warriors Secure Victory in International Championship", category: "club_news", published_at: "2026-07-24T10:00:00" },
+  { id: "news-2", title: "Ahmed_Pro Named Player of the Month", category: "player_news", published_at: "2026-07-20T14:30:00" },
+  { id: "news-3", title: "New Season Tournament Schedule Announced", category: "tournament", published_at: "2026-07-18T09:15:00" },
+];
+
 export default async function NewsListPage() {
   await requireStaff();
-  const supabase = await createClient();
+  let news = MOCK_DASHBOARD_NEWS;
 
-  const { data: news } = await supabase
-    .from("news")
-    .select("id, title, category, published_at")
-    .order("published_at", { ascending: false });
+  try {
+    const supabase = await createClient();
+
+    const { data: supabaseNews } = await supabase
+      .from("news")
+      .select("id, title, category, published_at")
+      .order("published_at", { ascending: false });
+
+    if (supabaseNews) {
+      news = supabaseNews;
+    }
+  } catch (error) {
+    // Use mock data if Supabase fails
+  }
 
   return (
     <div>
