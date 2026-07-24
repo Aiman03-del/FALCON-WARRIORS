@@ -19,9 +19,9 @@ const MOCK_AWARDS = [
 
 export default async function AchievementsPage() {
   await requireStaff();
-  
+
   let achievements = MOCK_ACHIEVEMENTS;
-  let awards = MOCK_AWARDS;
+  let awards: any[] = MOCK_AWARDS;
 
   try {
     const supabase = await createClient();
@@ -119,7 +119,9 @@ export default async function AchievementsPage() {
               <tr key={a.id} className="border-b border-border last:border-0">
                 <td className="px-4 py-3 font-medium">{a.title}</td>
                 <td className="px-4 py-3 text-muted">
-                  {a.player_details?.efootball_username ?? "—"}
+                  {Array.isArray(a.player_details)
+                    ? a.player_details[0]?.efootball_username ?? "—"
+                    : a.player_details?.efootball_username ?? "—"}
                 </td>
                 <td className="px-4 py-3 text-muted">{a.season ?? "—"}</td>
                 <td className="px-4 py-3 text-right">
