@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/app/lib/supabase/server";
 import Navbar from "@/app/components/Navbar";
@@ -7,9 +8,13 @@ import MatchesFilterBar from "@/app/components/MatchesFilterBar";
 import { Swords, Calendar, CheckCircle2, Clock } from "lucide-react";
 import { getMatches } from "@/app/lib/queries/matches";
 
-export const metadata = {
-  title: "Matches | Falcon Warriors",
-  description: "All match results, upcoming fixtures and live games for Falcon Warriors eFootball club.",
+export const metadata: Metadata = {
+  title: "Matches | Falcon Warriors - Results & Fixtures",
+  description: "View all Falcon Warriors match results, upcoming fixtures, and live games. Filter by type and status.",
+  openGraph: {
+    title: "Matches | Falcon Warriors",
+    description: "View all Falcon Warriors match results and upcoming fixtures.",
+  },
 };
 
 const resultStyles = {

@@ -77,7 +77,7 @@ export default function NextRoundGenerator({
       >
         {loading ? "Generating..." : `Generate Round ${currentRound + 1}`}
       </button>
-      {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
+      {error && <p className="mt-2 text-xs text-gold">{error}</p>}
     </div>
   );
 }

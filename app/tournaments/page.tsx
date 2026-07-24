@@ -5,9 +5,15 @@ import Footer from "@/app/components/Footer";
 import TournamentStatusBadge from "@/app/components/TournamentStatusBadge";
 import { Trophy, Calendar, Layers } from "lucide-react";
 
-export const metadata = {
-  title: "Tournaments | Falcon Warriors",
-  description: "Official tournament history and ongoing leagues for Falcon Warriors eFootball club.",
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Tournaments | Falcon Warriors - Browse All Championships",
+  description: "Browse all Falcon Warriors tournaments including internal championships, league competitions, and knockout tournaments.",
+  openGraph: {
+    title: "Tournaments | Falcon Warriors",
+    description: "Browse all Falcon Warriors tournaments including internal championships and league competitions.",
+  },
 };
 
 const statusConfig: Record<string, { label: string; className: string }> = {

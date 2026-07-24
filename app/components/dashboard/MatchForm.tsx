@@ -91,7 +91,7 @@ export default function MatchForm() {
       </div>
 
       {error && (
-        <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</p>
+        <p className="rounded-lg bg-gold/15 px-3 py-2 text-sm text-gold">{error}</p>
       )}
 
       <button type="submit" disabled={loading} className="btn-primary mt-2 disabled:opacity-50">

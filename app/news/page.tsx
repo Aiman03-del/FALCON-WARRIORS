@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/app/lib/supabase/server";
@@ -5,17 +6,21 @@ import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import { Newspaper, Calendar } from "lucide-react";
 
-export const metadata = {
-  title: "News | Falcon Warriors",
+export const metadata: Metadata = {
+  title: "News | Falcon Warriors - Latest Updates",
   description: "Latest news, announcements and match reports from Falcon Warriors eFootball club.",
+  openGraph: {
+    title: "News | Falcon Warriors",
+    description: "Latest news and announcements from Falcon Warriors.",
+  },
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
   club_news: "text-gold",
   match_report: "text-indigo-light",
-  announcement: "text-red-400",
-  transfer: "text-green-400",
-  achievement: "text-yellow-400",
+  announcement: "text-gold",
+  transfer: "text-indigo",
+  achievement: "text-gold",
 };
 
 function isSafe(src: string | null | undefined) {

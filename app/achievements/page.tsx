@@ -1,11 +1,12 @@
+import type { Metadata } from "next";
 import { createClient } from "@/app/lib/supabase/server";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import { Trophy, Medal, Star } from "lucide-react";
 
-export const metadata = {
-  title: "Achievements | Falcon Warriors",
-  description: "Club trophies and individual player awards — the hall of fame of Falcon Warriors.",
+export const metadata: Metadata = {
+  title: "Achievements | Falcon Warriors - Hall of Fame",
+  description: "Club trophies and individual player awards — the hall of fame of Falcon Warriors eFootball club.",
 };
 
 export default async function AchievementsPage() {

@@ -27,7 +27,7 @@ export default function DeleteAchievementButton({
     <button
       onClick={handleDelete}
       disabled={loading}
-      className="text-red-400 hover:text-red-300 disabled:opacity-50"
+      className="text-gold hover:text-red-300 disabled:opacity-50"
     >
       <Trash2 size={14} />
     </button>

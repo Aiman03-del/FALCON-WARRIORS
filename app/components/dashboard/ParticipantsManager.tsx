@@ -30,7 +30,7 @@ function getUsername(p: Participant) {
 const statusStyles: Record<string, string> = {
   pending: "bg-gold/15 text-gold",
   approved: "bg-indigo/20 text-indigo-light",
-  rejected: "bg-red-500/15 text-red-400",
+  rejected: "bg-red-500/15 text-gold",
 };
 
 export default function ParticipantsManager({
@@ -130,7 +130,7 @@ export default function ParticipantsManager({
                         <button
                           onClick={() => handleDecision(p.id, "rejected")}
                           disabled={loading}
-                          className="flex items-center gap-1 rounded-lg bg-red-500/15 px-3 py-1.5 text-xs font-semibold text-red-400 hover:bg-red-500/25 disabled:opacity-50"
+                          className="flex items-center gap-1 rounded-lg bg-red-500/15 px-3 py-1.5 text-xs font-semibold text-gold hover:bg-red-500/25 disabled:opacity-50"
                         >
                           <X size={13} />
                           Reject
@@ -209,7 +209,7 @@ export default function ParticipantsManager({
                   </td>
                   <td className="px-4 py-3 font-display font-bold text-gold">{p.points}</td>
                   <td className="px-4 py-3 text-right">
-                    <button onClick={() => handleRemove(p.id)} className="text-red-400 hover:text-red-300">
+                    <button onClick={() => handleRemove(p.id)} className="text-gold hover:text-red-300">
                       <Trash2 size={14} />
                     </button>
                   </td>

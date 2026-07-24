@@ -399,7 +399,7 @@ export default function CurrentRoundBoard({
       {/* ===== Footer ===== */}
       <div className="border-t border-border p-4 sm:p-6">
         {error && (
-          <p className="mb-3 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</p>
+          <p className="mb-3 rounded-lg bg-gold/15 px-3 py-2 text-sm text-gold">{error}</p>
         )}
         <button
           onClick={handleSubmit}
