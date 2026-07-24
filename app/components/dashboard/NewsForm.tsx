@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/app/providers/ToastProvider";
 import { createClient } from "@/app/lib/supabase/client";
 import ImageUploadInput from "@/app/components/ImageUploadInput";
 
@@ -27,6 +28,7 @@ const categories = [
 export default function NewsForm({ mode, newsId, initial }: NewsFormProps) {
   const supabase = createClient();
   const router = useRouter();
+  const { addToast } = useToast();
 
   const [title, setTitle] = useState(initial?.title ?? "");
   const [content, setContent] = useState(initial?.content ?? "");

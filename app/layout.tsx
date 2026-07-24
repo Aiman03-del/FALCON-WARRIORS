@@ -67,9 +67,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={`${display.variable} ${body.variable}`}>
-        {children}
+    <html className="bg-background" lang="en">
+      <head>
+        <link rel="icon" href="/favicon.png" type="image/png" />
+      </head>
+      <body className={`${body.className} bg-background text-foreground antialiased`}>
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );

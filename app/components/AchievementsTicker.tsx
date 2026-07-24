@@ -11,7 +11,7 @@ export default function AchievementsTicker({
 
   return (
     <section className="border-b border-border bg-surface">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-10 gap-y-4 px-6 py-6">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-10 gap-y-4 px-3 sm:px-4 md:px-6 py-6">
         {achievements.map((a) => (
           <div key={a.id} className="flex items-center gap-2">
             <Trophy className="text-gold" size={18} />

@@ -288,7 +288,7 @@ export default function CurrentRoundBoard({
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-surface">
       {/* ===== Header ===== */}
-      <div className="relative bg-gradient-to-b from-gold/10 via-surface to-surface px-6 pb-6 pt-6">
+      <div className="relative bg-gradient-to-b from-gold/10 via-surface to-surface px-3 sm:px-4 md:px-6 pb-6 pt-6">
         <div className="mx-auto flex w-full max-w-md items-center justify-between gap-3">
           {/* Falcon Warriors — ফিক্সড লোগো */}
           <div className="flex flex-1 flex-col items-center gap-2">

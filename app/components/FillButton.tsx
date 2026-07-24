@@ -18,7 +18,7 @@ export default function FillButton({
   className = "",
   onClick,
 }: FillButtonProps) {
-  const baseClasses = `inline-flex items-center justify-center bg-gold px-6 py-3 text-sm font-semibold text-bg transition hover:bg-gold/90 ${className}`;
+  const baseClasses = `inline-flex items-center justify-center gap-2 whitespace-nowrap bg-gold px-2 py-2 text-xs sm:px-3 sm:py-2.5 sm:text-sm md:px-4 md:py-3 font-semibold text-bg transition hover:bg-gold/90 rounded disabled:opacity-50 disabled:cursor-not-allowed ${className}`;
 
   if (href) {
     return (

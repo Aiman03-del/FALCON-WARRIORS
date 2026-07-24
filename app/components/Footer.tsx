@@ -11,7 +11,7 @@ const footerLinks = [
 export default function Footer() {
   return (
     <footer className="bg-bg">
-      <div className="mx-auto max-w-7xl px-6 py-10">
+      <div className="mx-auto max-w-7xl px-3 sm:px-4 md:px-6 py-10">
         <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
           <div className="flex items-center gap-2">
             <Image
