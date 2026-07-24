@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Shuffle } from "lucide-react";
 import { createClient } from "@/app/lib/supabase/client";
+import ConfirmActionButton from "@/app/components/ConfirmActionButton";
 import { generateKnockoutRound1, generateRoundRobin } from "@/app/lib/fixtures/generateFixtures";
 type Props = {
   tournamentId: string;
@@ -28,13 +29,6 @@ export default function FixtureGenerator({
   async function handleGenerate() {
     if (participants.length < 2) {
       setError("At least 2 approved participants are required.");
-      return;
-    }
-
-    if (
-      alreadyGenerated &&
-      !confirm("All fixtures will be deleted and regenerated. Continue?")
-    ) {
       return;
     }
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Star, Trash2 } from "lucide-react";
 import { createClient } from "@/app/lib/supabase/client";
+import ConfirmActionButton from "@/app/components/ConfirmActionButton";
 
 export default function BallonDorActions({ id, isWinner }: { id: string; isWinner: boolean }) {
   const supabase = createClient();
@@ -34,7 +35,6 @@ export default function BallonDorActions({ id, isWinner }: { id: string; isWinne
   }
 
   async function handleDelete() {
-    if (!confirm("Remove this nominee?")) return;
     setLoading(true);
     await supabase.from("ballon_dor_nominees").delete().eq("id", id);
     setLoading(false);
@@ -53,13 +53,20 @@ export default function BallonDorActions({ id, isWinner }: { id: string; isWinne
           Mark Winner
         </button>
       )}
-      <button
-        onClick={handleDelete}
-        disabled={loading}
-        className="text-gold hover:text-red-300 disabled:opacity-50"
+      <ConfirmActionButton
+        onConfirm={handleDelete}
+        confirmTitle="Remove Nominee"
+        confirmMessage="Are you sure you want to remove this nominee? This action cannot be undone."
+        confirmText="Remove"
+        cancelText="Cancel"
+        successMessage="Nominee removed successfully."
+        errorMessage="Failed to remove nominee."
+        isDangerous
+        ariaLabel="Remove nominee"
+        buttonClassName="text-gold hover:text-red-300 disabled:opacity-50"
       >
         <Trash2 size={13} />
-      </button>
+      </ConfirmActionButton>
     </div>
   );
 }

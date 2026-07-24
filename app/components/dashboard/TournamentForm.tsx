@@ -56,6 +56,7 @@ export default function TournamentForm({ mode, tournamentId, initial }: Tourname
   );
   const [players, setPlayers] = useState<PlayerOption[]>([]);
   const [squadIds, setSquadIds] = useState<string[]>([]);
+  const { addToast } = useToast();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -104,6 +105,7 @@ export default function TournamentForm({ mode, tournamentId, initial }: Tourname
       if (dbError || !data) {
         setLoading(false);
         setError(dbError?.message ?? "Failed to create");
+        addToast(dbError?.message ?? "Failed to create", "error");
         return;
       }
       savedId = data.id;
@@ -118,6 +120,7 @@ export default function TournamentForm({ mode, tournamentId, initial }: Tourname
       if (dbError) {
         setLoading(false);
         setError(dbError.message);
+        addToast(dbError.message, "error");
         return;
       }
     }
@@ -132,6 +135,13 @@ export default function TournamentForm({ mode, tournamentId, initial }: Tourname
     }
 
     setLoading(false);
+
+    addToast(
+      mode === "create"
+        ? "Tournament created successfully."
+        : "Tournament updated successfully.",
+      "success"
+    );
 
     router.push(mode === "create" ? `/dashboard/tournaments/${savedId}` : `/dashboard/tournaments/${tournamentId}`);
     router.refresh();

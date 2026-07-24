@@ -6,8 +6,9 @@ import { useToast } from "@/app/providers/ToastProvider";
 import { createClient } from "@/app/lib/supabase/client";
 
 export default function MatchForm() {
-  const supabase = createClient ();
+  const supabase = createClient();
   const router = useRouter();
+  const { addToast } = useToast();
 
   const [opponentName, setOpponentName] = useState("");
   const [opponentTag, setOpponentTag] = useState("");
@@ -37,9 +38,11 @@ export default function MatchForm() {
 
     if (insertError) {
       setError(insertError.message);
+      addToast(insertError.message, "error");
       return;
     }
 
+    addToast("Match created successfully.", "success");
     router.push("/dashboard/matches");
     router.refresh();
   }

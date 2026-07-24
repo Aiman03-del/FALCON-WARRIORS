@@ -56,6 +56,7 @@ export default function NewsForm({ mode, newsId, initial }: NewsFormProps) {
       setLoading(false);
       if (insertError) {
         setError(insertError.message);
+        addToast(insertError.message, "error");
         return;
       }
     } else {
@@ -67,10 +68,15 @@ export default function NewsForm({ mode, newsId, initial }: NewsFormProps) {
       setLoading(false);
       if (updateError) {
         setError(updateError.message);
+        addToast(updateError.message, "error");
         return;
       }
     }
 
+    addToast(
+      mode === "create" ? "News post created successfully." : "News post updated successfully.",
+      "success"
+    );
     router.push("/dashboard/news");
     router.refresh();
   }

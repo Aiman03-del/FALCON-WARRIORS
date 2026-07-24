@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, Check, X } from "lucide-react";
 import { createClient } from "@/app/lib/supabase/client";
+import ConfirmActionButton from "@/app/components/ConfirmActionButton";
 import { MultiSelectField } from "@/app/components/SelectField.multi";
 import FillButton from "@/app/components/FillButton";
 
@@ -93,7 +94,6 @@ export default function ParticipantsManager({
   }
 
   async function handleRemove(participantId: string) {
-    if (!confirm("Remove this participant?")) return;
     await supabase.from("tournament_participants").delete().eq("id", participantId);
     router.refresh();
   }

@@ -5,6 +5,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "../lib/supabase/client";
+import { useToast } from "@/app/providers/ToastProvider";
 import FillButton from "@/app/components/FillButton";
 
 export default function LoginPage() {
@@ -28,6 +29,8 @@ export default function LoginPage() {
     });
   }, [router, supabase]);
 
+  const { addToast } = useToast();
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -42,9 +45,11 @@ export default function LoginPage() {
 
     if (signInError) {
       setError(signInError.message);
+      addToast(signInError.message, "error");
       return;
     }
 
+    addToast("Logged in successfully.", "success");
     router.push("/");
     router.refresh();
   }
