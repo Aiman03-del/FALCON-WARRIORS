@@ -11,16 +11,36 @@ const statusStyles: Record<string, string> = {
   completed: "bg-indigo/20 text-indigo-light",
 };
 
-export default async function MatchesPage() {
+export default async function MatchesPage({
+  searchParams,
+}: {
+  searchParams?: { type?: string };
+}) {
   await requireStaff();
   const supabase = await createClient();
 
-  const { data: matches } = await supabase
+  const typeFilter = searchParams?.type ?? null;
+
+  let query = supabase
     .from("matches")
-    .select("id, opponent_name, opponent_logo_url, competition, match_date, status, score_home, score_away")
+    .select(
+      "id, opponent_name, opponent_logo_url, competition, match_date, status, score_home, score_away, match_type, tournament_id"
+    )
     .order("match_date", { ascending: false });
 
-  console.log("Dashboard matches data:", matches);
+  if (typeFilter === "internal") {
+    query = query.eq("match_type", "internal");
+  } else if (typeFilter === "external") {
+    query = query.eq("match_type", "external");
+  } else if (typeFilter === "official") {
+    query = query.not("tournament_id", "is", null);
+  } else if (typeFilter === "friendly") {
+    query = query.is("tournament_id", null).neq("match_type", "internal");
+  }
+
+  const { data: matches } = await query;
+
+  console.log("Dashboard matches data:", matches, "typeFilter:", typeFilter);
 
   return (
     <div>
@@ -36,6 +56,7 @@ export default async function MatchesPage() {
           New Match
         </FillButton>
       </div>
+
 
       <div className="card mt-6 overflow-x-auto min-w-0">
         <table className="min-w-full w-full text-left text-sm">
@@ -56,12 +77,25 @@ export default async function MatchesPage() {
                   <span className="mb-2 block text-[10px] uppercase tracking-wide text-muted md:hidden">
                     Opponent
                   </span>
-                  <Link
-                    href={`/dashboard/matches/${m.id}`}
-                    className="text-gold transition hover:text-gold-light"
-                  >
-                    {m.opponent_name}
-                  </Link>
+                  <div className="flex flex-col gap-2">
+                    <Link
+                      href={`/dashboard/matches/${m.id}`}
+                      className="text-gold transition hover:text-gold-light"
+                    >
+                      {m.opponent_name}
+                    </Link>
+                    <span
+                      className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                        m.match_type === "internal"
+                          ? "bg-purple-500/15 text-purple-300"
+                          : m.tournament_id
+                          ? "bg-gold/15 text-gold"
+                          : "bg-white/10 text-muted"
+                      }`}
+                    >
+                      {m.match_type === "internal" ? "Internal" : m.tournament_id ? "Official" : "Friendly"}
+                    </span>
+                  </div>
                 </td>
                 <td className="block px-4 py-3 text-muted md:table-cell">
                   <span className="mb-2 block text-[10px] uppercase tracking-wide text-muted md:hidden">

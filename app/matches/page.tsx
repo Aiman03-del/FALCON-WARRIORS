@@ -3,7 +3,9 @@ import { createClient } from "@/app/lib/supabase/server";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import MatchResultRow from "@/app/components/MatchResultRow";
+import MatchesFilterBar from "@/app/components/MatchesFilterBar";
 import { Swords, Calendar, CheckCircle2, Clock } from "lucide-react";
+import { getMatches } from "@/app/lib/queries/matches";
 
 export const metadata = {
   title: "Matches | Falcon Warriors",
@@ -31,13 +33,17 @@ function formatDate(dateStr: string) {
   });
 }
 
-export default async function MatchesPage() {
-  const supabase = await createClient();
-
-  const { data: matches } = await supabase
-    .from("matches")
-    .select("id, opponent_name, opponent_tag, opponent_logo_url, competition, match_date, status, score_home, score_away")
-    .order("match_date", { ascending: false });
+export default async function MatchesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; search?: string; type?: string }>;
+}) {
+  const params = await searchParams;
+  const matches = await getMatches({
+    status: params.status,
+    search: params.search,
+    type: params.type as any,
+  });
 
   const all = matches ?? [];
   const upcoming = all.filter((m) => m.status === "upcoming" || m.status === "live");
@@ -132,6 +138,8 @@ export default async function MatchesPage() {
                     opponentName={m.opponent_name ?? "Opponent"}
                     opponentTag={m.opponent_tag}
                     opponentLogoUrl={m.opponent_logo_url}
+                    matchType={m.match_type}
+                    tournamentId={m.tournament_id}
                     result={result}
                   />
                 );

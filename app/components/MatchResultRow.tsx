@@ -10,6 +10,8 @@ type Props = {
   opponentName: string;
   opponentTag?: string | null;
   opponentLogoUrl?: string | null;
+  matchType?: string | null;
+  tournamentId?: string | null;
   result: "WIN" | "DRAW" | "LOSS";
 };
 
@@ -55,8 +57,16 @@ export default function MatchResultRow({
   opponentName,
   opponentTag,
   opponentLogoUrl,
+  matchType,
+  tournamentId,
   result,
 }: Props) {
+  const typeBadge =
+    matchType === "internal"
+      ? { label: "Internal", className: "bg-purple-500/15 text-purple-300" }
+      : tournamentId
+      ? { label: "Official", className: "bg-gold/15 text-gold" }
+      : { label: "Friendly", className: "bg-white/10 text-muted" };
   return (
     <Link
       href={`/matches/${id}`}
@@ -72,11 +82,18 @@ export default function MatchResultRow({
             year: "numeric",
           })}
         </span>
-        {competition && (
-          <span className="w-fit truncate rounded-full bg-surface-2 px-2 py-0.5 text-[10px] text-white/70">
-            {competition}
+        <div className="flex flex-wrap items-center gap-2">
+          {competition && (
+            <span className="w-fit truncate rounded-full bg-surface-2 px-2 py-0.5 text-[10px] text-white/70">
+              {competition}
+            </span>
+          )}
+          <span
+            className={`w-fit truncate rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${typeBadge.className}`}
+          >
+            {typeBadge.label}
           </span>
-        )}
+        </div>
       </div>
 
       {/* Teams + Score — সব সময় centered, সমান স্পেসিং */}

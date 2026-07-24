@@ -40,54 +40,51 @@ function CardContent({ player }: { player: Player }) {
   const posColor = getPositionColor(player.preferred_position);
 
   return (
-    <>
+    <div className="flex w-full items-center gap-3">
       {/* Avatar */}
-      <div className="relative mx-auto h-24 w-24 shrink-0 overflow-hidden rounded-full border-2 border-gold/30 bg-surface-2 shadow-lg shadow-black/40">
+      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-gold/20 bg-surface-2">
         {player.avatar_url ? (
-          <Image
-            src={player.avatar_url}
-            alt={player.efootball_username}
-            fill
-            sizes="96px"
-            className="object-cover"
-          />
+          <Image src={player.avatar_url} alt={player.efootball_username} fill className="object-cover" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center font-display text-2xl font-bold text-gold">
+          <div className="flex h-full w-full items-center justify-center font-display text-lg font-bold text-gold">
             {initials}
           </div>
         )}
       </div>
 
-      {/* Info */}
-      <div className="mt-4 flex flex-col items-center gap-1 text-center">
-        <h3 className="font-display text-sm font-bold uppercase tracking-wide text-white transition-colors group-hover:text-gold-light">
-          {player.efootball_username}
-        </h3>
-        {player.real_name && (
-          <p className="text-[11px] text-muted">{player.real_name}</p>
-        )}
+      {/* Info (horizontal) */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          <div className="truncate">
+            <h3 className="font-display text-sm font-bold uppercase tracking-wide text-white truncate">
+              {player.efootball_username}
+            </h3>
+            {player.real_name && (
+              <p className="text-xs text-muted truncate">{player.real_name}</p>
+            )}
+          </div>
 
-        <div className="mt-2 flex flex-wrap justify-center gap-1.5">
+          {player.rank_division && (
+            <div className="ml-2 flex items-center gap-1 text-[10px] text-muted">
+              <Shield size={12} className="text-indigo" />
+            </div>
+          )}
+        </div>
+
+        <div className="mt-2 flex items-center gap-2">
           {player.preferred_position && (
-            <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${posColor}`}>
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${posColor}`}>
               {player.preferred_position}
             </span>
           )}
           {player.platform && (
-            <span className="rounded-full bg-white/8 px-2.5 py-0.5 text-[10px] font-medium uppercase text-muted">
+            <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-medium uppercase text-muted">
               {player.platform}
             </span>
           )}
         </div>
-
-        {player.rank_division && (
-          <div className="mt-2 flex items-center gap-1 text-[10px] text-muted">
-            <Shield size={10} className="text-indigo" />
-            {player.rank_division}
-          </div>
-        )}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -99,7 +96,7 @@ export default function PlayerCard({
   canViewDetails?: boolean;
 }) {
   const baseClass =
-    "card group flex flex-col items-center p-5 transition-all duration-200 hover:border-gold/30 hover:shadow-lg hover:shadow-gold/5";
+    "card group flex flex-row items-center p-3 transition-all duration-200 hover:border-gold/30 hover:shadow-md";
 
   if (canViewDetails) {
     return (

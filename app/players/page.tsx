@@ -1,7 +1,7 @@
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import PlayerCard from "../components/PlayerCard";
-import { getAllPlayers, getCurrentUserRole } from "../lib/queries/players";
+import { getAllPlayers } from "../lib/queries/players";
 import { Users } from "lucide-react";
 
 export const metadata = {
@@ -10,12 +10,8 @@ export const metadata = {
 };
 
 export default async function PlayersPage() {
-  const [players, role] = await Promise.all([
-    getAllPlayers(),
-    getCurrentUserRole(),
-  ]);
-
-  const canViewDetails = role === "admin" || role === "moderator";
+  const players = await getAllPlayers();
+  const canViewDetails = true; // Public profiles: everyone can open player pages
 
   return (
     <main>
@@ -34,11 +30,7 @@ export default async function PlayersPage() {
             </p>
           </div>
 
-          {canViewDetails && (
-            <span className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-gold/30 bg-gold/10 px-3 py-1.5 text-xs font-semibold text-gold">
-              ✦ Admin View — Click card for details
-            </span>
-          )}
+          {/* Admin badge removed; profiles are public */}
         </div>
 
         {/* Player Grid */}
@@ -48,7 +40,7 @@ export default async function PlayersPage() {
             <p className="text-sm text-muted">No active players found.</p>
           </div>
         ) : (
-          <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-8 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 md:gap-4">
             {players.map((p) => (
               <PlayerCard key={p.id} player={p} canViewDetails={canViewDetails} />
             ))}
