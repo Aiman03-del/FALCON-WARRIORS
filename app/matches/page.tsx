@@ -15,7 +15,7 @@ export const metadata = {
 const resultStyles = {
   WIN: "bg-indigo/20 text-indigo-light border-indigo/40",
   DRAW: "bg-white/10 text-muted border-white/20",
-  LOSS: "bg-red-500/15 text-red-400 border-red-500/30",
+  LOSS: "bg-gold/15 text-gold border-gold/30",
 };
 
 function getResult(home: number, away: number): "WIN" | "DRAW" | "LOSS" {
@@ -62,6 +62,11 @@ export default async function MatchesPage({
           {completed.length} results · {upcoming.length} upcoming fixtures
         </p>
 
+        {/* Filter Bar */}
+        <div className="mt-6">
+          <MatchesFilterBar />
+        </div>
+
         {/* Upcoming / Live */}
         {upcoming.length > 0 && (
           <div className="mt-8">
@@ -90,8 +95,8 @@ export default async function MatchesPage({
                         </div>
                       </div>
                       {isLive ? (
-                        <span className="inline-flex w-fit animate-pulse items-center gap-1.5 rounded-full bg-red-500/15 px-3 py-1 text-xs font-bold text-red-400">
-                          <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+                        <span className="inline-flex w-fit animate-pulse items-center gap-1.5 rounded-full bg-gold/15 px-3 py-1 text-xs font-bold text-gold">
+                          <span className="h-1.5 w-1.5 rounded-full bg-gold" />
                           LIVE NOW
                         </span>
                       ) : (

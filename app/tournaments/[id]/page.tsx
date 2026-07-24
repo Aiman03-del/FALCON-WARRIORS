@@ -6,6 +6,8 @@ import Navbar from "@/app/components/Navbar";
 import PointsTable from "@/app/components/PointsTable";
 import TournamentStatusBadge from "@/app/components/TournamentStatusBadge";
 import TournamentSquadList from "@/app/components/TournamentSquadList";
+import ExternalTournamentInfo from "@/app/components/ExternalTournamentInfo";
+import TournamentMatchesDisplay from "@/app/components/TournamentMatchesDisplay";
 import { getMyJoinStatus, getTournamentDetail } from "@/app/lib/queries/tournaments";
 import { notFound } from "next/navigation";
 
@@ -56,18 +58,27 @@ export default async function TournamentDetailPage({
           </p>
         )}
 
-        {tournament.type === "internal" && (
-          <div className="mt-6">
-            <JoinTournamentButton
-              tournamentId={tournament.id}
-              loggedIn={joinStatus.loggedIn}
-              hasPlayerProfile={"hasPlayerProfile" in joinStatus ? joinStatus.hasPlayerProfile : undefined}
-              playerId={"playerId" in joinStatus ? joinStatus.playerId : undefined}
-              myRequestStatus={"myRequestStatus" in joinStatus ? joinStatus.myRequestStatus : null}
-              approvedCount={"approvedCount" in joinStatus ? joinStatus.approvedCount : 0}
-              maxParticipants={tournament.max_participants}
-              registrationDeadline={tournament.registration_deadline}
-              tournamentStatus={tournament.status}
+        <div className="mt-6">
+          <JoinTournamentButton
+            tournamentId={tournament.id}
+            loggedIn={joinStatus.loggedIn}
+            hasPlayerProfile={"hasPlayerProfile" in joinStatus ? joinStatus.hasPlayerProfile : undefined}
+            playerId={"playerId" in joinStatus ? joinStatus.playerId : undefined}
+            myRequestStatus={"myRequestStatus" in joinStatus ? joinStatus.myRequestStatus : null}
+            approvedCount={"approvedCount" in joinStatus ? joinStatus.approvedCount : 0}
+            maxParticipants={tournament.max_participants}
+            registrationDeadline={tournament.registration_deadline}
+            tournamentStatus={tournament.status}
+            tournamentType={tournament.type as "internal" | "external"}
+          />
+        </div>
+
+        {tournament.type === "external" && (
+          <div className="mt-8">
+            <ExternalTournamentInfo 
+              tournamentName={tournament.name}
+              status={tournament.status}
+              isPublicView={true}
             />
           </div>
         )}
@@ -83,12 +94,9 @@ export default async function TournamentDetailPage({
 
         <div className="mt-8">
           <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-gold">
-            Fixtures & Bracket
+            Fixtures & Results
           </h2>
-          <BracketView
-            matches={matches as any}
-            mode={tournament.format === "knockout" ? "knockout" : "league"}
-          />
+          <TournamentMatchesDisplay matches={matches as any} />
         </div>
 
         {tournament.format !== "knockout" && (

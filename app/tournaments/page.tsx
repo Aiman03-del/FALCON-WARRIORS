@@ -12,7 +12,7 @@ export const metadata = {
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   upcoming: { label: "Upcoming", className: "bg-white/8 text-muted" },
-  ongoing: { label: "🔴 Ongoing", className: "bg-red-500/15 text-red-400" },
+  ongoing: { label: "🔴 Ongoing", className: "bg-gold/15 text-gold" },
   completed: { label: "Completed", className: "bg-indigo/20 text-indigo-light" },
 };
 

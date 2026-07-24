@@ -1,3 +1,5 @@
+import { createClient } from "../supabase/server";
+
 // Mock data for matches when Supabase is not connected
 const MOCK_MATCHES = [
   // External matches (vs other clubs)
@@ -112,29 +114,78 @@ const MOCK_MATCHES = [
 export async function getMatches(filters?: {
   status?: string;
   search?: string;
-  type?: "internal" | "external";
+  type?: "internal" | "external" | "all";
+  limit?: number;
 }) {
-  // Simulate async operation
-  await new Promise((resolve) => setTimeout(resolve, 100));
+  try {
+    const supabase = await createClient();
 
-  let results = [...MOCK_MATCHES];
+    let query = supabase
+      .from("matches")
+      .select("id, match_type, opponent_name, opponent_tag, opponent_logo_url, competition, match_date, status, score_home, score_away, tournament_id");
 
-  if (filters?.status) {
-    results = results.filter((m) => m.status === filters.status);
+    // Apply filters
+    if (filters?.status && filters.status !== "all") {
+      query = query.eq("status", filters.status);
+    }
+
+    if (filters?.type && filters.type !== "all") {
+      query = query.eq("match_type", filters.type);
+    }
+
+    // Sort by date descending
+    query = query.order("match_date", { ascending: false });
+
+    if (filters?.limit) {
+      query = query.limit(filters.limit);
+    }
+
+    const { data } = await query;
+
+    if (!data) return MOCK_MATCHES;
+
+    return data;
+  } catch (error) {
+    // Filter mock data
+    let results = [...MOCK_MATCHES];
+
+    if (filters?.status && filters.status !== "all") {
+      results = results.filter((m) => m.status === filters.status);
+    }
+
+    if (filters?.type && filters.type !== "all") {
+      results = results.filter((m) => m.match_type === filters.type);
+    }
+
+    if (filters?.search) {
+      const searchLower = filters.search.toLowerCase();
+      results = results.filter(
+        (m) =>
+          m.opponent_name.toLowerCase().includes(searchLower) ||
+          m.competition.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return results;
   }
+}
 
-  if (filters?.type) {
-    results = results.filter((m) => m.match_type === filters.type);
-  }
+export async function getUpcomingMatches(limit = 5) {
+  return getMatches({ status: "upcoming", limit });
+}
 
-  if (filters?.search) {
-    const searchLower = filters.search.toLowerCase();
-    results = results.filter(
-      (m) =>
-        m.opponent_name.toLowerCase().includes(searchLower) ||
-        m.competition.toLowerCase().includes(searchLower)
-    );
-  }
+export async function getCompletedMatches(limit = 10) {
+  return getMatches({ status: "completed", limit });
+}
 
-  return results;
+export async function getMatchesByType(type: "internal" | "external", limit = 20) {
+  return getMatches({ type, limit });
+}
+
+export async function getRecentMatchResults(limit = 3) {
+  return getMatches({ status: "completed", limit });
+}
+
+export async function getAllMatches(filters?: { type?: "internal" | "external" | "all"; status?: "upcoming" | "completed" | "live" | "all" }) {
+  return getMatches({ ...filters, limit: 100 });
 }

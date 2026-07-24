@@ -1,4 +1,5 @@
 import { createClient } from "../supabase/server";
+import { calculateStandings, getUpcomingMatches, getCompletedMatches, getPlayerRecentForm } from "../utils/tournament";
 
 // Mock tournament data
 const MOCK_TOURNAMENTS = [
@@ -206,5 +207,68 @@ export async function getMyJoinStatus(tournamentId: string) {
   } catch (error) {
     // If Supabase is not available, return mock data
     return { loggedIn: false as const };
+  }
+}
+
+export async function getTournamentStandings(tournamentId: string) {
+  try {
+    const supabase = await createClient();
+
+    const { data: participants } = await supabase
+      .from("tournament_participants")
+      .select("id, player_id, points, matches_played, wins, draws, losses, goals_for, goals_against, player_details(id, efootball_username)")
+      .eq("tournament_id", tournamentId)
+      .eq("status", "approved")
+      .order("points", { ascending: false });
+
+    if (!participants) return [];
+
+    return participants.map((p: any) => ({
+      ...p,
+      playerId: p.player_id,
+      matchesPlayed: p.matches_played,
+      goalsFor: p.goals_for,
+      goalsAgainst: p.goals_against,
+      goalDifference: (p.goals_for ?? 0) - (p.goals_against ?? 0),
+      player: p.player_details,
+    }));
+  } catch (error) {
+    return [];
+  }
+}
+
+export async function getTournamentUpcomingMatches(tournamentId: string) {
+  try {
+    const supabase = await createClient();
+
+    const { data: matches } = await supabase
+      .from("tournament_matches")
+      .select("id, round, match_order, player1_id, player2_id, player1_score, player2_score, status, player1:player1_id(efootball_username), player2:player2_id(efootball_username)")
+      .eq("tournament_id", tournamentId)
+      .in("status", ["pending", "live"])
+      .order("round")
+      .order("match_order");
+
+    return matches ?? [];
+  } catch (error) {
+    return [];
+  }
+}
+
+export async function getTournamentCompletedMatches(tournamentId: string) {
+  try {
+    const supabase = await createClient();
+
+    const { data: matches } = await supabase
+      .from("tournament_matches")
+      .select("id, round, match_order, player1_id, player2_id, player1_score, player2_score, status, player1:player1_id(efootball_username), player2:player2_id(efootball_username)")
+      .eq("tournament_id", tournamentId)
+      .eq("status", "completed")
+      .order("round", { ascending: false })
+      .order("match_order", { ascending: false });
+
+    return matches ?? [];
+  } catch (error) {
+    return [];
   }
 }

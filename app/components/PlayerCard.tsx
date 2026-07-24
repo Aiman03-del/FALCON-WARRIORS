@@ -13,19 +13,19 @@ type Player = {
 };
 
 const POSITION_COLORS: Record<string, string> = {
-  ST: "bg-red-500/20 text-red-400",
-  CF: "bg-red-500/20 text-red-400",
-  SS: "bg-orange-500/20 text-orange-400",
-  LW: "bg-orange-500/20 text-orange-400",
-  RW: "bg-orange-500/20 text-orange-400",
-  AMF: "bg-yellow-500/20 text-yellow-400",
-  CMF: "bg-green-500/20 text-green-400",
-  DMF: "bg-blue-500/20 text-blue-400",
-  LMF: "bg-teal-500/20 text-teal-400",
-  RMF: "bg-teal-500/20 text-teal-400",
-  CB: "bg-indigo-500/20 text-indigo-300",
-  LB: "bg-purple-500/20 text-purple-400",
-  RB: "bg-purple-500/20 text-purple-400",
+  ST: "bg-gold/20 text-gold",
+  CF: "bg-gold/20 text-gold",
+  SS: "bg-gold-light/20 text-gold-light",
+  LW: "bg-gold-light/20 text-gold-light",
+  RW: "bg-gold-light/20 text-gold-light",
+  AMF: "bg-indigo/20 text-indigo-light",
+  CMF: "bg-indigo/20 text-indigo-light",
+  DMF: "bg-indigo-light/20 text-indigo",
+  LMF: "bg-indigo-light/20 text-indigo",
+  RMF: "bg-indigo-light/20 text-indigo",
+  CB: "bg-indigo/25 text-indigo-light",
+  LB: "bg-indigo/25 text-indigo-light",
+  RB: "bg-indigo/25 text-indigo-light",
   GK: "bg-gold/20 text-gold",
 };
 

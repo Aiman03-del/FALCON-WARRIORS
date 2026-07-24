@@ -6,7 +6,7 @@ export default function FormBadges({ form }: { form: ("W" | "D" | "L")[] }) {
   const styles: Record<"W" | "D" | "L", string> = {
     W: "bg-indigo/25 text-indigo-light",
     D: "bg-white/10 text-muted",
-    L: "bg-red-500/20 text-red-400",
+    L: "bg-gold/20 text-gold",
   };
 
   return (
