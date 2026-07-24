@@ -6,6 +6,7 @@ import Footer from "@/app/components/Footer";
 import MatchResultRow from "@/app/components/MatchResultRow";
 import { Swords, Calendar, CheckCircle2, Clock } from "lucide-react";
 import { getMatches } from "@/app/lib/queries/matches";
+import MatchesFilterBar from "../components/MatchesFilterBar";
 
 export const metadata: Metadata = {
   title: "Matches | Falcon Warriors - Results & Fixtures",
