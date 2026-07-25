@@ -243,6 +243,23 @@ export default function CurrentRoundBoard({
 
   async function handleSubmit() {
     setError(null);
+    console.log("handleSubmit saving data", {
+      matchId,
+      rows: rows.map((r) => ({
+        id: r.id,
+        falcon_score: Number(r.fs),
+        opponent_score: Number(r.os),
+        opponent_label: r.opponent_label,
+        opponent_logo_url: r.opponent_logo_url,
+      })),
+      totalFalcon,
+      totalOpponent,
+      motmId,
+      roundStage,
+      opponentName,
+      opponentLogoUrl,
+    });
+
     const incomplete = rows.some((r) => r.fs === "" || r.os === "");
     if (incomplete) {
       setError("সব রো-তে স্কোর বসান — যেটাতে খেলা হয়নি সেটাতেও ০ দিন।");

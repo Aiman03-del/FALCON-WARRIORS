@@ -6,6 +6,7 @@ import { Check } from "lucide-react";
 import { createClient } from "@/app/lib/supabase/client";
 import { recalcAllPlayerStats } from "@/app/lib/matches/recalcPlayerStats";
 import SelectField from "../SelectField";
+
 type PlayerOption = { id: string; efootball_username: string; avatar_url?: string | null };
 
 type Props = {
@@ -20,6 +21,12 @@ type Props = {
   player2Name?: string;
   players: PlayerOption[];
   tournamentSquad: PlayerOption[] | null;
+};
+
+type PlayedEntry = {
+  playerId: string;
+  goals: number;
+  rating: string;
 };
 
 function PlayerTile({
@@ -71,8 +78,9 @@ export default function MatchResultForm({
   const [scoreAway, setScoreAway] = useState(currentScoreAway ?? 0);
   const [player1Rating, setPlayer1Rating] = useState("");
   const [player2Rating, setPlayer2Rating] = useState("");
-  const [playedById, setPlayedById] = useState("");
-  const [playedByRating, setPlayedByRating] = useState("");
+
+  // একাধিক প্লেয়ার এখন ম্যাচ খেলতে পারবে, প্রত্যেকের গোল/রেটিং আলাদা
+  const [playedEntries, setPlayedEntries] = useState<PlayedEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -80,20 +88,67 @@ export default function MatchResultForm({
 
   useEffect(() => {
     if (matchType !== "external") return;
-    supabase
-      .from("match_squad")
-      .select("player_id")
-      .eq("match_id", matchId)
-      .maybeSingle()
-      .then(({ data }) => setPlayedById(data?.player_id ?? ""));
+
+    async function loadExisting() {
+      const { data: squadRows } = await supabase
+        .from("match_squad")
+        .select("player_id")
+        .eq("match_id", matchId);
+
+      const { data: goalRows } = await supabase
+        .from("match_goal_entries")
+        .select("player_id, goals")
+        .eq("match_id", matchId);
+
+      const { data: ratingRows } = await supabase
+        .from("match_ratings")
+        .select("player_id, rating")
+        .eq("match_id", matchId);
+
+      const goalMap: Record<string, number> = {};
+      for (const g of goalRows ?? []) goalMap[g.player_id] = g.goals;
+
+      const ratingMap: Record<string, string> = {};
+      for (const r of ratingRows ?? []) ratingMap[r.player_id] = String(r.rating);
+
+      const entries: PlayedEntry[] = (squadRows ?? []).map((row) => ({
+        playerId: row.player_id,
+        goals: goalMap[row.player_id] ?? 0,
+        rating: ratingMap[row.player_id] ?? "",
+      }));
+
+      setPlayedEntries(entries);
+    }
+
+    loadExisting();
   }, [matchId, matchType, supabase]);
+
+  function togglePlayer(playerId: string) {
+    setPlayedEntries((prev) => {
+      const exists = prev.find((e) => e.playerId === playerId);
+      if (exists) return prev.filter((e) => e.playerId !== playerId);
+      return [...prev, { playerId, goals: 0, rating: "" }];
+    });
+  }
+
+  function updateEntry(playerId: string, field: "goals" | "rating", value: string) {
+    setPlayedEntries((prev) =>
+      prev.map((e) =>
+        e.playerId === playerId
+          ? { ...e, [field]: field === "goals" ? Number(value) : value }
+          : e
+      )
+    );
+  }
+
+  const totalEnteredGoals = playedEntries.reduce((sum, e) => sum + (e.goals || 0), 0);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
-    if (matchType === "external" && status === "completed" && !playedById) {
-      setError("যিনি এই ম্যাচ খেলেছেন তাকে সিলেক্ট করুন।");
+    if (matchType === "external" && status === "completed" && playedEntries.length === 0) {
+      setError("যারা এই ম্যাচ খেলেছে তাদের কমপক্ষে একজনকে সিলেক্ট করুন।");
       return;
     }
 
@@ -133,23 +188,45 @@ export default function MatchResultForm({
     if (matchType === "external") {
       await supabase.from("match_squad").delete().eq("match_id", matchId);
       await supabase.from("match_goal_entries").delete().eq("match_id", matchId);
+      await supabase.from("match_ratings").delete().eq("match_id", matchId);
 
-      if (playedById) {
-        await supabase.from("match_squad").insert({ match_id: matchId, player_id: playedById });
+      if (playedEntries.length > 0) {
+        // যারা খেলেছে সবাইকে squad-এ যোগ (matches/win-loss স্ট্যাটসের জন্য)
+        await supabase.from("match_squad").insert(
+          playedEntries.map((entry) => ({ match_id: matchId, player_id: entry.playerId }))
+        );
 
-        if (status === "completed" && scoreHome > 0) {
-          await supabase.from("match_goal_entries").insert({
-            match_id: matchId,
-            player_id: playedById,
-            goals: scoreHome,
-          });
+        if (status === "completed") {
+          const goalRowsToInsert = playedEntries
+            .filter((entry) => entry.goals > 0)
+            .map((entry) => ({
+              match_id: matchId,
+              player_id: entry.playerId,
+              goals: entry.goals,
+            }));
+
+          if (goalRowsToInsert.length > 0) {
+            await supabase.from("match_goal_entries").insert(goalRowsToInsert);
+          }
+
+          const ratingRowsToInsert = playedEntries
+            .filter((entry) => entry.rating)
+            .map((entry) => ({
+              match_id: matchId,
+              player_id: entry.playerId,
+              rating: Number(entry.rating),
+            }));
+
+          if (ratingRowsToInsert.length > 0) {
+            await supabase.from("match_ratings").insert(ratingRowsToInsert);
+          }
         }
       }
     }
 
-    await supabase.from("match_ratings").delete().eq("match_id", matchId);
-
     if (matchType === "internal" && status === "completed") {
+      await supabase.from("match_ratings").delete().eq("match_id", matchId);
+
       const ratingsToInsert = [] as Array<{ match_id: string; player_id: string; rating: number }>;
       if (player1Rating && player1Id) {
         ratingsToInsert.push({ match_id: matchId, player_id: player1Id, rating: Number(player1Rating) });
@@ -160,14 +237,6 @@ export default function MatchResultForm({
       if (ratingsToInsert.length > 0) {
         await supabase.from("match_ratings").insert(ratingsToInsert);
       }
-    }
-
-    if (matchType === "external" && status === "completed" && playedById && playedByRating) {
-      await supabase.from("match_ratings").insert({
-        match_id: matchId,
-        player_id: playedById,
-        rating: Number(playedByRating),
-      });
     }
 
     await recalcAllPlayerStats(supabase);
@@ -196,7 +265,7 @@ export default function MatchResultForm({
       {matchType === "external" && status !== "upcoming" && (
         <div>
           <p className="mb-2 text-xs font-medium text-muted">
-            Who played this match for Falcon Warriors?
+            কারা এই ম্যাচ খেলেছে? (একাধিক সিলেক্ট করা যাবে)
           </p>
           {rosterPool.length === 0 ? (
             <p className="text-sm text-muted">
@@ -208,8 +277,8 @@ export default function MatchResultForm({
                 <PlayerTile
                   key={p.id}
                   player={p}
-                  selected={playedById === p.id}
-                  onClick={() => setPlayedById(p.id)}
+                  selected={playedEntries.some((e) => e.playerId === p.id)}
+                  onClick={() => togglePlayer(p.id)}
                 />
               ))}
             </div>
@@ -265,51 +334,76 @@ export default function MatchResultForm({
             </div>
           </div>
 
-          {status === "completed" && (
+          {status === "completed" && matchType === "internal" && (
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              {matchType === "internal" ? (
-                <>
-                  <label className="flex flex-col gap-1 text-xs text-muted">
-                    <span>{player1Name ?? "Player 1"} Rating</span>
+              <label className="flex flex-col gap-1 text-xs text-muted">
+                <span>{player1Name ?? "Player 1"} Rating</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={10}
+                  step="0.1"
+                  value={player1Rating}
+                  onChange={(e) => setPlayer1Rating(e.target.value)}
+                  placeholder="1-10"
+                  className="rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm outline-none focus:border-gold"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-xs text-muted">
+                <span>{player2Name ?? "Player 2"} Rating</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={10}
+                  step="0.1"
+                  value={player2Rating}
+                  onChange={(e) => setPlayer2Rating(e.target.value)}
+                  placeholder="1-10"
+                  className="rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm outline-none focus:border-gold"
+                />
+              </label>
+            </div>
+          )}
+
+          {status === "completed" && matchType === "external" && playedEntries.length > 0 && (
+            <div className="mt-4 flex flex-col gap-2">
+              <p className="text-xs font-medium text-muted">প্রতিটি প্লেয়ারের গোল ও রেটিং দিন</p>
+              {playedEntries.map((entry) => {
+                const p = rosterPool.find((x) => x.id === entry.playerId);
+                return (
+                  <div
+                    key={entry.playerId}
+                    className="grid grid-cols-[1fr_80px_80px] items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2"
+                  >
+                    <span className="truncate text-sm">{p?.efootball_username ?? "Unknown"}</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={entry.goals}
+                      onChange={(e) => updateEntry(entry.playerId, "goals", e.target.value)}
+                      onWheel={(e) => e.currentTarget.blur()}
+                      placeholder="Goals"
+                      className="rounded-lg border border-border bg-surface px-2 py-1.5 text-center text-sm outline-none focus:border-gold"
+                    />
                     <input
                       type="number"
                       min={1}
                       max={10}
                       step="0.1"
-                      value={player1Rating}
-                      onChange={(e) => setPlayer1Rating(e.target.value)}
-                      placeholder="1-10"
-                      className="rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm outline-none focus:border-gold"
+                      value={entry.rating}
+                      onChange={(e) => updateEntry(entry.playerId, "rating", e.target.value)}
+                      placeholder="Rating"
+                      className="rounded-lg border border-border bg-surface px-2 py-1.5 text-center text-sm outline-none focus:border-gold"
                     />
-                  </label>
-                  <label className="flex flex-col gap-1 text-xs text-muted">
-                    <span>{player2Name ?? "Player 2"} Rating</span>
-                    <input
-                      type="number"
-                      min={1}
-                      max={10}
-                      step="0.1"
-                      value={player2Rating}
-                      onChange={(e) => setPlayer2Rating(e.target.value)}
-                      placeholder="1-10"
-                      className="rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm outline-none focus:border-gold"
-                    />
-                  </label>
-                </>
-              ) : (
-                <label className="flex flex-col gap-1 text-xs text-muted">
-                  <span>Played By Rating</span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={10}
-                    step="0.1"
-                    value={playedByRating}
-                    onChange={(e) => setPlayedByRating(e.target.value)}
-                    placeholder="1-10"
-                    className="rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm outline-none focus:border-gold"
-                  />
-                </label>
+                  </div>
+                );
+              })}
+              {totalEnteredGoals !== scoreHome && (
+                <p className="text-xs text-gold/80">
+                  সতর্কতা: এখন পর্যন্ত এন্ট্রি করা গোল ({totalEnteredGoals}) টিমের স্কোরের ({scoreHome})
+                  সাথে মিলছে না। বাকি গোল সম্ভবত own-goal বা অজানা স্কোরার থেকে এসেছে — তাহলে সমস্যা নেই,
+                  নাহলে চেক করে নিন।
+                </p>
               )}
             </div>
           )}

@@ -1,8 +1,7 @@
 import { createClient } from "@/app/lib/supabase/server";
-import SquadQuickEditor from "./SquadQuickEditor";
 import CurrentRoundBoard from "./CurrentRoundBoard";
 import StartNewRoundForm from "./StartNewRoundForm";
-import RoundHistoryList from "./RoundHistoryList";
+import { RoundHistoryList } from "./RoundHistoryList";
 
 export default async function OfficialTournamentOverview({
   tournamentId,
@@ -19,11 +18,6 @@ export default async function OfficialTournamentOverview({
   const falconSquad = (squadRows ?? [])
     .map((s: any) => (Array.isArray(s.player_details) ? s.player_details[0] : s.player_details))
     .filter(Boolean);
-
-  const { data: allPlayers } = await supabase
-    .from("player_details")
-    .select("id, efootball_username")
-    .order("efootball_username");
 
   const { data: matches } = await supabase
     .from("matches")
@@ -59,13 +53,6 @@ export default async function OfficialTournamentOverview({
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Squad management */}
-      <SquadQuickEditor
-        tournamentId={tournamentId}
-        allPlayers={allPlayers ?? []}
-        currentSquad={falconSquad}
-      />
-
       {/* Current round */}
       <div>
         <h2 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-gold">

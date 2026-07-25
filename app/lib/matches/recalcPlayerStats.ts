@@ -72,43 +72,29 @@ export async function recalcAllPlayerStats(supabase: SupabaseClient) {
     else { s1.draws++; s2.draws++; }
   }
 
-  // 3. External matches (Falcon vs external club, regular or tournament — one player marked as "Played By")
-  const { data: externalMatches } = await supabase
-    .from("matches")
-    .select("id, score_home, score_away")
-    .eq("match_type", "external")
-    .eq("status", "completed");
+  // 3. External matches — Squad Battle System (match_squad_battles থেকে individual স্ট্যাটস)
+  const { data: battles } = await supabase
+    .from("match_squad_battles")
+    .select("falcon_player_id, falcon_score, opponent_score, match_id, matches!inner(status, match_type)")
+    .not("falcon_player_id", "is", null)
+    .not("falcon_score", "is", null)
+    .not("opponent_score", "is", null);
 
-  if (externalMatches && externalMatches.length > 0) {
-    const matchIds = externalMatches.map((m) => m.id);
+  for (const b of (battles ?? []) as any[]) {
+    const matchInfo = Array.isArray(b.matches) ? b.matches[0] : b.matches;
+    if (!matchInfo || matchInfo.status !== "completed" || matchInfo.match_type !== "external") continue;
 
-    const { data: squadRows } = await supabase
-      .from("match_squad")
-      .select("match_id, player_id")
-      .in("match_id", matchIds);
+    const s = statsMap[b.falcon_player_id];
+    if (!s) continue;
 
-    const playerByMatch: Record<string, string> = {};
-    for (const row of squadRows ?? []) {
-      playerByMatch[row.match_id] = row.player_id;
-    }
+    s.matches++;
+    s.goals += b.falcon_score;
+    s.goals_for += b.falcon_score;
+    s.goals_against += b.opponent_score;
 
-    for (const m of externalMatches) {
-      const playerId = playerByMatch[m.id];
-      if (!playerId) continue; // skip if no player is selected
-
-      const s = statsMap[playerId];
-      if (!s) continue;
-      if (m.score_home === null || m.score_away === null) continue;
-
-      s.matches++;
-      s.goals += m.score_home;
-      s.goals_for += m.score_home;
-      s.goals_against += m.score_away;
-
-      if (m.score_home > m.score_away) s.wins++;
-      else if (m.score_home < m.score_away) s.losses++;
-      else s.draws++;
-    }
+    if (b.falcon_score > b.opponent_score) s.wins++;
+    else if (b.falcon_score < b.opponent_score) s.losses++;
+    else s.draws++;
   }
 
   // 4. MOTM counts (from match_events for all match types)

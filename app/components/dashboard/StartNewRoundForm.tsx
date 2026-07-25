@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/app/lib/supabase/client";
 import { ensureSquadBattles } from "@/app/lib/matches/generateSquadBattles";
+import FillButton from "../FillButton";
+
 export default function StartNewRoundForm({
   tournamentId,
   falconSquad,
@@ -55,7 +57,7 @@ export default function StartNewRoundForm({
   }
 
   return (
-    <div className="card flex flex-col gap-4 p-6">
+    <div className="flex flex-col gap-4 p-6">
       <p className="font-display text-sm font-bold uppercase tracking-wide text-gold">
         Start New Round
       </p>
@@ -67,9 +69,9 @@ export default function StartNewRoundForm({
         <p className="rounded-lg bg-gold/15 px-3 py-2 text-sm text-gold">{error}</p>
       )}
 
-      <button onClick={handleStart} disabled={loading} className="btn-primary w-fit disabled:opacity-50">
+      <FillButton onClick={handleStart} disabled={loading}>
         {loading ? "Starting..." : "Start Round"}
-      </button>
+      </FillButton>
     </div>
   );
 }
