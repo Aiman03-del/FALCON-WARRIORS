@@ -6,7 +6,6 @@ import Footer from "@/app/components/Footer";
 import MatchResultRow from "@/app/components/MatchResultRow";
 import { Swords, Calendar, CheckCircle2, Clock } from "lucide-react";
 import { getMatches } from "@/app/lib/queries/matches";
-import MatchesFilterBar from "../components/MatchesFilterBar";
 
 export const metadata: Metadata = {
   title: "Matches | Falcon Warriors - Results & Fixtures",
@@ -44,6 +43,7 @@ export default async function MatchesPage({
   searchParams: Promise<{ status?: string; search?: string; type?: string }>;
 }) {
   const params = await searchParams;
+  const currentType = params.type === "unofficial" ? "unofficial" : "official";
   const matches = await getMatches({
     status: params.status,
     search: params.search,
@@ -67,9 +67,24 @@ export default async function MatchesPage({
           {completed.length} results · {upcoming.length} upcoming fixtures
         </p>
 
-        {/* Filter Bar */}
-        <div className="mt-6">
-          <MatchesFilterBar />
+        {/* Tabs */}
+        <div className="mt-6 flex flex-wrap gap-2">
+          {[
+            { value: "official", label: "Official" },
+            { value: "unofficial", label: "Unofficial" },
+          ].map((tab) => (
+            <Link
+              key={tab.value}
+              href={`/matches?type=${tab.value}`}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                currentType === tab.value
+                  ? "bg-gold text-bg"
+                  : "bg-white/8 text-muted hover:bg-white/12"
+              }`}
+            >
+              {tab.label}
+            </Link>
+          ))}
         </div>
 
         {/* Upcoming / Live */}

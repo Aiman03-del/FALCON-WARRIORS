@@ -21,7 +21,13 @@ export async function getMatches(params: MatchQueryParams = {}) {
   }
 
   if (params.type) {
-    query = query.eq("match_type", params.type);
+    if (params.type === "official") {
+      query = query.not("tournament_id", "is", null);
+    } else if (params.type === "unofficial") {
+      query = query.is("tournament_id", null);
+    } else {
+      query = query.eq("match_type", params.type);
+    }
   }
 
   if (params.search) {

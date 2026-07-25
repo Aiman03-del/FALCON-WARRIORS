@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Filter } from "lucide-react";
 
-type FilterType = "all" | "internal" | "external";
+type FilterType = "all" | "internal" | "external" | "official" | "unofficial";
 type FilterStatus = "all" | "upcoming" | "completed" | "live";
 
 export default function MatchesFilterBar() {
@@ -16,6 +16,8 @@ export default function MatchesFilterBar() {
 
   const typeOptions: Array<{ value: FilterType; label: string }> = [
     { value: "all", label: "All Types" },
+    { value: "official", label: "Official" },
+    { value: "unofficial", label: "Unofficial" },
     { value: "internal", label: "Internal" },
     { value: "external", label: "External" },
   ];

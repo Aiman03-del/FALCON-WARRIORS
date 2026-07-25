@@ -24,26 +24,39 @@ const resultStyles: Record<Props["result"], string> = {
 function TeamBlock({
   tag,
   name,
-  align,
   logoUrl,
+  align = "left",
 }: {
   tag: string;
   name: string;
-  align: "left" | "right";
   logoUrl?: string | null;
+  align?: "left" | "right";
 }) {
   return (
-    <div className="flex w-28 flex-col items-center gap-1.5 sm:w-32">
-      <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10 text-xs font-bold text-white/70">
-        {logoUrl ? (
-          <Image src={logoUrl} alt={name} fill className="object-cover" sizes="40px" />
-        ) : (
-          <span>{tag.slice(0, 2).toUpperCase()}</span>
-        )}
-      </div>
-      <span className="line-clamp-1 text-center text-xs font-medium leading-tight sm:text-sm">
-        {name}
-      </span>
+    <div className={`flex min-w-[130px] items-center gap-3 ${align === "right" ? "justify-end text-right" : "justify-start text-left"}`}>
+      {align === "left" ? (
+        <>
+          <span className="text-sm font-medium text-white/90">{name}</span>
+          <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/10 text-xs font-bold text-white/70">
+            {logoUrl ? (
+              <Image src={logoUrl} alt={name} fill className="object-cover" sizes="40px" />
+            ) : (
+              <span>{tag.slice(0, 2).toUpperCase()}</span>
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/10 text-xs font-bold text-white/70">
+            {logoUrl ? (
+              <Image src={logoUrl} alt={name} fill className="object-cover" sizes="40px" />
+            ) : (
+              <span>{tag.slice(0, 2).toUpperCase()}</span>
+            )}
+          </div>
+          <span className="text-sm font-medium text-white/90">{name}</span>
+        </>
+      )}
     </div>
   );
 }
@@ -70,54 +83,29 @@ export default function MatchResultRow({
   return (
     <Link
       href={`/matches/${id}`}
-      className="card flex flex-col gap-3 p-4 hover:border-gold/30 sm:flex-row sm:items-center sm:justify-between"
+      className="card grid items-center gap-4 p-4 text-center hover:border-gold/30 sm:grid-cols-[minmax(140px,1fr)_auto_minmax(140px,1fr)]"
     >
-      {/* Date + Competition */}
-      <div className="flex flex-col gap-1 sm:w-40 sm:shrink-0">
-        <span className="text-xs text-muted">
-          {new Date(date).toLocaleDateString("en-US", {
-            weekday: "short",
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          })}
+      {/* Teams + Score */}
+      <TeamBlock tag="FW" name="Falcon Warriors" logoUrl={undefined} align="left" />
+
+      <div className="grid items-center justify-items-center gap-2">
+        <span className="text-xs uppercase tracking-[0.15em] text-muted">
+          {new Date(date).toLocaleDateString("en-US", { weekday: "short" })}
         </span>
-        <div className="flex flex-wrap items-center gap-2">
-          {competition && (
-            <span className="w-fit truncate rounded-full bg-surface-2 px-2 py-0.5 text-[10px] text-white/70">
-              {competition}
-            </span>
-          )}
-          <span
-            className={`w-fit truncate rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${typeBadge.className}`}
-          >
-            {typeBadge.label}
-          </span>
-        </div>
+        <span className="font-display text-3xl font-bold tabular-nums">
+          {scoreHome} - {scoreAway}
+        </span>
+        <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase ${resultStyles[result]}`}>
+          {result}
+        </span>
       </div>
 
-      {/* Teams + Score — সব সময় centered, সমান স্পেসিং */}
-      <div className="flex items-center justify-center gap-3 sm:flex-1 sm:gap-6">
-        <TeamBlock tag="FW" name="Falcon Warriors" align="right" />
-
-        <div className="flex w-16 flex-col items-center gap-1.5 shrink-0">
-          <span className="font-display text-xl font-bold tabular-nums sm:text-2xl">
-            {scoreHome} - {scoreAway}
-          </span>
-          <span
-            className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase ${resultStyles[result]}`}
-          >
-            {result}
-          </span>
-        </div>
-
-        <TeamBlock
-          tag={opponentTag ?? opponentName}
-          name={opponentName}
-          align="left"
-          logoUrl={opponentLogoUrl}
-        />
-      </div>
+      <TeamBlock
+        tag={opponentTag ?? opponentName}
+        name={opponentName}
+        logoUrl={opponentLogoUrl}
+        align="right"
+      />
     </Link>
   );
 }
