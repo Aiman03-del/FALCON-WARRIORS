@@ -1,9 +1,10 @@
-import FillButton from "@/app/components/FillButton";
+"use client";
+
+import { useEffect, useState } from "react";
 import DeleteMatchButton from "@/app/components/dashboard/DeleteMatchButton";
 import Link from "next/link";
-import { Edit3, Plus } from "lucide-react";
-import { requireStaff } from "@/app/lib/queries/dashboard";
-import { createClient } from "@/app/lib/supabase/server";
+import { Edit3 } from "lucide-react";
+import { createClient } from "@/app/lib/supabase/client";
 
 const statusStyles: Record<string, string> = {
   upcoming: "bg-white/10 text-muted",
@@ -11,62 +12,40 @@ const statusStyles: Record<string, string> = {
   completed: "bg-indigo/20 text-indigo-light",
 };
 
-const MOCK_DASHBOARD_MATCHES = [
-  { id: "ext-3", opponent_name: "Tiger Squad", opponent_logo_url: "https://via.placeholder.com/40?text=TGR", competition: "International League", match_date: "2026-07-21", status: "completed", score_home: 3, score_away: 1, match_type: "external", tournament_id: null },
-  { id: "ext-2", opponent_name: "Golden Hawks", opponent_logo_url: "https://via.placeholder.com/40?text=GHA", competition: "International League", match_date: "2026-07-18", status: "completed", score_home: 4, score_away: 2, match_type: "external", tournament_id: null },
-  { id: "ext-1", opponent_name: "Silver Strikers", opponent_logo_url: "https://via.placeholder.com/40?text=SLS", competition: "Champions Cup", match_date: "2026-07-15", status: "completed", score_home: 2, score_away: 2, match_type: "external", tournament_id: null },
-  { id: "fix-1", opponent_name: "Phoenix FC", opponent_logo_url: "https://via.placeholder.com/40?text=PHX", competition: "International League", match_date: "2026-07-28", status: "upcoming", score_home: null, score_away: null, match_type: "external", tournament_id: null },
-  { id: "fix-2", opponent_name: "Dragon United", opponent_logo_url: "https://via.placeholder.com/40?text=DGN", competition: "Champions Cup", match_date: "2026-07-31", status: "upcoming", score_home: null, score_away: null, match_type: "external", tournament_id: null },
-];
+export default function MatchesPage() {
+  const [activeTab, setActiveTab] = useState<"official" | "unofficial">("official");
+  const [matches, setMatches] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export default async function MatchesPage({
-  searchParams,
-}: {
-  searchParams?: { type?: string };
-}) {
-  await requireStaff();
-  
-  const typeFilter = searchParams?.type ?? null;
-  let matches = MOCK_DASHBOARD_MATCHES;
+  useEffect(() => {
+    fetchMatches();
+  }, []);
 
-  try {
-    const supabase = await createClient();
+  async function fetchMatches() {
+    try {
+      const supabase = await createClient();
 
-    let query = supabase
-      .from("matches")
-      .select(
-        "id, opponent_name, opponent_logo_url, competition, match_date, status, score_home, score_away, match_type, tournament_id"
-      )
-      .order("match_date", { ascending: false });
+      // Fetch matches with their tournament info
+      const { data: matchesData } = await supabase
+        .from("matches")
+        .select(
+          "id, opponent_name, opponent_logo_url, competition, match_date, status, score_home, score_away, match_type, tournament_id, tournaments(type)"
+        )
+        .not("tournament_id", "is", null)
+        .order("match_date", { ascending: false });
 
-    if (typeFilter === "internal") {
-      query = query.eq("match_type", "internal");
-    } else if (typeFilter === "external") {
-      query = query.eq("match_type", "external");
-    } else if (typeFilter === "official") {
-      query = query.not("tournament_id", "is", null);
-    } else if (typeFilter === "friendly") {
-      query = query.is("tournament_id", null).neq("match_type", "internal");
+      setMatches(matchesData ?? []);
+    } catch (error) {
+      console.error("Failed to fetch matches:", error);
+    } finally {
+      setLoading(false);
     }
-
-    const { data: supabaseMatches } = await query;
-    if (supabaseMatches) {
-      matches = supabaseMatches;
-    }
-  } catch (error) {
-    // Use mock data if Supabase fails
   }
 
-  // Filter mock data by type
-  if (typeFilter === "internal") {
-    matches = matches.filter(m => m.match_type === "internal");
-  } else if (typeFilter === "external") {
-    matches = matches.filter(m => m.match_type === "external");
-  } else if (typeFilter === "official") {
-    matches = matches.filter(m => m.tournament_id !== null);
-  } else if (typeFilter === "friendly") {
-    matches = matches.filter(m => m.tournament_id === null && m.match_type !== "internal");
-  }
+  const filteredMatches = (matches ?? []).filter((m) => {
+    const tournamentType = m.tournaments?.type || "internal";
+    return activeTab === "official" ? tournamentType === "official" : tournamentType === "internal";
+  });
 
   return (
     <div>
@@ -75,14 +54,33 @@ export default async function MatchesPage({
           <h1 className="font-display text-2xl font-bold uppercase tracking-wide">
             Matches
           </h1>
-          <p className="mt-1 text-sm text-muted">Schedule fixtures and enter results.</p>
+          <p className="mt-1 text-sm text-muted">View all tournament matches.</p>
         </div>
-        <FillButton href="/dashboard/matches/new" className="flex items-center gap-2 text-sm">
-          <Plus size={16} />
-          New Match
-        </FillButton>
       </div>
 
+      {/* Tabs */}
+      <div className="mt-6 flex gap-4 border-b border-border">
+        <button
+          onClick={() => setActiveTab("official")}
+          className={`px-4 py-3 font-medium text-sm transition ${
+            activeTab === "official"
+              ? "border-b-2 border-gold text-gold"
+              : "text-muted hover:text-foreground"
+          }`}
+        >
+          Official
+        </button>
+        <button
+          onClick={() => setActiveTab("unofficial")}
+          className={`px-4 py-3 font-medium text-sm transition ${
+            activeTab === "unofficial"
+              ? "border-b-2 border-gold text-gold"
+              : "text-muted hover:text-foreground"
+          }`}
+        >
+          Unofficial
+        </button>
+      </div>
 
       <div className="card mt-6 overflow-x-auto min-w-0">
         <table className="min-w-full w-full text-left text-sm">
@@ -97,31 +95,18 @@ export default async function MatchesPage({
             </tr>
           </thead>
           <tbody className="md:table-row-group">
-            {(matches ?? []).map((m) => (
+            {filteredMatches.map((m) => (
               <tr key={m.id} className="block border-b border-border last:border-0 md:table-row">
                 <td className="block px-4 py-3 md:table-cell">
                   <span className="mb-2 block text-[10px] uppercase tracking-wide text-muted md:hidden">
                     Opponent
                   </span>
-                  <div className="flex flex-col gap-2">
-                    <Link
-                      href={`/dashboard/matches/${m.id}`}
-                      className="text-gold transition hover:text-gold-light"
-                    >
-                      {m.opponent_name}
-                    </Link>
-                    <span
-                      className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
-                        m.match_type === "internal"
-                          ? "bg-purple-500/15 text-purple-300"
-                          : m.tournament_id
-                          ? "bg-gold/15 text-gold"
-                          : "bg-white/10 text-muted"
-                      }`}
-                    >
-                      {m.match_type === "internal" ? "Internal" : m.tournament_id ? "Official" : "Friendly"}
-                    </span>
-                  </div>
+                  <Link
+                    href={`/dashboard/matches/${m.id}`}
+                    className="text-gold transition hover:text-gold-light"
+                  >
+                    {m.opponent_name}
+                  </Link>
                 </td>
                 <td className="block px-4 py-3 text-muted md:table-cell">
                   <span className="mb-2 block text-[10px] uppercase tracking-wide text-muted md:hidden">
@@ -159,7 +144,7 @@ export default async function MatchesPage({
                     <Link
                       href={`/dashboard/matches/${m.id}`}
                       className="inline-flex items-center justify-center rounded-lg p-2 text-gold transition hover:bg-gold/10 hover:text-gold-light"
-                      aria-label="Edit match"
+                      aria-label="View match"
                     >
                       <Edit3 size={16} />
                     </Link>
@@ -168,10 +153,10 @@ export default async function MatchesPage({
                 </td>
               </tr>
             ))}
-            {(matches ?? []).length === 0 && (
+            {filteredMatches.length === 0 && (
               <tr className="block md:table-row">
                 <td colSpan={6} className="px-4 py-8 text-center text-muted">
-                  No matches yet. Create your first fixture.
+                  No {activeTab} matches yet.
                 </td>
               </tr>
             )}

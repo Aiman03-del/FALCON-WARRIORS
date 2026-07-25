@@ -1,8 +1,10 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import FillButton from "@/app/components/FillButton";
 import DeleteTournamentButton from "@/app/components/dashboard/DeleteTournamentButton";
 import Link from "next/link";
 import { Edit3, Plus } from "lucide-react";
-import { requireStaff } from "@/app/lib/queries/dashboard";
 import { createClient } from "@/app/lib/supabase/client";
 
 const statusStyles: Record<string, string> = {
@@ -11,14 +13,34 @@ const statusStyles: Record<string, string> = {
   completed: "bg-indigo/20 text-indigo-light",
 };
 
-export default async function TournamentsPage() {
-  await requireStaff();
-  const supabase = await createClient();
+export default function TournamentsPage() {
+  const [activeTab, setActiveTab] = useState<"official" | "unofficial">("official");
+  const [tournaments, setTournaments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const { data: tournaments } = await supabase
-    .from("tournaments")
-    .select("id, name, type, format, status, start_date, end_date")
-    .order("start_date", { ascending: false });
+  useEffect(() => {
+    fetchTournaments();
+  }, []);
+
+  async function fetchTournaments() {
+    try {
+      const supabase = await createClient();
+      const { data } = await supabase
+        .from("tournaments")
+        .select("id, name, type, format, status, start_date, end_date")
+        .order("start_date", { ascending: false });
+
+      setTournaments(data ?? []);
+    } catch (error) {
+      console.error("Failed to fetch tournaments:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const filteredTournaments = (tournaments ?? []).filter((t) =>
+    activeTab === "official" ? t.type === "official" : t.type === "internal"
+  );
 
   return (
     <div>
@@ -37,12 +59,35 @@ export default async function TournamentsPage() {
         </FillButton>
       </div>
 
+      {/* Tabs */}
+      <div className="mt-6 flex gap-4 border-b border-border">
+        <button
+          onClick={() => setActiveTab("official")}
+          className={`px-4 py-3 font-medium text-sm transition ${
+            activeTab === "official"
+              ? "border-b-2 border-gold text-gold"
+              : "text-muted hover:text-foreground"
+          }`}
+        >
+          Official
+        </button>
+        <button
+          onClick={() => setActiveTab("unofficial")}
+          className={`px-4 py-3 font-medium text-sm transition ${
+            activeTab === "unofficial"
+              ? "border-b-2 border-gold text-gold"
+              : "text-muted hover:text-foreground"
+          }`}
+        >
+          Unofficial
+        </button>
+      </div>
+
       <div className="card mt-6 overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-border text-xs uppercase text-muted">
             <tr>
               <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Type</th>
               <th className="px-4 py-3">Format</th>
               <th className="px-4 py-3">Dates</th>
               <th className="px-4 py-3">Status</th>
@@ -50,7 +95,7 @@ export default async function TournamentsPage() {
             </tr>
           </thead>
           <tbody>
-            {(tournaments ?? []).map((t) => (
+            {filteredTournaments.map((t) => (
               <tr key={t.id} className="border-b border-border last:border-0">
                 <td className="px-4 py-3 font-medium">
                   <Link
@@ -60,7 +105,6 @@ export default async function TournamentsPage() {
                     {t.name}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-muted capitalize">{t.type}</td>
                 <td className="px-4 py-3 text-muted capitalize">{t.format ?? "—"}</td>
                 <td className="px-4 py-3 text-muted">
                   {t.start_date ? new Date(t.start_date).toLocaleDateString() : "—"}
@@ -87,10 +131,10 @@ export default async function TournamentsPage() {
                 </td>
               </tr>
             ))}
-            {(tournaments ?? []).length === 0 && (
+            {filteredTournaments.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-muted">
-                  No tournaments yet.
+                <td colSpan={5} className="px-4 py-8 text-center text-muted">
+                  No {activeTab} tournaments yet.
                 </td>
               </tr>
             )}
