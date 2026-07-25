@@ -58,7 +58,7 @@ export default function MatchCard({
               className="relative h-12 w-12 overflow-hidden rounded-full border-2 border-gold/60 bg-gold/10"
             >
               <Image
-                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect fill='%23D4AF37' width='48' height='48'/%3E%3C/svg%3E"
+                src="/logo.jpg"
                 alt="Falcon Warriors"
                 fill
                 className="object-cover"

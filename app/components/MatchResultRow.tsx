@@ -86,7 +86,7 @@ export default function MatchResultRow({
       className="card grid items-center gap-4 p-4 text-center hover:border-gold/30 sm:grid-cols-[minmax(140px,1fr)_auto_minmax(140px,1fr)]"
     >
       {/* Teams + Score */}
-      <TeamBlock tag="FW" name="Falcon Warriors" logoUrl={undefined} align="left" />
+      <TeamBlock tag="FW" name="Falcon Warriors" logoUrl="/logo.jpg" align="left" />
 
       <div className="grid items-center justify-items-center gap-2">
         <span className="text-xs uppercase tracking-[0.15em] text-muted">
