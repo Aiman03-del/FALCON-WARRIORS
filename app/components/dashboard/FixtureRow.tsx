@@ -24,10 +24,12 @@ export default function FixtureRow({
   match,
   allParticipants,
   tournamentId,
+  format,
 }: {
   match: Match;
   allParticipants: PlayerOption[];
   tournamentId: string;
+  format: string;
 }) {
   const supabase = createClient();
   const router = useRouter();
@@ -55,6 +57,27 @@ export default function FixtureRow({
     setLoading(false);
     setEditingOpponents(false);
     router.refresh();
+  }
+
+  // League/round-robin-এ পরবর্তী কোনো রাউন্ড জেনারেট করার দরকার নেই, তাই সব ম্যাচ
+  // (completed/bye) শেষ হলে টুর্নামেন্ট নিরাপদে "completed" করে দেওয়া যায়।
+  // Knockout আলাদাভাবে NextRoundGenerator হ্যান্ডেল করে।
+  async function maybeAutoCompleteLeague() {
+    if (format !== "league") return;
+
+    const { count } = await supabase
+      .from("tournament_matches")
+      .select("id", { count: "exact", head: true })
+      .eq("tournament_id", tournamentId)
+      .not("status", "in", "(completed,bye)");
+
+    if (count === 0) {
+      await supabase
+        .from("tournaments")
+        .update({ status: "completed" })
+        .eq("id", tournamentId)
+        .neq("status", "completed");
+    }
   }
 
   async function handleSaveResult() {
@@ -91,6 +114,7 @@ export default function FixtureRow({
 
     await recalcStandings(supabase, tournamentId);
     await recalcAllPlayerStats(supabase);
+    await maybeAutoCompleteLeague();
 
     setLoading(false);
     router.refresh();

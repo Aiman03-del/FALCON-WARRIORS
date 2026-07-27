@@ -53,12 +53,42 @@ export function generateKnockoutRound1(participants: ParticipantForDraw[]): Matc
   return matches;
 }
 
-// Knockout: next round from previous round winners
+// Knockout: next round from previous round winners.
+// IMPORTANT: winners must already be in bracket order (i.e. the order their
+// feeder matches appeared in, sorted by match_order) — we pair them
+// sequentially (1v2, 3v4, ...) rather than reshuffling, so the bracket tree
+// stays consistent and can be drawn with connecting lines round to round.
 export function generateKnockoutNextRound(
   winners: ParticipantForDraw[],
   nextRound: number
 ): MatchDraft[] {
-  return generateKnockoutRound1(winners).map((m) => ({ ...m, round: nextRound }));
+  const matches: MatchDraft[] = [];
+  let order = 1;
+
+  for (let i = 0; i < winners.length; i += 2) {
+    const p1 = winners[i];
+    const p2 = winners[i + 1];
+
+    if (!p2) {
+      matches.push({
+        round: nextRound,
+        match_order: order++,
+        player1_id: p1.id,
+        player2_id: null,
+        status: "bye",
+      });
+    } else {
+      matches.push({
+        round: nextRound,
+        match_order: order++,
+        player1_id: p1.id,
+        player2_id: p2.id,
+        status: "scheduled",
+      });
+    }
+  }
+
+  return matches;
 }
 
 // League: Round-robin (circle method) — everyone plays everyone once (or twice)

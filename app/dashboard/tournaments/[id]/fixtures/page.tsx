@@ -5,6 +5,7 @@ import FixtureRow from "@/app/components/dashboard/FixtureRow";
 import NextRoundGenerator from "@/app/components/dashboard/NextRoundGenerator";
 import { requireStaff } from "@/app/lib/queries/dashboard";
 import { createClient } from "@/app/lib/supabase/server";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 
@@ -19,7 +20,7 @@ export default async function FixturesPage({
 
   const { data: tournament } = await supabase
     .from("tournaments")
-    .select("id, name, format, double_round")
+    .select("id, name, format, double_round, status")
     .eq("id", id)
     .single();
 
@@ -49,12 +50,22 @@ export default async function FixturesPage({
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold uppercase tracking-wide">
-        {tournament.name} — Fixtures
-      </h1>
-      <p className="mt-1 text-sm text-muted capitalize">
-        {tournament.format} format · {participants.length} approved participants
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold uppercase tracking-wide">
+            {tournament.name} — Fixtures
+          </h1>
+          <p className="mt-1 text-sm text-muted capitalize">
+            {tournament.format} format · {participants.length} approved participants
+          </p>
+        </div>
+        <Link
+          href={`/dashboard/tournaments/${tournament.id}/bracket`}
+          className="btn-outline text-sm"
+        >
+          {tournament.format === "knockout" ? "View Bracket" : "View Standings"}
+        </Link>
+      </div>
 
       <div className="mt-6">
         <FixtureGenerator
@@ -100,7 +111,13 @@ export default async function FixturesPage({
               {(matches ?? [])
                 .filter((m) => m.round === round)
                 .map((m) => (
-                  <FixtureRow key={m.id} match={m} allParticipants={participants} tournamentId={tournament.id} />
+                  <FixtureRow
+                    key={m.id}
+                    match={m}
+                    allParticipants={participants}
+                    tournamentId={tournament.id}
+                    format={tournament.format}
+                  />
                 ))}
             </div>
           </div>
@@ -112,6 +129,7 @@ export default async function FixturesPage({
           tournamentId={tournament.id}
           matches={matches ?? []}
           allParticipants={participants}
+          tournamentStatus={tournament.status}
         />
       )}
     </div>

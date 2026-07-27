@@ -2,9 +2,11 @@ import BackLink from "@/app/components/BackLink";
 import { requireStaff } from "@/app/lib/queries/dashboard";
 import { createClient } from "@/app/lib/supabase/server";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import TournamentStatusControl from "../../TournamentStatusControl";
 import OfficialTournamentOverview from "@/app/components/dashboard/OfficialTournamentOverview";
 import ParticipantsManager from "@/app/components/dashboard/ParticipantsManager";
+
 export default async function ManageTournamentPage({
   params,
 }: {
@@ -43,7 +45,11 @@ export default async function ManageTournamentPage({
           <OfficialTournamentOverview tournamentId={tournament.id} />
         </div>
       ) : (
-        <InternalTournamentSection tournamentId={tournament.id} maxParticipants={tournament.max_participants} />
+        <InternalTournamentSection
+          tournamentId={tournament.id}
+          format={tournament.format}
+          maxParticipants={tournament.max_participants}
+        />
       )}
     </div>
   );
@@ -51,9 +57,11 @@ export default async function ManageTournamentPage({
 
 async function InternalTournamentSection({
   tournamentId,
+  format,
   maxParticipants,
 }: {
   tournamentId: string;
+  format: string;
   maxParticipants: number | null;
 }) {
   const supabase = await createClient();
@@ -69,11 +77,28 @@ async function InternalTournamentSection({
     .order("efootball_username");
 
   return (
-    <ParticipantsManager
-      tournamentId={tournamentId}
-      participants={participants ?? []}
-      allPlayers={allPlayers ?? []}
-      maxParticipants={maxParticipants}
-    />
+    <div>
+      <div className="mt-6 flex flex-wrap gap-3">
+        <Link
+          href={`/dashboard/tournaments/${tournamentId}/fixtures`}
+          className="btn-primary text-sm"
+        >
+          Manage Fixtures
+        </Link>
+        <Link
+          href={`/dashboard/tournaments/${tournamentId}/bracket`}
+          className="btn-outline text-sm"
+        >
+          {format === "knockout" ? "View Bracket" : "View Standings"}
+        </Link>
+      </div>
+
+      <ParticipantsManager
+        tournamentId={tournamentId}
+        participants={participants ?? []}
+        allPlayers={allPlayers ?? []}
+        maxParticipants={maxParticipants}
+      />
+    </div>
   );
 }

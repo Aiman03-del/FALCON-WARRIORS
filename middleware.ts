@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Demo mode - set to true to allow access without authentication
-const DEMO_MODE = true;
+const DEMO_MODE = false;
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });

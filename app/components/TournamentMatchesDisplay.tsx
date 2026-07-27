@@ -5,8 +5,8 @@ type Match = {
   id: string;
   round: number;
   matchOrder: number;
-  player1Id: string;
-  player2Id: string;
+  player1Id?: string | null;
+  player2Id?: string | null;
   player1Score: number | null;
   player2Score: number | null;
   status: "pending" | "completed" | "live";
@@ -22,6 +22,12 @@ function getResult(score1: number, score2: number): "W" | "D" | "L" {
   if (score1 > score2) return "W";
   if (score1 === score2) return "D";
   return "L";
+}
+
+function getPlayerLabel(playerName: string | undefined, playerId?: string | null) {
+  if (playerName) return playerName;
+  if (playerId) return `Player ${playerId.slice(0, 4)}`;
+  return "TBD";
 }
 
 export default function TournamentMatchesDisplay({ matches }: Props) {
@@ -48,14 +54,14 @@ export default function TournamentMatchesDisplay({ matches }: Props) {
               <div key={m.id} className="card flex items-center justify-between gap-4 p-3 sm:p-4">
                 <div className="flex flex-1 items-center justify-between gap-2 sm:justify-center">
                   <div className="text-center">
-                    <p className="text-sm font-semibold">{m.player1?.efootball_username || `Player ${m.player1Id.slice(0, 4)}`}</p>
+                    <p className="text-sm font-semibold">{getPlayerLabel(m.player1?.efootball_username, m.player1Id)}</p>
                     <p className="text-xs text-muted">Round {m.round}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold uppercase text-muted">VS</span>
                   </div>
                   <div className="text-center">
-                    <p className="text-sm font-semibold">{m.player2?.efootball_username || `Player ${m.player2Id.slice(0, 4)}`}</p>
+                    <p className="text-sm font-semibold">{getPlayerLabel(m.player2?.efootball_username, m.player2Id)}</p>
                     <p className="text-xs text-muted">Match {m.matchOrder}</p>
                   </div>
                 </div>
@@ -80,7 +86,7 @@ export default function TournamentMatchesDisplay({ matches }: Props) {
                 <div key={m.id} className="card flex items-center justify-between gap-4 p-3 sm:p-4">
                   <div className="flex flex-1 items-center justify-between gap-2 sm:justify-center">
                     <div className="min-w-0 text-center">
-                      <p className="truncate text-sm font-semibold">{m.player1?.efootball_username || `Player ${m.player1Id.slice(0, 4)}`}</p>
+                      <p className="truncate text-sm font-semibold">{getPlayerLabel(m.player1?.efootball_username, m.player1Id)}</p>
                       <p className="text-xs text-muted">Round {m.round}</p>
                     </div>
                     <div className="flex flex-col items-center gap-1 shrink-0">
@@ -90,7 +96,7 @@ export default function TournamentMatchesDisplay({ matches }: Props) {
                       <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${resultStyle}`}>{result}</span>
                     </div>
                     <div className="min-w-0 text-center">
-                      <p className="truncate text-sm font-semibold">{m.player2?.efootball_username || `Player ${m.player2Id.slice(0, 4)}`}</p>
+                      <p className="truncate text-sm font-semibold">{getPlayerLabel(m.player2?.efootball_username, m.player2Id)}</p>
                       <p className="text-xs text-muted">Match {m.matchOrder}</p>
                     </div>
                   </div>

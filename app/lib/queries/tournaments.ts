@@ -1,5 +1,4 @@
 import { createClient } from "../supabase/server";
-import { calculateStandings, getUpcomingMatches, getCompletedMatches, getPlayerRecentForm } from "../utils/tournament";
 
 // Mock tournament data
 const MOCK_TOURNAMENTS = [
