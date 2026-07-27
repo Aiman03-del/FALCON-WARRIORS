@@ -72,7 +72,8 @@ export async function recalcAllPlayerStats(supabase: SupabaseClient) {
     else { s1.draws++; s2.draws++; }
   }
 
-  // 3. External matches — Squad Battle System (match_squad_battles থেকে individual স্ট্যাটস)
+  // 3. External matches — support both the legacy squad battle system and the
+  // current match_squad + match_goal_entries flow used by friendly matches.
   const { data: battles } = await supabase
     .from("match_squad_battles")
     .select("falcon_player_id, falcon_score, opponent_score, match_id, matches!inner(status, match_type)")
@@ -94,6 +95,52 @@ export async function recalcAllPlayerStats(supabase: SupabaseClient) {
 
     if (b.falcon_score > b.opponent_score) s.wins++;
     else if (b.falcon_score < b.opponent_score) s.losses++;
+    else s.draws++;
+  }
+
+  const { data: squadRows } = await supabase
+    .from("match_squad")
+    .select("match_id, player_id")
+    .not("player_id", "is", null);
+
+  const { data: goalEntries } = await supabase
+    .from("match_goal_entries")
+    .select("match_id, player_id, goals")
+    .not("player_id", "is", null);
+
+  const { data: externalMatches } = await supabase
+    .from("matches")
+    .select("id, status, match_type, score_home, score_away")
+    .eq("match_type", "external")
+    .eq("status", "completed");
+
+  const externalGoalMap: Record<string, Record<string, number>> = {};
+  for (const entry of goalEntries ?? []) {
+    if (!entry.match_id || !entry.player_id) continue;
+    externalGoalMap[entry.match_id] ??= {};
+    externalGoalMap[entry.match_id][entry.player_id] = Number(entry.goals ?? 0);
+  }
+
+  const externalMatchMap = new Map((externalMatches ?? []).map((match: any) => [match.id, match]));
+
+  for (const row of squadRows ?? []) {
+    const matchInfo = externalMatchMap.get(row.match_id);
+    if (!matchInfo) continue;
+
+    const s = statsMap[row.player_id];
+    if (!s) continue;
+
+    const ownGoals = externalGoalMap[row.match_id]?.[row.player_id] ?? 0;
+    const scoreHome = Number(matchInfo.score_home ?? 0);
+    const scoreAway = Number(matchInfo.score_away ?? 0);
+
+    s.matches++;
+    s.goals += ownGoals;
+    s.goals_for += ownGoals;
+    s.goals_against += scoreAway;
+
+    if (scoreHome > scoreAway) s.wins++;
+    else if (scoreHome < scoreAway) s.losses++;
     else s.draws++;
   }
 

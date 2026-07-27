@@ -78,19 +78,25 @@ async function InternalTournamentSection({
 
   return (
     <div>
-      <div className="mt-6 flex flex-wrap gap-3">
-        <Link
-          href={`/dashboard/tournaments/${tournamentId}/fixtures`}
-          className="btn-primary text-sm"
-        >
-          Manage Fixtures
-        </Link>
-        <Link
-          href={`/dashboard/tournaments/${tournamentId}/bracket`}
-          className="btn-outline text-sm"
-        >
-          {format === "knockout" ? "View Bracket" : "View Standings"}
-        </Link>
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-surface-2/70 p-4">
+        <div>
+          <p className="text-sm font-semibold">Tournament Actions</p>
+          <p className="text-xs text-muted">Generate fixtures, manage matches, and review standings.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/dashboard/tournaments/${tournamentId}/fixtures`}
+            className="btn-primary text-sm"
+          >
+            Go to Fixtures
+          </Link>
+          <Link
+            href={`/dashboard/tournaments/${tournamentId}/bracket`}
+            className="btn-outline text-sm"
+          >
+            {format === "knockout" ? "View Bracket" : "View Standings"}
+          </Link>
+        </div>
       </div>
 
       <ParticipantsManager

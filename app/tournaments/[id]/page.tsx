@@ -69,7 +69,7 @@ export default async function TournamentDetailPage({
             maxParticipants={tournament.max_participants}
             registrationDeadline={tournament.registration_deadline}
             tournamentStatus={tournament.status}
-            tournamentType={tournament.type as "internal" | "external"}
+            tournamentType={tournament.type === "official" ? "external" : "internal"}
           />
         </div>
 
