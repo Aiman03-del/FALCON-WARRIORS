@@ -38,6 +38,10 @@ export default function TournamentsPage() {
     }
   }
 
+  function handleTournamentDeleted(id: string) {
+    setTournaments((current) => current.filter((tournament) => tournament.id !== id));
+  }
+
   const filteredTournaments = (tournaments ?? []).filter((t) =>
     activeTab === "official" ? t.type === "official" : t.type === "internal"
   );
@@ -126,7 +130,7 @@ export default function TournamentsPage() {
                     >
                       <Edit3 size={16} />
                     </Link>
-                    <DeleteTournamentButton id={t.id} />
+                    <DeleteTournamentButton id={t.id} onDeleted={handleTournamentDeleted} />
                   </div>
                 </td>
               </tr>

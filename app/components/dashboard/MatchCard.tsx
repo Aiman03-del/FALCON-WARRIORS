@@ -89,7 +89,7 @@ export default function MatchCard({
               {opponentLogoUrl ? (
                 <Image
                   src={opponentLogoUrl}
-                  alt={opponentName}
+                  alt={opponentName?.trim() ? opponentName : "Opponent team logo"}
                   fill
                   className="object-cover"
                 />
