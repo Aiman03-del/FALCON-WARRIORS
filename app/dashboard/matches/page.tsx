@@ -8,36 +8,77 @@ export default function MatchesPage() {
   const [activeTab, setActiveTab] = useState<"official" | "unofficial">("official");
   const [matches, setMatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMatches();
   }, []);
 
-  async function fetchMatches() {
-    try {
-      const supabase = await createClient();
+async function fetchMatches() {
+  setFetchError(null);
+  const supabase = await createClient();
 
-      // Fetch matches with their tournament info
-      const { data: matchesData } = await supabase
-        .from("matches")
-        .select(
-          "id, opponent_name, opponent_logo_url, competition, match_date, status, score_home, score_away, match_type, tournament_id, tournaments(type)"
-        )
-        .not("tournament_id", "is", null)
-        .order("match_date", { ascending: false });
+  // Official — matches টেবিল থেকে
+  const { data: officialMatches, error: err1 } = await supabase
+    .from("matches")
+    .select(
+      "id, opponent_name, opponent_logo_url, competition, round_stage, match_date, status, score_home, score_away, tournament_id, tournaments!inner(type)"
+    )
+    .not("tournament_id", "is", null)
+    .eq("tournaments.type", "official")
+    .order("match_date", { ascending: false });
 
-      setMatches(matchesData ?? []);
-    } catch (error) {
-      console.error("Failed to fetch matches:", error);
-    } finally {
-      setLoading(false);
-    }
+  // Internal — tournament_matches টেবিল থেকে (player vs player)
+  const { data: internalMatches, error: err2 } = await supabase
+    .from("tournament_matches")
+    .select(
+      "id, round, status, player1_score, player2_score, created_at, tournament_id, tournaments!inner(type, name), player1:player1_id(efootball_username), player2:player2_id(efootball_username)"
+    )
+    .eq("tournaments.type", "internal")
+    .order("created_at", { ascending: false });
+
+  if (err1 || err2) {
+    setFetchError(err1?.message ?? err2?.message ?? "Something went wrong");
+    setLoading(false);
+    return;
   }
 
-  const filteredMatches = (matches ?? []).filter((m) => {
-    const tournamentType = m.tournaments?.type || "internal";
-    return activeTab === "official" ? tournamentType === "official" : tournamentType === "internal";
+  const normalizedOfficial = (officialMatches ?? []).map((m: any) => ({
+    id: m.id,
+    kind: "official" as const,
+    opponent_name: m.opponent_name,
+    opponent_logo_url: m.opponent_logo_url,
+    competition: m.competition ?? m.round_stage,
+    match_date: m.match_date,
+    status: m.status,
+    score_home: m.score_home,
+    score_away: m.score_away,
+  }));
+
+  const normalizedInternal = (internalMatches ?? []).map((m: any) => {
+    const p1 = Array.isArray(m.player1) ? m.player1[0] : m.player1;
+    const p2 = Array.isArray(m.player2) ? m.player2[0] : m.player2;
+    const tournamentName = Array.isArray(m.tournaments) ? m.tournaments[0]?.name : m.tournaments?.name;
+    return {
+      id: m.id,
+      kind: "internal" as const,
+      opponent_name: `${p1?.efootball_username ?? "?"} vs ${p2?.efootball_username ?? "?"}`,
+      opponent_logo_url: null,
+      competition: tournamentName ?? `Round ${m.round}`,
+      match_date: m.created_at,
+      status: m.status,
+      score_home: m.player1_score,
+      score_away: m.player2_score,
+    };
   });
+
+  setMatches([...normalizedOfficial, ...normalizedInternal]);
+  setLoading(false);
+}
+
+const filteredMatches = (matches ?? []).filter((m) =>
+  activeTab === "official" ? m.kind === "official" : m.kind === "internal"
+);
 
   return (
     <div>
@@ -73,6 +114,12 @@ export default function MatchesPage() {
           Unofficial
         </button>
       </div>
+
+      {fetchError && (
+        <p className="mt-4 rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          Failed to load matches: {fetchError}
+        </p>
+      )}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filteredMatches.map((m) => (

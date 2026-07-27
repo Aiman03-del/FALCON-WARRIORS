@@ -17,27 +17,28 @@ export default function TournamentsPage() {
   const [activeTab, setActiveTab] = useState<"official" | "unofficial">("official");
   const [tournaments, setTournaments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTournaments();
   }, []);
 
-  async function fetchTournaments() {
-    try {
-      const supabase = await createClient();
-      const { data } = await supabase
-        .from("tournaments")
-        .select("id, name, type, format, status, start_date, end_date")
-        .order("start_date", { ascending: false });
+ async function fetchTournaments() {
+    setFetchError(null);
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("tournaments")
+      .select("id, name, type, format, status, start_date, end_date")
+      .order("start_date", { ascending: false });
 
-      setTournaments(data ?? []);
-    } catch (error) {
+    if (error) {
       console.error("Failed to fetch tournaments:", error);
-    } finally {
-      setLoading(false);
+      setFetchError(error.message);
+    } else {
+      setTournaments(data ?? []);
     }
+    setLoading(false);
   }
-
   function handleTournamentDeleted(id: string) {
     setTournaments((current) => current.filter((tournament) => tournament.id !== id));
   }
@@ -86,6 +87,12 @@ export default function TournamentsPage() {
           Unofficial
         </button>
       </div>
+
+      {fetchError && (
+        <p className="mt-4 rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          Failed to load tournaments: {fetchError}
+        </p>
+      )}
 
       <div className="card mt-6 overflow-x-auto">
         <table className="w-full text-left text-sm">
