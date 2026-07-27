@@ -236,6 +236,47 @@ export async function getTournamentStandings(tournamentId: string) {
   }
 }
 
+// For group_knockout tournaments: returns each group's participants, ranked
+// (1st place first) using the same tiebreak order as the points table
+// (points → goal difference → goals scored). Used both to display group
+// tables and to seed the knockout stage once every group match is done.
+export async function getGroupStandings(tournamentId: string) {
+  try {
+    const supabase = await createClient();
+
+    const { data: participants } = await supabase
+      .from("tournament_participants")
+      .select(
+        "id, player_id, group_name, points, matches_played, wins, draws, losses, goals_for, goals_against, player_details(id, efootball_username, avatar_url)"
+      )
+      .eq("tournament_id", tournamentId)
+      .eq("status", "approved");
+
+    const groups: Record<string, any[]> = {};
+    for (const p of participants ?? []) {
+      const key = p.group_name ?? "Ungrouped";
+      (groups[key] ??= []).push(p);
+    }
+
+    const sortFn = (a: any, b: any) => {
+      if (b.points !== a.points) return b.points - a.points;
+      const gdA = (a.goals_for ?? 0) - (a.goals_against ?? 0);
+      const gdB = (b.goals_for ?? 0) - (b.goals_against ?? 0);
+      if (gdB !== gdA) return gdB - gdA;
+      return (b.goals_for ?? 0) - (a.goals_for ?? 0);
+    };
+
+    return Object.entries(groups)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([groupName, rows]) => ({
+        groupName,
+        standings: [...rows].sort(sortFn),
+      }));
+  } catch (error) {
+    return [];
+  }
+}
+
 export async function getTournamentUpcomingMatches(tournamentId: string) {
   try {
     const supabase = await createClient();

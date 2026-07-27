@@ -7,7 +7,7 @@ import { createClient } from "@/app/lib/supabase/client";
 import { recalcStandings } from "@/app/lib/fixtures/recalcStandings";
 import { recalcAllPlayerStats } from "@/app/lib/matches/recalcPlayerStats";
 
-type PlayerOption = { id: string; username: string };
+type PlayerOption = { id: string; username: string; avatar_url?: string | null };
 
 type Match = {
   id: string;
@@ -46,6 +46,20 @@ export default function FixtureRow({
   function nameOf(id: string | null) {
     if (!id) return "— BYE —";
     return allParticipants.find((p) => p.id === id)?.username ?? "Unknown";
+  }
+
+  function avatarUrlOf(id: string | null) {
+    if (!id) return null;
+    return allParticipants.find((p) => p.id === id)?.avatar_url ?? null;
+  }
+
+  function initialsOf(name: string) {
+    return name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? "")
+      .join("") || "P";
   }
 
   async function handleSaveOpponents() {
@@ -134,7 +148,7 @@ export default function FixtureRow({
     <div className="card p-4">
       {editingOpponents ? (
         <div className="flex flex-wrap items-end gap-3">
-          <div className="flex-1 min-w-[150px]">
+          <div className="min-w-37.5 flex-1">
             <label className="mb-1 block text-xs font-medium text-muted">Player 1</label>
             <select
               value={p1}
@@ -149,7 +163,7 @@ export default function FixtureRow({
               ))}
             </select>
           </div>
-          <div className="flex-1 min-w-[150px]">
+          <div className="min-w-37.5 flex-1">
             <label className="mb-1 block text-xs font-medium text-muted">Player 2</label>
             <select
               value={p2}
@@ -179,37 +193,17 @@ export default function FixtureRow({
           </button>
         </div>
       ) : (
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <p className="text-sm font-semibold">
-              {nameOf(match.player1_id)} <span className="text-muted">vs</span>{" "}
-              {nameOf(match.player2_id)}
-            </p>
-            <button
-              onClick={() => setEditingOpponents(true)}
-              className="flex items-center gap-1 text-xs text-gold hover:text-gold-light"
-            >
-              <Shuffle size={12} />
-              Change
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              value={s1}
-              onChange={(e) => setS1(e.target.value)}
-              className="w-14 rounded-lg border border-border bg-surface-2 px-2 py-1.5 text-center text-sm outline-none focus:border-gold"
-              placeholder="0"
-            />
-            <span className="text-muted">-</span>
-            <input
-              type="number"
-              value={s2}
-              onChange={(e) => setS2(e.target.value)}
-              className="w-14 rounded-lg border border-border bg-surface-2 px-2 py-1.5 text-center text-sm outline-none focus:border-gold"
-              placeholder="0"
-            />
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex min-w-37.5 flex-1 flex-col items-center gap-2 rounded-2xl border border-white/10 bg-surface-2/70 p-3">
+            <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-linear-to-br from-gold to-indigo text-lg font-bold text-white shadow-lg shadow-gold/20">
+              {avatarUrlOf(match.player1_id) ? (
+                <img src={avatarUrlOf(match.player1_id)!} alt={nameOf(match.player1_id)} className="h-full w-full object-cover" />
+              ) : (
+                initialsOf(nameOf(match.player1_id))
+              )}
+            </div>
+            <p className="text-center text-sm font-semibold">{nameOf(match.player1_id)}</p>
+            <label className="text-[11px] font-medium uppercase tracking-wide text-muted">Rating</label>
             <input
               type="number"
               min={1}
@@ -217,9 +211,63 @@ export default function FixtureRow({
               step="0.1"
               value={r1}
               onChange={(e) => setR1(e.target.value)}
-              className="w-16 rounded-lg border border-border bg-surface-2 px-2 py-1.5 text-center text-xs outline-none focus:border-gold"
-              placeholder="rating"
+              className="w-20 rounded-lg border border-border bg-surface px-2 py-1.5 text-center text-xs outline-none focus:border-gold"
+              placeholder="0"
             />
+          </div>
+
+          <div className="flex min-w-45 flex-col items-center gap-3">
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                value={s1}
+                onChange={(e) => setS1(e.target.value)}
+                className="w-14 rounded-lg border border-border bg-surface-2 px-2 py-1.5 text-center text-sm outline-none focus:border-gold"
+                placeholder="0"
+              />
+              <span className="text-sm font-semibold text-muted">-</span>
+              <input
+                type="number"
+                value={s2}
+                onChange={(e) => setS2(e.target.value)}
+                className="w-14 rounded-lg border border-border bg-surface-2 px-2 py-1.5 text-center text-sm outline-none focus:border-gold"
+                placeholder="0"
+              />
+            </div>
+
+            <button
+              onClick={handleSaveResult}
+              disabled={loading || s1 === "" || s2 === ""}
+              className="btn-primary w-full text-xs disabled:opacity-50"
+            >
+              Save Result
+            </button>
+
+            <button
+              onClick={() => setEditingOpponents(true)}
+              className="flex items-center gap-1 text-xs text-gold hover:text-gold-light"
+            >
+              <Shuffle size={12} />
+              Change Opponents
+            </button>
+
+            {match.status === "completed" && (
+              <span className="rounded-full bg-indigo/20 px-2.5 py-1 text-[10px] font-bold uppercase text-indigo-light">
+                Completed
+              </span>
+            )}
+          </div>
+
+          <div className="flex min-w-37.5 flex-1 flex-col items-center gap-2 rounded-2xl border border-white/10 bg-surface-2/70 p-3">
+            <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-linear-to-br from-indigo to-gold text-lg font-bold text-white shadow-lg shadow-indigo/20">
+              {avatarUrlOf(match.player2_id) ? (
+                <img src={avatarUrlOf(match.player2_id)!} alt={nameOf(match.player2_id)} className="h-full w-full object-cover" />
+              ) : (
+                initialsOf(nameOf(match.player2_id))
+              )}
+            </div>
+            <p className="text-center text-sm font-semibold">{nameOf(match.player2_id)}</p>
+            <label className="text-[11px] font-medium uppercase tracking-wide text-muted">Rating</label>
             <input
               type="number"
               min={1}
@@ -227,23 +275,10 @@ export default function FixtureRow({
               step="0.1"
               value={r2}
               onChange={(e) => setR2(e.target.value)}
-              className="w-16 rounded-lg border border-border bg-surface-2 px-2 py-1.5 text-center text-xs outline-none focus:border-gold"
-              placeholder="rating"
+              className="w-20 rounded-lg border border-border bg-surface px-2 py-1.5 text-center text-xs outline-none focus:border-gold"
+              placeholder="0"
             />
-            <button
-              onClick={handleSaveResult}
-              disabled={loading || s1 === "" || s2 === ""}
-              className="btn-primary text-xs disabled:opacity-50"
-            >
-              Save Result
-            </button>
           </div>
-
-          {match.status === "completed" && (
-            <span className="rounded-full bg-indigo/20 px-2.5 py-1 text-[10px] font-bold uppercase text-indigo-light">
-              Completed
-            </span>
-          )}
         </div>
       )}
     </div>

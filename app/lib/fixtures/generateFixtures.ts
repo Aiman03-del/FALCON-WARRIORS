@@ -1,6 +1,7 @@
 export type ParticipantForDraw = {
   id: string; // player_id
   username: string;
+  seed?: number | null; // 1 = strongest. null/undefined = unseeded
 };
 
 export type MatchDraft = {
@@ -9,6 +10,12 @@ export type MatchDraft = {
   player1_id: string | null;
   player2_id: string | null;
   status: "scheduled" | "bye";
+  group_name?: string | null;
+};
+
+export type GroupAssignment = {
+  group_name: string;
+  participant: ParticipantForDraw;
 };
 
 function shuffle<T>(arr: T[]): T[] {
@@ -31,7 +38,6 @@ export function generateKnockoutRound1(participants: ParticipantForDraw[]): Matc
     const p2 = shuffled[i + 1];
 
     if (!p2) {
-      // Odd number — last player gets a bye and advances to the next round
       matches.push({
         round: 1,
         match_order: order++,
@@ -47,6 +53,79 @@ export function generateKnockoutRound1(participants: ParticipantForDraw[]): Matc
         player2_id: p2.id,
         status: "scheduled",
       });
+    }
+  }
+
+  return matches;
+}
+
+function nextPowerOfTwo(n: number): number {
+  let p = 1;
+  while (p < n) p *= 2;
+  return p;
+}
+
+// Standard tournament-bracket seeding order, e.g. for size 8: [1,8,4,5,2,7,3,6].
+// This guarantees seed 1 and seed 2 can only meet in the final, seeds 1-4 can
+// only meet from the semi-final onward, etc. — the same placement method used
+// by real single-elimination brackets (tennis, football cup draws, esports).
+function standardSeedOrder(size: number): number[] {
+  let order = [1, 2];
+  while (order.length < size) {
+    const doubled = order.length * 2;
+    const next: number[] = [];
+    for (const s of order) {
+      next.push(s, doubled + 1 - s);
+    }
+    order = next;
+  }
+  return order;
+}
+
+// Knockout: seeded round 1. Participants with a `seed` are placed using the
+// standard bracket seeding table so the strongest seeds are spread apart and
+// any byes (when the field isn't a power of 2) land on the *top* seeds —
+// exactly like a professional single-elimination draw. Participants without a
+// seed are shuffled randomly and slotted in after the seeded ones.
+export function generateSeededKnockoutRound1(participants: ParticipantForDraw[]): MatchDraft[] {
+  const seeded = participants
+    .filter((p) => p.seed != null)
+    .sort((a, b) => (a.seed as number) - (b.seed as number));
+  const unseeded = shuffle(participants.filter((p) => p.seed == null));
+  const ordered = [...seeded, ...unseeded]; // index 0 = seed #1 (strongest)
+
+  const n = ordered.length;
+  const bracketSize = nextPowerOfTwo(n);
+  const slots = standardSeedOrder(bracketSize);
+
+  const matches: MatchDraft[] = [];
+  let matchOrder = 1;
+
+  for (let i = 0; i < slots.length; i += 2) {
+    const seedA = slots[i];
+    const seedB = slots[i + 1];
+    const pA = seedA <= n ? ordered[seedA - 1] : null;
+    const pB = seedB <= n ? ordered[seedB - 1] : null;
+
+    if (pA && pB) {
+      matches.push({
+        round: 1,
+        match_order: matchOrder++,
+        player1_id: pA.id,
+        player2_id: pB.id,
+        status: "scheduled",
+      });
+    } else {
+      const survivor = pA ?? pB;
+      if (survivor) {
+        matches.push({
+          round: 1,
+          match_order: matchOrder++,
+          player1_id: survivor.id,
+          player2_id: null,
+          status: "bye",
+        });
+      }
     }
   }
 
@@ -161,4 +240,86 @@ export function generateRoundRobin(
     .map((m) => ({ ...m, round: m.round + totalRounds }));
 
   return [...firstLegMatches, ...secondLegMatches, ...byeMatches];
+}
+
+// Group Stage draw: splits participants into `groupCount` groups using a
+// "snake" distribution (A,B,C,D, D,C,B,A, A,B,C,D, ...) over seeded order —
+// this is how real tournaments balance groups so all the top seeds don't end
+// up bunched into the same group. Unseeded participants are shuffled first.
+export function generateGroups(
+  participants: ParticipantForDraw[],
+  groupCount: number
+): GroupAssignment[] {
+  const seeded = participants
+    .filter((p) => p.seed != null)
+    .sort((a, b) => (a.seed as number) - (b.seed as number));
+  const unseeded = shuffle(participants.filter((p) => p.seed == null));
+  const ordered = [...seeded, ...unseeded];
+
+  const groupNames = Array.from({ length: groupCount }, (_, i) => String.fromCharCode(65 + i));
+
+  const assignments: GroupAssignment[] = [];
+  let g = 0;
+  let dir = 1;
+
+  for (const participant of ordered) {
+    assignments.push({ group_name: groupNames[g], participant });
+    g += dir;
+    if (g === groupCount) {
+      g = groupCount - 1;
+      dir = -1;
+    } else if (g < 0) {
+      g = 0;
+      dir = 1;
+    }
+  }
+
+  return assignments;
+}
+
+// Group Stage fixtures: independent round-robin inside every group. Rounds
+// are numbered per-group (Group A's Round 1 can be played alongside Group B's
+// Round 1) — the `group_name` tag on each draft is what keeps them apart.
+export function generateGroupStageFixtures(
+  assignments: GroupAssignment[],
+  doubleRound: boolean = false
+): MatchDraft[] {
+  const byGroup: Record<string, ParticipantForDraw[]> = {};
+  for (const a of assignments) {
+    (byGroup[a.group_name] ??= []).push(a.participant);
+  }
+
+  const all: MatchDraft[] = [];
+  for (const [groupName, players] of Object.entries(byGroup)) {
+    const drafts = generateRoundRobin(players, doubleRound);
+    all.push(...drafts.map((d) => ({ ...d, group_name: groupName })));
+  }
+  return all;
+}
+
+// Knockout Stage seeded from group-stage results. `groupStandings` must
+// already be ranked (1st place first) per group. We take the top
+// `qualifiersPerGroup` from each group, tier by tier (all 1st-place finishers,
+// then all 2nd-place, ...), and rotate every tier below the winners by one
+// group-position so a group's runner-up doesn't get dropped right next to
+// that same group's winner in the seed list.
+export function generateKnockoutFromGroups(
+  groupStandings: { groupName: string; ranked: ParticipantForDraw[] }[],
+  qualifiersPerGroup: number
+): MatchDraft[] {
+  const tiers: ParticipantForDraw[][] = [];
+
+  for (let pos = 0; pos < qualifiersPerGroup; pos++) {
+    const tier = groupStandings
+      .map((g) => g.ranked[pos])
+      .filter((p): p is ParticipantForDraw => !!p);
+
+    const shift = tier.length > 0 ? pos % tier.length : 0;
+    tiers.push([...tier.slice(shift), ...tier.slice(0, shift)]);
+  }
+
+  const seededOrder = tiers.flat();
+  const withSeeds: ParticipantForDraw[] = seededOrder.map((p, i) => ({ ...p, seed: i + 1 }));
+
+  return generateSeededKnockoutRound1(withSeeds);
 }

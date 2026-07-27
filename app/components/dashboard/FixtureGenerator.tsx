@@ -5,14 +5,20 @@ import { useRouter } from "next/navigation";
 import { Shuffle } from "lucide-react";
 import { createClient } from "@/app/lib/supabase/client";
 import ConfirmActionButton from "@/app/components/ConfirmActionButton";
-import { generateKnockoutRound1, generateRoundRobin } from "@/app/lib/fixtures/generateFixtures";
+import {
+  generateGroups,
+  generateGroupStageFixtures,
+  generateRoundRobin,
+  generateSeededKnockoutRound1,
+} from "@/app/lib/fixtures/generateFixtures";
 
 type Props = {
   tournamentId: string;
   format: string;
   doubleRound: boolean;
-  participants: { id: string; username: string }[];
+  participants: { id: string; username: string; seed?: number | null }[];
   alreadyGenerated: boolean;
+  groupCount?: number | null;
 };
 
 export default function FixtureGenerator({
@@ -21,42 +27,90 @@ export default function FixtureGenerator({
   doubleRound,
   participants,
   alreadyGenerated,
+  groupCount,
 }: Props) {
   const supabase = createClient();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
-  const notEnoughPlayers = participants.length < 2;
+  const minRequired = format === "group_knockout" ? (groupCount ?? 2) * 2 : 2;
+  const notEnoughPlayers = participants.length < minRequired;
 
   const label =
     format === "league" && doubleRound
       ? "Generate Fixtures (Double Round)"
+      : format === "knockout"
+      ? "Generate Seeded Bracket"
+      : format === "group_knockout"
+      ? "Draw Groups & Generate Fixtures"
       : "Generate Fixtures Randomly";
 
   async function runGeneration() {
     if (alreadyGenerated) {
       await supabase.from("tournament_matches").delete().eq("tournament_id", tournamentId);
+      // Also reset any previous group draw so re-generating starts clean.
+      await supabase
+        .from("tournament_participants")
+        .update({ group_name: null })
+        .eq("tournament_id", tournamentId);
     }
 
-    const drafts =
-      format === "knockout"
-        ? generateKnockoutRound1(participants.map((p) => ({ id: p.id, username: p.username })))
-        : generateRoundRobin(
-            participants.map((p) => ({ id: p.id, username: p.username })),
-            doubleRound
-          );
+    const drawPlayers = participants.map((p) => ({ id: p.id, username: p.username, seed: p.seed ?? null }));
 
-    const rows = drafts.map((d) => ({
-      tournament_id: tournamentId,
-      round: d.round,
-      match_order: d.match_order,
-      player1_id: d.player1_id,
-      player2_id: d.player2_id,
-      status: d.status,
-    }));
+    if (format === "knockout") {
+      const drafts = generateSeededKnockoutRound1(drawPlayers);
+      const rows = drafts.map((d) => ({
+        tournament_id: tournamentId,
+        round: d.round,
+        match_order: d.match_order,
+        player1_id: d.player1_id,
+        player2_id: d.player2_id,
+        status: d.status,
+        stage: "knockout",
+      }));
+      const { error: insertError } = await supabase.from("tournament_matches").insert(rows);
+      if (insertError) throw new Error(insertError.message);
+    } else if (format === "group_knockout") {
+      const groups = generateGroups(drawPlayers, groupCount ?? 4);
 
-    const { error: insertError } = await supabase.from("tournament_matches").insert(rows);
-    if (insertError) throw new Error(insertError.message);
+      // Persist each participant's group assignment.
+      await Promise.all(
+        groups.map((g) =>
+          supabase
+            .from("tournament_participants")
+            .update({ group_name: g.group_name })
+            .eq("tournament_id", tournamentId)
+            .eq("player_id", g.participant.id)
+        )
+      );
+
+      const drafts = generateGroupStageFixtures(groups, doubleRound);
+      const rows = drafts.map((d) => ({
+        tournament_id: tournamentId,
+        round: d.round,
+        match_order: d.match_order,
+        player1_id: d.player1_id,
+        player2_id: d.player2_id,
+        status: d.status,
+        stage: "group",
+        group_name: d.group_name,
+      }));
+      const { error: insertError } = await supabase.from("tournament_matches").insert(rows);
+      if (insertError) throw new Error(insertError.message);
+    } else {
+      const drafts = generateRoundRobin(drawPlayers, doubleRound);
+      const rows = drafts.map((d) => ({
+        tournament_id: tournamentId,
+        round: d.round,
+        match_order: d.match_order,
+        player1_id: d.player1_id,
+        player2_id: d.player2_id,
+        status: d.status,
+        stage: "league",
+      }));
+      const { error: insertError } = await supabase.from("tournament_matches").insert(rows);
+      if (insertError) throw new Error(insertError.message);
+    }
 
     router.refresh();
   }
@@ -64,10 +118,13 @@ export default function FixtureGenerator({
   function handleClick() {
     setError(null);
     if (notEnoughPlayers) {
-      setError("At least 2 approved participants are required.");
+      setError(
+        format === "group_knockout"
+          ? `At least ${minRequired} approved participants are required for ${groupCount ?? 4} groups.`
+          : "At least 2 approved participants are required."
+      );
       return;
     }
-    // এখনো কোনো ফিক্সচার নেই — হারানোর কিছু নেই, তাই সরাসরি জেনারেট
     runGeneration().catch((e) => setError(e instanceof Error ? e.message : "Failed to generate fixtures."));
   }
 
@@ -77,7 +134,7 @@ export default function FixtureGenerator({
         <ConfirmActionButton
           onConfirm={runGeneration}
           confirmTitle="Re-generate Fixtures?"
-          confirmMessage="এটা এই টুর্নামেন্টের সব বিদ্যমান ম্যাচ স্থায়ীভাবে মুছে ফেলবে — ইতিমধ্যে এন্টার করা রেজাল্টসহ — এবং নতুন করে র‍্যান্ডম ড্র বানাবে। এটা আর ফিরিয়ে আনা যাবে না।"
+          confirmMessage="এটা এই টুর্নামেন্টের সব বিদ্যমান ম্যাচ স্থায়ীভাবে মুছে ফেলবে — ইতিমধ্যে এন্টার করা রেজাল্টসহ — এবং নতুন করে ড্র বানাবে (গ্রুপ বণ্টনও রিসেট হবে)। এটা আর ফিরিয়ে আনা যাবে না।"
           confirmText="হ্যাঁ, মুছে নতুন করে জেনারেট করুন"
           cancelText="বর্তমান ফিক্সচার রাখুন"
           successMessage="ফিক্সচার আবার জেনারেট হয়েছে।"

@@ -21,7 +21,7 @@ export async function recalcStandings(supabase: SupabaseClient, tournamentId: st
 
   const { data: matches } = await supabase
     .from("tournament_matches")
-    .select("player1_id, player2_id, player1_score, player2_score, status")
+    .select("player1_id, player2_id, player1_score, player2_score, status, stage")
     .eq("tournament_id", tournamentId)
     .eq("status", "completed");
 
@@ -41,6 +41,10 @@ export async function recalcStandings(supabase: SupabaseClient, tournamentId: st
   for (const m of matches ?? []) {
     if (!m.player1_id || !m.player2_id) continue; // skip BYE matches
     if (m.player1_score === null || m.player2_score === null) continue;
+    // Knockout-stage results decide elimination, not league points — keep
+    // them out of the points table (relevant for group_knockout tournaments,
+    // where group matches build the table but the knockout bracket doesn't).
+    if (m.stage === "knockout") continue;
 
     const s1 = statsMap[m.player1_id];
     const s2 = statsMap[m.player2_id];
