@@ -8,6 +8,7 @@ import ConfirmActionButton from "@/app/components/ConfirmActionButton";
 import {
   generateGroups,
   generateGroupStageFixtures,
+  generateKnockoutRound1,
   generateRoundRobin,
   generateSeededKnockoutRound1,
 } from "@/app/lib/fixtures/generateFixtures";
@@ -19,6 +20,7 @@ type Props = {
   participants: { id: string; username: string; seed?: number | null }[];
   alreadyGenerated: boolean;
   groupCount?: number | null;
+  byeMethod?: "seed" | "random";
 };
 
 export default function FixtureGenerator({
@@ -28,6 +30,7 @@ export default function FixtureGenerator({
   participants,
   alreadyGenerated,
   groupCount,
+  byeMethod = "seed",
 }: Props) {
   const supabase = createClient();
   const router = useRouter();
@@ -58,7 +61,8 @@ export default function FixtureGenerator({
     const drawPlayers = participants.map((p) => ({ id: p.id, username: p.username, seed: p.seed ?? null }));
 
     if (format === "knockout") {
-      const drafts = generateSeededKnockoutRound1(drawPlayers);
+      const drafts =
+        byeMethod === "random" ? generateKnockoutRound1(drawPlayers) : generateSeededKnockoutRound1(drawPlayers);
       const rows = drafts.map((d) => ({
         tournament_id: tournamentId,
         round: d.round,

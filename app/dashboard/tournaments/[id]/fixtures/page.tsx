@@ -20,7 +20,7 @@ export default async function FixturesPage({
 
   const { data: tournament } = await supabase
     .from("tournaments")
-    .select("id, name, format, double_round, status")
+    .select("id, name, format, double_round, status, bye_method")
     .eq("id", id)
     .single();
 
@@ -74,6 +74,7 @@ export default async function FixturesPage({
           doubleRound={tournament.double_round}
           participants={participants}
           alreadyGenerated={(matches ?? []).length > 0}
+          byeMethod={tournament.bye_method ?? "seed"}
         />
       </div>
 
@@ -130,6 +131,7 @@ export default async function FixturesPage({
           matches={matches ?? []}
           allParticipants={participants}
           tournamentStatus={tournament.status}
+          byeMethod={tournament.bye_method ?? "seed"}
         />
       )}
     </div>

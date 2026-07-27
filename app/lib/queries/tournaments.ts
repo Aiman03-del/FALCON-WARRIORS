@@ -1,4 +1,5 @@
 import { createClient } from "../supabase/server";
+import { rankStandings } from "../fixtures/tiebreakers";
 
 export async function getTournamentDetail(id: string) {
   const supabase = await createClient();
@@ -15,7 +16,7 @@ export async function getTournamentDetail(id: string) {
   const { data: participants } = await supabase
     .from("tournament_participants")
     .select(
-      "id, points, rank, status, matches_played, wins, draws, losses, goals_for, goals_against, player_details(id, efootball_username, avatar_url)"
+      "id, points, rank, status, matches_played, wins, draws, losses, goals_for, goals_against, manual_rank, player_details(id, efootball_username, avatar_url)"
     )
     .eq("tournament_id", id)
     .eq("status", "approved");
@@ -115,15 +116,26 @@ export async function getTournamentStandings(tournamentId: string) {
 
   const { data: participants, error } = await supabase
     .from("tournament_participants")
-    .select("id, player_id, points, matches_played, wins, draws, losses, goals_for, goals_against, player_details(id, efootball_username)")
+    .select("id, player_id, points, matches_played, wins, draws, losses, goals_for, goals_against, manual_rank, player_details(id, efootball_username)")
     .eq("tournament_id", tournamentId)
-    .eq("status", "approved")
-    .order("points", { ascending: false });
+    .eq("status", "approved");
 
   if (error) throw error;
   if (!participants) return [];
 
-  return participants.map((p: any) => ({
+  // Only league-stage results should decide league standings (knockout-stage
+  // results settle elimination, not the table) — same rule recalcStandings uses.
+  // Filtering in JS (not via .neq("stage", ...)) avoids Postgres's NULL !=
+  // three-valued-logic silently excluding older rows with a null stage.
+  const { data: rawMatches } = await supabase
+    .from("tournament_matches")
+    .select("player1_id, player2_id, player1_score, player2_score, status, stage")
+    .eq("tournament_id", tournamentId)
+    .eq("status", "completed");
+
+  const matches = (rawMatches ?? []).filter((m) => m.stage !== "knockout");
+
+  const withComputed = participants.map((p: any) => ({
     ...p,
     playerId: p.player_id,
     matchesPlayed: p.matches_played,
@@ -132,6 +144,8 @@ export async function getTournamentStandings(tournamentId: string) {
     goalDifference: (p.goals_for ?? 0) - (p.goals_against ?? 0),
     player: p.player_details,
   }));
+
+  return rankStandings(withComputed, matches ?? []);
 }
 
 // For group_knockout tournaments: returns each group's participants, ranked
@@ -144,12 +158,18 @@ export async function getGroupStandings(tournamentId: string) {
   const { data: participants, error } = await supabase
     .from("tournament_participants")
     .select(
-      "id, player_id, group_name, points, matches_played, wins, draws, losses, goals_for, goals_against, player_details(id, efootball_username, avatar_url)"
+      "id, player_id, group_name, points, matches_played, wins, draws, losses, goals_for, goals_against, manual_rank, player_details(id, efootball_username, avatar_url)"
     )
     .eq("tournament_id", tournamentId)
     .eq("status", "approved");
 
   if (error) throw error;
+
+  const { data: rawMatches } = await supabase
+    .from("tournament_matches")
+    .select("player1_id, player2_id, player1_score, player2_score, status, stage, group_name")
+    .eq("tournament_id", tournamentId)
+    .eq("status", "completed");
 
   const groups: Record<string, any[]> = {};
   for (const p of participants ?? []) {
@@ -157,20 +177,14 @@ export async function getGroupStandings(tournamentId: string) {
     (groups[key] ??= []).push(p);
   }
 
-  const sortFn = (a: any, b: any) => {
-    if (b.points !== a.points) return b.points - a.points;
-    const gdA = (a.goals_for ?? 0) - (a.goals_against ?? 0);
-    const gdB = (b.goals_for ?? 0) - (b.goals_against ?? 0);
-    if (gdB !== gdA) return gdB - gdA;
-    return (b.goals_for ?? 0) - (a.goals_for ?? 0);
-  };
-
   return Object.entries(groups)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([groupName, rows]) => ({
-      groupName,
-      standings: [...rows].sort(sortFn),
-    }));
+    .map(([groupName, rows]) => {
+      const groupMatches = (rawMatches ?? []).filter(
+        (m) => m.stage === "group" && m.group_name === groupName
+      );
+      return { groupName, standings: rankStandings(rows, groupMatches) };
+    });
 }
 
 export async function getTournamentUpcomingMatches(tournamentId: string) {

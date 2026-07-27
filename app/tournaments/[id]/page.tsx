@@ -104,8 +104,7 @@ export default async function TournamentDetailPage({
             <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-gold">
               Points Table
             </h2>
-            <PointsTable participants={participants} formMap={formMap} />
-          </div>
+          <PointsTable participants={participants} formMap={formMap} matches={matches as any} /></div>
         )}
       </section>
       <Footer />

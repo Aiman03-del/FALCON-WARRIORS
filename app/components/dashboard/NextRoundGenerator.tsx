@@ -19,11 +19,13 @@ export default function NextRoundGenerator({
   matches,
   allParticipants,
   tournamentStatus,
+  byeMethod = "seed",
 }: {
   tournamentId: string;
   matches: Match[];
   allParticipants: { id: string; username: string }[];
   tournamentStatus: string;
+  byeMethod?: "seed" | "random";
 }) {
   const supabase = createClient();
   const router = useRouter();
@@ -81,7 +83,15 @@ export default function NextRoundGenerator({
       .map((id) => allParticipants.find((p) => p.id === id))
       .filter((p): p is { id: string; username: string } => !!p);
 
-    const drafts = generateKnockoutNextRound(winnerPlayers, currentRound + 1);
+    // bye_method = "random" এ পরের রাউন্ডেও আবার বাই দরকার হতে পারে (যেমন ৭, ৯, ১১
+    // দল দিয়ে শুরু করলে) — একই দল বারবার বাই না পায় সেজন্য আগে কারা বাই পেয়েছে
+    // তার তালিকা বানিয়ে পাঠাচ্ছি। bye_method = "seed" এ এটা কার্যত কখনো প্রয়োজন হয়
+    // না (ব্র্যাকেট round 1-এই power-of-2 তে পূরণ হয়ে যায়), তাই পাঠালেও ক্ষতি নেই।
+    const alreadyByedIds = new Set(
+      matches.filter((m) => m.status === "bye" && m.player1_id).map((m) => m.player1_id as string)
+    );
+
+    const drafts = generateKnockoutNextRound(winnerPlayers, currentRound + 1, alreadyByedIds);
 
     const rows = drafts.map((d) => ({
       tournament_id: tournamentId,

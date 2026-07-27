@@ -27,9 +27,36 @@ function shuffle<T>(arr: T[]): T[] {
   return copy;
 }
 
-// Knockout: only round 1 — random pairing, if odd one player gets a bye
-export function generateKnockoutRound1(participants: ParticipantForDraw[]): MatchDraft[] {
-  const shuffled = shuffle(participants);
+// Fairness check: when we need to pick one unpaired participant to receive a
+// bye, prefer someone who hasn't already had a bye earlier in this knockout
+// run. `alreadyByed` is the set of participant ids who have already received
+// a bye in a previous round. We move a not-yet-byed participant to the very
+// end of the list so the pairing loop below naturally assigns them the bye
+// slot. If everyone in the list has already had a bye (rare, only possible
+// once very few participants remain), we leave the order as-is — there's no
+// fairer option left.
+function pickByeAvoidingRepeat<T extends { id: string }>(list: T[], alreadyByed: Set<string>): T[] {
+  if (list.length % 2 === 0) return list;
+
+  const lastEligibleIndex = [...list].reverse().findIndex((p) => !alreadyByed.has(p.id));
+  if (lastEligibleIndex === -1) return list; // everyone already had a bye — nothing fairer to do
+
+  const realIndex = list.length - 1 - lastEligibleIndex;
+  const copy = [...list];
+  const [chosen] = copy.splice(realIndex, 1);
+  copy.push(chosen);
+  return copy;
+}
+
+// Knockout: only round 1 — random pairing, if odd one player gets a bye.
+// `alreadyByedIds` lets callers avoid repeating a bye on the same participant
+// across rounds (relevant for bye_method = "random", where byes can recur in
+// later rounds — see generateKnockoutNextRound below).
+export function generateKnockoutRound1(
+  participants: ParticipantForDraw[],
+  alreadyByedIds: Set<string> = new Set()
+): MatchDraft[] {
+  const shuffled = pickByeAvoidingRepeat(shuffle(participants), alreadyByedIds);
   const matches: MatchDraft[] = [];
   let order = 1;
 
@@ -137,16 +164,23 @@ export function generateSeededKnockoutRound1(participants: ParticipantForDraw[])
 // feeder matches appeared in, sorted by match_order) — we pair them
 // sequentially (1v2, 3v4, ...) rather than reshuffling, so the bracket tree
 // stays consistent and can be drawn with connecting lines round to round.
+// Knockout: next round from previous round winners.
+// IMPORTANT: winners must already be in bracket order (i.e. the order their
+// feeder matches appeared in, sorted by match_order) — we pair them
+// sequentially (1v2, 3v4, ...) rather than reshuffling, so the bracket tree
+// stays consistent and can be drawn with connecting lines round to round.
 export function generateKnockoutNextRound(
   winners: ParticipantForDraw[],
-  nextRound: number
+  nextRound: number,
+  alreadyByedIds: Set<string> = new Set()
 ): MatchDraft[] {
+  const ordered = pickByeAvoidingRepeat(winners, alreadyByedIds);
   const matches: MatchDraft[] = [];
   let order = 1;
 
-  for (let i = 0; i < winners.length; i += 2) {
-    const p1 = winners[i];
-    const p2 = winners[i + 1];
+  for (let i = 0; i < ordered.length; i += 2) {
+    const p1 = ordered[i];
+    const p2 = ordered[i + 1];
 
     if (!p2) {
       matches.push({
@@ -169,7 +203,6 @@ export function generateKnockoutNextRound(
 
   return matches;
 }
-
 // League: Round-robin (circle method) — everyone plays everyone once (or twice)
 export function generateRoundRobin(
   participants: ParticipantForDraw[],
