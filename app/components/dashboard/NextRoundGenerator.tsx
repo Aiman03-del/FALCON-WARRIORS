@@ -8,10 +8,12 @@ import { generateKnockoutNextRound } from "@/app/lib/fixtures/generateFixtures";
 
 type Match = {
   round: number;
+  match_order: number;
   status: string;
   player1_id: string | null;
   player2_id: string | null;
   winner_id: string | null;
+  stage?: string | null;
 };
 
 export default function NextRoundGenerator({
@@ -20,20 +22,23 @@ export default function NextRoundGenerator({
   allParticipants,
   tournamentStatus,
   byeMethod = "seed",
+  thirdPlaceMatch = false, // নতুন prop
 }: {
   tournamentId: string;
   matches: Match[];
   allParticipants: { id: string; username: string }[];
   tournamentStatus: string;
   byeMethod?: "seed" | "random";
+  thirdPlaceMatch?: boolean;
 }) {
   const supabase = createClient();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const currentRound = matches.length > 0 ? Math.max(...matches.map((m) => m.round)) : 0;
-  const roundMatches = matches.filter((m) => m.round === currentRound);
+  const knockoutMatches = matches.filter((m) => m.stage === "knockout" || m.stage == null);
+  const currentRound = knockoutMatches.length > 0 ? Math.max(...knockoutMatches.map((m) => m.round)) : 0;
+  const roundMatches = knockoutMatches.filter((m) => m.round === currentRound);
   const allDone =
     roundMatches.length > 0 &&
     roundMatches.every((m) => m.status === "completed" || m.status === "bye");
@@ -60,7 +65,7 @@ export default function NextRoundGenerator({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [championId, tournamentStatus, tournamentId]);
 
-  if (matches.length === 0) return null;
+  if (knockoutMatches.length === 0) return null;
 
   if (championId) {
     return (
@@ -75,6 +80,8 @@ export default function NextRoundGenerator({
 
   if (!allDone || winners.length < 2) return null;
 
+ // ... winners গণনা করার পরে, handleGenerateNext-এর ভেতরে ...
+
   async function handleGenerateNext() {
     setError(null);
     setLoading(true);
@@ -83,10 +90,6 @@ export default function NextRoundGenerator({
       .map((id) => allParticipants.find((p) => p.id === id))
       .filter((p): p is { id: string; username: string } => !!p);
 
-    // bye_method = "random" এ পরের রাউন্ডেও আবার বাই দরকার হতে পারে (যেমন ৭, ৯, ১১
-    // দল দিয়ে শুরু করলে) — একই দল বারবার বাই না পায় সেজন্য আগে কারা বাই পেয়েছে
-    // তার তালিকা বানিয়ে পাঠাচ্ছি। bye_method = "seed" এ এটা কার্যত কখনো প্রয়োজন হয়
-    // না (ব্র্যাকেট round 1-এই power-of-2 তে পূরণ হয়ে যায়), তাই পাঠালেও ক্ষতি নেই।
     const alreadyByedIds = new Set(
       matches.filter((m) => m.status === "bye" && m.player1_id).map((m) => m.player1_id as string)
     );
@@ -100,7 +103,32 @@ export default function NextRoundGenerator({
       player1_id: d.player1_id,
       player2_id: d.player2_id,
       status: d.status,
+      stage: "knockout",
+      is_third_place: false,
     }));
+
+    // ৩য়-স্থান ম্যাচ: শুধু তখনই, যখন আমরা এইমাত্র ফাইনাল জেনারেট করছি (২ জন
+    // বিজয়ী থেকে ১টা ম্যাচ) — অর্থাৎ বর্তমান রাউন্ডটাই ছিল সেমিফাইনাল (ঠিক ২টা ম্যাচ)।
+    // দুটো সেমিফাইনালই bye ছাড়া real ম্যাচ হলে তবেই real loser পাওয়া যাবে।
+    if (thirdPlaceMatch && winners.length === 2 && roundMatches.length === 2) {
+      const losers = roundMatches
+        .filter((m) => m.status === "completed" && m.player1_id && m.player2_id && m.winner_id)
+        .map((m) => (m.winner_id === m.player1_id ? m.player2_id : m.player1_id))
+        .filter((id): id is string => !!id);
+
+      if (losers.length === 2) {
+        rows.push({
+          tournament_id: tournamentId,
+          round: currentRound + 1,
+          match_order: Math.max(...drafts.map((d) => d.match_order)) + 1,
+          player1_id: losers[0],
+          player2_id: losers[1],
+          status: "scheduled",
+          stage: "knockout",
+          is_third_place: true,
+        });
+      }
+    }
 
     const { error: insertError } = await supabase.from("tournament_matches").insert(rows);
     setLoading(false);

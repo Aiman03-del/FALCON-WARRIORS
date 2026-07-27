@@ -2,7 +2,10 @@
 import BracketView from "@/app/components/BracketView";
 import FixtureGenerator from "@/app/components/dashboard/FixtureGenerator";
 import FixtureRow from "@/app/components/dashboard/FixtureRow";
+import GroupKnockoutTransition from "@/app/components/dashboard/GroupKnockoutTransition";
+import LeaguePlayoffTransition from "@/app/components/dashboard/LeaguePlayoffTransition";
 import NextRoundGenerator from "@/app/components/dashboard/NextRoundGenerator";
+import { getGroupStandings, getTournamentStandings } from "@/app/lib/queries/tournaments";
 import { requireStaff } from "@/app/lib/queries/dashboard";
 import { createClient } from "@/app/lib/supabase/server";
 import Link from "next/link";
@@ -20,7 +23,7 @@ export default async function FixturesPage({
 
   const { data: tournament } = await supabase
     .from("tournaments")
-    .select("id, name, format, double_round, status, bye_method")
+    .select("id, name, format, double_round, status, bye_method, group_count, qualifiers_per_group, playoff_size")
     .eq("id", id)
     .single();
 
@@ -41,12 +44,32 @@ export default async function FixturesPage({
 
   const { data: matches } = await supabase
     .from("tournament_matches")
-    .select("id, round, match_order, player1_id, player2_id, player1_score, player2_score, winner_id, status")
+    .select("id, round, match_order, player1_id, player2_id, player1_score, player2_score, winner_id, status, stage, group_name")
     .eq("tournament_id", id)
     .order("round")
     .order("match_order");
 
-  const rounds = Array.from(new Set((matches ?? []).map((m) => m.round))).sort((a, b) => a - b);
+  const groupStandings =
+    tournament.format === "group_knockout" ? await getGroupStandings(tournament.id) : [];
+
+  const leagueStandings =
+    tournament.format === "league_playoff" ? await getTournamentStandings(tournament.id) : [];
+
+  const roundKeys = Array.from(
+    new Set((matches ?? []).map((m) => `${m.stage ?? "main"}::${m.round}`))
+  ).sort((a, b) => {
+    const [stageA, roundA] = a.split("::");
+    const [stageB, roundB] = b.split("::");
+    if (stageA !== stageB) return stageA.localeCompare(stageB);
+    return Number(roundA) - Number(roundB);
+  });
+
+  const formatLabels: Record<string, string> = {
+    league: "League",
+    knockout: "Knockout",
+    group_knockout: "Group Stage + Knockout",
+    league_playoff: "League + Knockout (Playoff)",
+  };
 
   return (
     <div>
@@ -56,7 +79,7 @@ export default async function FixturesPage({
             {tournament.name} — Fixtures
           </h1>
           <p className="mt-1 text-sm text-muted capitalize">
-            {tournament.format} format · {participants.length} approved participants
+            {formatLabels[tournament.format] ?? tournament.format} · {participants.length} approved participants
           </p>
         </div>
         <Link
@@ -75,10 +98,12 @@ export default async function FixturesPage({
           participants={participants}
           alreadyGenerated={(matches ?? []).length > 0}
           byeMethod={tournament.bye_method ?? "seed"}
+          groupCount={tournament.group_count}
+          qualifiersPerGroup={tournament.qualifiers_per_group}
         />
       </div>
 
-      {rounds.length > 0 && (
+      {roundKeys.length > 0 && (
         <div className="mt-8">
           <h2 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-gold">
             Bracket Preview
@@ -98,34 +123,67 @@ export default async function FixturesPage({
         </div>
       )}
 
-      {rounds.length === 0 ? (
+      {roundKeys.length === 0 ? (
         <p className="mt-10 text-center text-sm text-muted">
           No fixtures generated yet. Click the button above to randomly generate matchups.
         </p>
       ) : (
-        rounds.map((round) => (
-          <div key={round} className="mt-8">
-            <h2 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-gold">
-              Round {round}
-            </h2>
-            <div className="flex flex-col gap-3">
-              {(matches ?? [])
-                .filter((m) => m.round === round)
-                .map((m) => (
-                  <FixtureRow
-                    key={m.id}
-                    match={m}
-                    allParticipants={participants}
-                    tournamentId={tournament.id}
-                    format={tournament.format}
-                  />
-                ))}
+        roundKeys.map((key) => {
+          const [stage, roundStr] = key.split("::");
+          const round = Number(roundStr);
+          const stageLabel =
+            stage === "group"
+              ? "Group Stage"
+              : stage === "knockout"
+              ? "Knockout"
+              : stage === "league"
+              ? "League"
+              : null;
+
+          return (
+            <div key={key} className="mt-8">
+              <h2 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-gold">
+                {stageLabel ? `${stageLabel} — Round ${round}` : `Round ${round}`}
+              </h2>
+              <div className="flex flex-col gap-3">
+                {(matches ?? [])
+                  .filter((m) => (m.stage ?? "main") === stage && m.round === round)
+                  .map((m) => (
+                    <FixtureRow
+                      key={m.id}
+                      match={m}
+                      allParticipants={participants}
+                      tournamentId={tournament.id}
+                      format={tournament.format}
+                    />
+                  ))}
+              </div>
             </div>
-          </div>
-        ))
+          );
+        })
       )}
 
-      {tournament.format === "knockout" && (
+      {tournament.format === "group_knockout" && (
+        <GroupKnockoutTransition
+          tournamentId={tournament.id}
+          matches={matches ?? []}
+          groupStandings={groupStandings.map((g) => ({ groupName: g.groupName, standings: g.standings }))}
+          qualifiersPerGroup={tournament.qualifiers_per_group ?? 2}
+        />
+      )}
+
+      {tournament.format === "league_playoff" && (
+        <LeaguePlayoffTransition
+          tournamentId={tournament.id}
+          matches={matches ?? []}
+          standings={leagueStandings}
+          playoffSize={tournament.playoff_size ?? 4}
+        />
+      )}
+
+      {(tournament.format === "knockout" ||
+        tournament.format === "group_knockout" ||
+        tournament.format === "league_playoff") && (
         <NextRoundGenerator
           tournamentId={tournament.id}
           matches={matches ?? []}

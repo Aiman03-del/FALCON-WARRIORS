@@ -18,6 +18,7 @@ type Match = {
   player1_score: number | null;
   player2_score: number | null;
   status: string;
+  is_third_place?: boolean; // নতুন
 };
 
 export default function FixtureRow({
@@ -137,6 +138,11 @@ export default function FixtureRow({
   if (match.status === "bye") {
     return (
       <div className="card flex items-center justify-between p-4">
+        {match.is_third_place && (
+          <span className="mb-2 inline-block rounded-full bg-indigo/20 px-2.5 py-1 text-[10px] font-bold uppercase text-indigo-light">
+            3rd Place Match
+          </span>
+        )}
         <p className="text-sm font-medium">
           {nameOf(match.player1_id)} <span className="text-muted">— BYE (auto-advance)</span>
         </p>
@@ -146,6 +152,11 @@ export default function FixtureRow({
 
   return (
     <div className="card p-4">
+      {match.is_third_place && (
+        <span className="mb-2 inline-block rounded-full bg-indigo/20 px-2.5 py-1 text-[10px] font-bold uppercase text-indigo-light">
+          3rd Place Match
+        </span>
+      )}
       {editingOpponents ? (
         <div className="flex flex-wrap items-end gap-3">
           <div className="min-w-37.5 flex-1">

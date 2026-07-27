@@ -23,6 +23,11 @@ type TournamentFormProps = {
     end_date: string | null;
     max_participants: number | null;
     registration_deadline: string | null;
+    group_count: number | null;
+    qualifiers_per_group: number | null;
+    playoff_size: number | null;
+    bye_method: string | null;
+    third_place_match: boolean | null;
   };
 };
 
@@ -46,6 +51,13 @@ export default function TournamentForm({ mode, tournamentId, initial }: Tourname
   const [type, setType] = useState(initial?.type ?? "internal");
   const [format, setFormat] = useState(initial?.format ?? "league");
   const [doubleRound, setDoubleRound] = useState(initial?.double_round ?? false);
+  const [groupCount, setGroupCount] = useState(initial?.group_count?.toString() ?? "4");
+  const [qualifiersPerGroup, setQualifiersPerGroup] = useState(
+    initial?.qualifiers_per_group?.toString() ?? "2"
+  );
+  const [playoffSize, setPlayoffSize] = useState(initial?.playoff_size?.toString() ?? "4");
+  const [byeMethod, setByeMethod] = useState(initial?.bye_method ?? "seed");
+  const [thirdPlaceMatch, setThirdPlaceMatch] = useState(initial?.third_place_match ?? false);
   const [startDate, setStartDate] = useState(toDateInputValue(initial?.start_date ?? null));
   const [endDate, setEndDate] = useState(toDateInputValue(initial?.end_date ?? null));
   const [maxParticipants, setMaxParticipants] = useState(
@@ -91,6 +103,11 @@ export default function TournamentForm({ mode, tournamentId, initial }: Tourname
       end_date: endDate || null,
       max_participants: type === "official" ? null : maxParticipants ? Number(maxParticipants) : null,
       registration_deadline: type === "official" ? null : registrationDeadline || null,
+      group_count: format === "group_knockout" ? Number(groupCount) : null,
+      qualifiers_per_group: format === "group_knockout" ? Number(qualifiersPerGroup) : null,
+      playoff_size: format === "league_playoff" ? Number(playoffSize) : null,
+      bye_method: format === "knockout" || format === "group_knockout" || format === "league_playoff" ? byeMethod : null,
+      third_place_match: format === "group_knockout" || format === "league_playoff" ? thirdPlaceMatch : false,
     };
 
     let savedId = tournamentId;
@@ -184,12 +201,14 @@ export default function TournamentForm({ mode, tournamentId, initial }: Tourname
           options={[
             { value: "league", label: "League" },
             { value: "knockout", label: "Knockout" },
+            { value: "group_knockout", label: "Group Stage + Knockout" },
+            { value: "league_playoff", label: "League + Knockout (Playoff)" },
           ]}
           className="flex-1"
         />
       </div>
 
-      {format === "league" && (
+      {(format === "league" || format === "group_knockout" || format === "league_playoff") && (
         <label className="flex items-center gap-2.5 rounded-lg border border-border bg-surface-2 px-4 py-3 text-sm">
           <input
             type="checkbox"
@@ -197,7 +216,82 @@ export default function TournamentForm({ mode, tournamentId, initial }: Tourname
             onChange={(e) => setDoubleRound(e.target.checked)}
             className="h-4 w-4 rounded border-border accent-gold"
           />
-          <span>Double Round (each opponent is played twice in a 2-leg system)</span>
+          <span>
+            Double Round (each opponent is played twice in a 2-leg system
+            {format === "group_knockout" ? " — within each group" : ""}
+            {format === "league_playoff" ? " — in the league stage" : ""})
+          </span>
+        </label>
+      )}
+
+      {(format === "knockout" || format === "group_knockout" || format === "league_playoff") && (
+        <SelectField
+          label="Bye Method"
+          value={byeMethod}
+          onChange={setByeMethod}
+          options={[
+            { value: "seed", label: "Seed-based (top seeds get byes first)" },
+            { value: "random", label: "Random (fairness-checked, no repeat byes)" },
+          ]}
+        />
+      )}
+
+      {format === "group_knockout" && (
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="flex-1">
+            <label className="mb-1 block text-xs font-medium text-muted">Number of Groups</label>
+            <input
+              type="number"
+              min="2"
+              step="1"
+              inputMode="numeric"
+              value={groupCount}
+              onChange={(e) => setGroupCount(e.target.value.replace(/\D/g, ""))}
+              className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-white/30"
+              placeholder="4"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="mb-1 block text-xs font-medium text-muted">Qualifiers per Group</label>
+            <input
+              type="number"
+              min="1"
+              step="1"
+              inputMode="numeric"
+              value={qualifiersPerGroup}
+              onChange={(e) => setQualifiersPerGroup(e.target.value.replace(/\D/g, ""))}
+              className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-white/30"
+              placeholder="2"
+            />
+          </div>
+        </div>
+      )}
+
+      {format === "league_playoff" && (
+        <div className="flex-1">
+          <label className="mb-1 block text-xs font-medium text-muted">Playoff Size (Top N advance)</label>
+          <input
+            type="number"
+            min="2"
+            step="1"
+            inputMode="numeric"
+            value={playoffSize}
+            onChange={(e) => setPlayoffSize(e.target.value.replace(/\D/g, ""))}
+            className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-white/30"
+            placeholder="4"
+          />
+        </div>
+      )}
+
+      {(format === "group_knockout" || format === "league_playoff") && (
+        <label className="flex items-center gap-2.5 rounded-lg border border-border bg-surface-2 px-4 py-3 text-sm">
+          <input
+            type="checkbox"
+            checked={thirdPlaceMatch}
+            onChange={(e) => setThirdPlaceMatch(e.target.checked)}
+            className="h-4 w-4 rounded border-border accent-gold"
+          />
+          <span>Include a 3rd Place Match (losing semi-finalists play it off)</span>
         </label>
       )}
 

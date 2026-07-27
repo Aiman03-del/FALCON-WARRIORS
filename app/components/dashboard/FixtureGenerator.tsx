@@ -20,8 +20,11 @@ type Props = {
   participants: { id: string; username: string; seed?: number | null }[];
   alreadyGenerated: boolean;
   groupCount?: number | null;
+  qualifiersPerGroup?: number | null;
   byeMethod?: "seed" | "random";
 };
+
+const DEFAULT_GROUP_COUNT = 4;
 
 export default function FixtureGenerator({
   tournamentId,
@@ -30,18 +33,28 @@ export default function FixtureGenerator({
   participants,
   alreadyGenerated,
   groupCount,
+  qualifiersPerGroup,
   byeMethod = "seed",
 }: Props) {
   const supabase = createClient();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
-  const minRequired = format === "group_knockout" ? (groupCount ?? 2) * 2 : 2;
+  const effectiveGroupCount = groupCount ?? DEFAULT_GROUP_COUNT;
+
+  // Each group needs at least 2 players to form a match, and ideally enough
+  // players to actually produce `qualifiersPerGroup` qualifiers later.
+  const minPerGroup = Math.max(2, qualifiersPerGroup ?? 2);
+  const minRequired = format === "group_knockout" ? effectiveGroupCount * minPerGroup : 2;
   const notEnoughPlayers = participants.length < minRequired;
 
   const label =
     format === "league" && doubleRound
       ? "Generate Fixtures (Double Round)"
+      : format === "league_playoff"
+      ? doubleRound
+        ? "Generate League Fixtures (Double Round)"
+        : "Generate League Fixtures"
       : format === "knockout"
       ? "Generate Seeded Bracket"
       : format === "group_knockout"
@@ -75,7 +88,7 @@ export default function FixtureGenerator({
       const { error: insertError } = await supabase.from("tournament_matches").insert(rows);
       if (insertError) throw new Error(insertError.message);
     } else if (format === "group_knockout") {
-      const groups = generateGroups(drawPlayers, groupCount ?? 4);
+      const groups = generateGroups(drawPlayers, effectiveGroupCount);
 
       // Persist each participant's group assignment.
       await Promise.all(
@@ -102,6 +115,10 @@ export default function FixtureGenerator({
       const { error: insertError } = await supabase.from("tournament_matches").insert(rows);
       if (insertError) throw new Error(insertError.message);
     } else {
+      // Covers both "league" and "league_playoff" — the first phase of a
+      // playoff tournament is just a plain round-robin; the seeded knockout
+      // bracket for the top N is generated separately once the league stage
+      // is complete (see the Group → Knockout style transition button).
       const drafts = generateRoundRobin(drawPlayers, doubleRound);
       const rows = drafts.map((d) => ({
         tournament_id: tournamentId,
@@ -124,7 +141,7 @@ export default function FixtureGenerator({
     if (notEnoughPlayers) {
       setError(
         format === "group_knockout"
-          ? `At least ${minRequired} approved participants are required for ${groupCount ?? 4} groups.`
+          ? `At least ${minRequired} approved participants are required for ${effectiveGroupCount} groups (min ${minPerGroup} per group).`
           : "At least 2 approved participants are required."
       );
       return;

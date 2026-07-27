@@ -24,6 +24,16 @@ export default async function TournamentDetailPage({
   const { tournament, participants, matches, formMap, squad } = data;
   const joinStatus = await getMyJoinStatus(id);
 
+  const knockoutMatches = (matches as any[]).filter((m) => m.stage === "knockout" || m.stage == null);
+  const bracketMatches = knockoutMatches.filter((m) => !m.is_third_place);
+  const thirdPlaceMatch = knockoutMatches.find((m) => m.is_third_place) ?? null;
+  const hasBracket = bracketMatches.length > 0;
+
+  const groupNames =
+    tournament.format === "group_knockout"
+      ? Array.from(new Set(participants.map((p: any) => p.group_name).filter(Boolean))).sort()
+      : [];
+
   return (
     <main>
       <Navbar />
@@ -99,12 +109,61 @@ export default async function TournamentDetailPage({
           <TournamentMatchesDisplay matches={matches as any} />
         </div>
 
-        {tournament.format !== "knockout" && (
+        {tournament.format === "group_knockout" &&
+          groupNames.map((groupName) => (
+            <div key={groupName} className="mt-8">
+              <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-gold">
+                Group {groupName}
+              </h2>
+              <PointsTable
+                participants={participants.filter((p: any) => p.group_name === groupName)}
+                formMap={formMap}
+                matches={(matches as any[]).filter((m) => m.stage === "group" && m.group_name === groupName)}
+              />
+            </div>
+          ))}
+
+        {(tournament.format === "league" || tournament.format === "league_playoff") && (
           <div className="mt-8">
             <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-gold">
               Points Table
             </h2>
-          <PointsTable participants={participants} formMap={formMap} matches={matches as any} /></div>
+            <PointsTable
+              participants={participants}
+              formMap={formMap}
+              matches={(matches as any[]).filter((m) => m.stage !== "knockout")}
+            />
+          </div>
+        )}
+
+        {(tournament.format === "knockout" || hasBracket) && (
+          <div className="mt-8">
+            <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-gold">
+              Knockout Bracket
+            </h2>
+            <BracketView matches={bracketMatches as any} mode="knockout" />
+          </div>
+        )}
+
+        {thirdPlaceMatch && (
+          <div className="mt-8">
+            <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-gold">
+              3rd Place Match
+            </h2>
+            <div className="card flex items-center justify-between p-4 text-sm">
+              <span className="font-medium">
+                {(thirdPlaceMatch as any).player1?.efootball_username ?? "TBD"}
+              </span>
+              <span className="text-muted">
+                {(thirdPlaceMatch as any).status === "completed"
+                  ? `${(thirdPlaceMatch as any).player1_score} - ${(thirdPlaceMatch as any).player2_score}`
+                  : "vs"}
+              </span>
+              <span className="font-medium">
+                {(thirdPlaceMatch as any).player2?.efootball_username ?? "TBD"}
+              </span>
+            </div>
+          </div>
         )}
       </section>
       <Footer />

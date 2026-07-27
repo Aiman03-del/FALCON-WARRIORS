@@ -6,7 +6,9 @@ export async function getTournamentDetail(id: string) {
 
   const { data: tournament, error } = await supabase
     .from("tournaments")
-    .select("id, name, type, format, status, start_date, end_date, max_participants, registration_deadline")
+    .select(
+      "id, name, type, format, status, start_date, end_date, max_participants, registration_deadline, group_count, qualifiers_per_group, playoff_size, third_place_match"
+    )
     .eq("id", id)
     .single();
 
@@ -16,14 +18,16 @@ export async function getTournamentDetail(id: string) {
   const { data: participants } = await supabase
     .from("tournament_participants")
     .select(
-      "id, points, rank, status, matches_played, wins, draws, losses, goals_for, goals_against, manual_rank, player_details(id, efootball_username, avatar_url)"
+      "id, group_name, points, rank, status, matches_played, wins, draws, losses, goals_for, goals_against, manual_rank, player_details(id, efootball_username, avatar_url)"
     )
     .eq("tournament_id", id)
     .eq("status", "approved");
 
   const { data: matches } = await supabase
     .from("tournament_matches")
-    .select("id, round, match_order, player1_id, player2_id, player1_score, player2_score, status, player1:player1_id(efootball_username), player2:player2_id(efootball_username)")
+    .select(
+      "id, round, match_order, player1_id, player2_id, player1_score, player2_score, status, stage, group_name, is_third_place, player1:player1_id(efootball_username), player2:player2_id(efootball_username)"
+    )
     .eq("tournament_id", id)
     .order("round")
     .order("match_order");

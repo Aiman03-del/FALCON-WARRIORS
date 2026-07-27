@@ -27,7 +27,7 @@ export default async function TournamentBracketPage({
   const { data: participantsRaw } = await supabase
     .from("tournament_participants")
     .select(
-      "id, player_id, points, matches_played, wins, draws, losses, goals_for, goals_against, manual_rank, player_details(id, efootball_username)"
+      "id, player_id, group_name, points, matches_played, wins, draws, losses, goals_for, goals_against, manual_rank, player_details(id, efootball_username)"
     )
     .eq("tournament_id", id)
     .eq("status", "approved");
@@ -41,10 +41,25 @@ export default async function TournamentBracketPage({
 
   const { data: matches } = await supabase
     .from("tournament_matches")
-    .select("id, round, match_order, player1_id, player2_id, player1_score, player2_score, winner_id, status, stage")
+    .select(
+      "id, round, match_order, player1_id, player2_id, player1_score, player2_score, winner_id, status, stage, group_name, is_third_place"
+    )
     .eq("tournament_id", id)
     .order("round")
     .order("match_order");
+
+  const nameOf = (playerId: string | null) =>
+    playerId ? participants.find((p) => p.id === playerId)?.username ?? "Unknown" : "— BYE —";
+
+  const knockoutMatches = (matches ?? []).filter((m: any) => m.stage === "knockout" || m.stage == null);
+  const bracketMatches = knockoutMatches.filter((m: any) => !m.is_third_place);
+  const thirdPlaceMatch = knockoutMatches.find((m: any) => m.is_third_place) ?? null;
+  const hasBracket = bracketMatches.length > 0;
+
+  const groupNames =
+    tournament.format === "group_knockout"
+      ? Array.from(new Set((participantsRaw ?? []).map((p: any) => p.group_name).filter(Boolean))).sort()
+      : [];
 
   return (
     <div>
@@ -68,24 +83,56 @@ export default async function TournamentBracketPage({
       </div>
 
       <div className="mt-8">
-        {tournament.format === "knockout" ? (
-          <BracketView
-            matches={(matches ?? []).map((m: any) => ({
-              ...m,
-              player1: participants.find((p) => p.id === m.player1_id)
-                ? { efootball_username: participants.find((p) => p.id === m.player1_id)!.username }
-                : null,
-              player2: participants.find((p) => p.id === m.player2_id)
-                ? { efootball_username: participants.find((p) => p.id === m.player2_id)!.username }
-                : null,
-            }))}
-            mode="knockout"
-          />
-        ) : (
+        {tournament.format === "group_knockout" &&
+          groupNames.map((groupName) => (
+            <div key={groupName} className="mb-8">
+              <h2 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-gold">
+                Group {groupName}
+              </h2>
+              <StandingsTable
+                participants={(participantsRaw ?? []).filter((p: any) => p.group_name === groupName)}
+                matches={(matches ?? []).filter(
+                  (m: any) => m.status === "completed" && m.stage === "group" && m.group_name === groupName
+                )}
+              />
+            </div>
+          ))}
+
+        {(tournament.format === "league" || tournament.format === "league_playoff") && (
           <StandingsTable
             participants={participantsRaw ?? []}
             matches={(matches ?? []).filter((m: any) => m.status === "completed" && m.stage !== "knockout")}
           />
+        )}
+
+        {(tournament.format === "knockout" || hasBracket) && (
+          <div className={tournament.format === "group_knockout" || tournament.format === "league_playoff" ? "mt-8" : ""}>
+            <BracketView
+              matches={bracketMatches.map((m: any) => ({
+                ...m,
+                player1: m.player1_id ? { efootball_username: nameOf(m.player1_id) } : null,
+                player2: m.player2_id ? { efootball_username: nameOf(m.player2_id) } : null,
+              }))}
+              mode="knockout"
+            />
+          </div>
+        )}
+
+        {thirdPlaceMatch && (
+          <div className="mt-6">
+            <h2 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-gold">
+              3rd Place Match
+            </h2>
+            <div className="card flex items-center justify-between p-4 text-sm">
+              <span className="font-medium">{nameOf(thirdPlaceMatch.player1_id)}</span>
+              <span className="text-muted">
+                {thirdPlaceMatch.status === "completed"
+                  ? `${thirdPlaceMatch.player1_score} - ${thirdPlaceMatch.player2_score}`
+                  : "vs"}
+              </span>
+              <span className="font-medium">{nameOf(thirdPlaceMatch.player2_id)}</span>
+            </div>
+          </div>
         )}
       </div>
     </div>
