@@ -55,12 +55,12 @@ export default function DashboardSidebar({
   const pathname = usePathname();
 
   const defaultClasses = className
-    ? `${className} shrink-0 border-r border-border bg-surface`
-    : "hidden shrink-0 border-r border-border bg-surface md:block";
+    ? `${className} shrink-0 border-r border-border bg-surface flex flex-col`
+    : "hidden shrink-0 border-r border-border bg-surface md:flex md:flex-col";
 
   return (
     <aside className={defaultClasses}>
-      <div className="flex items-center justify-between border-b border-border px-3 py-4">
+      <div className="flex items-center justify-between border-b border-border px-3 py-4 flex-shrink-0">
         <div className="flex min-w-0 items-center gap-2 overflow-hidden">
           <Image
             src="/logo.jpg"
@@ -86,7 +86,7 @@ export default function DashboardSidebar({
         )}
       </div>
 
-      <nav className="flex flex-col gap-1 p-3">
+      <nav className="flex flex-col gap-1 p-3 overflow-y-auto flex-1 hide-scrollbar">
         {navItems.map((item) => {
           const active = isActiveRoute(pathname, item.href);
           const Icon = item.icon;
@@ -138,7 +138,7 @@ export default function DashboardSidebar({
         </Link>
       </nav>
 
-      <div className="absolute bottom-4 left-4 right-4">
+      <div className="border-t border-border px-4 py-3 flex-shrink-0">
         <span className={`rounded-full bg-gold/15 px-2.5 py-1 text-[10px] font-bold uppercase text-gold ${collapsed ? "block text-center" : "inline-block"}`}>
           {collapsed ? role.slice(0, 1).toUpperCase() : role}
         </span>

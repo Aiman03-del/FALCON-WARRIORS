@@ -20,13 +20,13 @@ export default function DashboardShell({ role, children }: DashboardShellProps) 
         collapsed={sidebarCollapsed}
         onClose={() => setSidebarOpen(false)}
         onToggleCollapse={() => setSidebarCollapsed((collapsed) => !collapsed)}
-        className={`fixed inset-y-0 left-0 z-50 transform border-r border-border bg-surface transition-all duration-300 md:sticky md:top-0 md:h-screen md:overflow-hidden md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 transform border-r border-border bg-surface transition-all duration-300 md:sticky md:top-0 md:h-screen md:translate-x-0 ${
           sidebarCollapsed ? "w-20" : "w-64"
         } ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
       />
 
-      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between border-b border-border bg-bg px-4 py-3 md:hidden">
+      <div className="flex-1 min-w-0 flex flex-col">
+        <div className="flex items-center justify-between border-b border-border bg-bg px-4 py-3 flex-shrink-0 md:hidden">
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
@@ -46,7 +46,7 @@ export default function DashboardShell({ role, children }: DashboardShellProps) 
           </button>
         </div>
 
-        <div className="hidden border-b border-border bg-bg px-4 py-3 md:flex md:justify-end">
+        <div className="hidden border-b border-border bg-bg px-4 py-3 flex-shrink-0 md:flex md:justify-end">
           <button
             type="button"
             onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
@@ -57,7 +57,7 @@ export default function DashboardShell({ role, children }: DashboardShellProps) 
           </button>
         </div>
 
-        <main className="p-6 md:p-10">{children}</main>
+        <main className="flex-1 overflow-y-auto p-6 md:p-10">{children}</main>
       </div>
 
       {sidebarOpen && (

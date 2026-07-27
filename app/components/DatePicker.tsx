@@ -67,6 +67,7 @@ export default function DatePicker({
   required,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
+  const [popupPlacement, setPopupPlacement] = useState<"bottom" | "top">("bottom");
   const containerRef = useRef<HTMLDivElement>(null);
 
   const parsed = parseValue(value, type);
@@ -95,6 +96,26 @@ export default function DatePicker({
       if (parsed) {
         setTimeValue(`${pad(parsed.hours)}:${pad(parsed.minutes)}`);
       }
+
+      const updatePlacement = () => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const rect = container.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const spaceAbove = rect.top;
+
+        setPopupPlacement(spaceBelow >= 240 || spaceBelow > spaceAbove ? "bottom" : "top");
+      };
+
+      updatePlacement();
+      window.addEventListener("resize", updatePlacement);
+      window.addEventListener("scroll", updatePlacement, true);
+
+      return () => {
+        window.removeEventListener("resize", updatePlacement);
+        window.removeEventListener("scroll", updatePlacement, true);
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -176,7 +197,7 @@ export default function DatePicker({
   }
 
   return (
-    <div ref={containerRef} className={className}>
+    <div ref={containerRef} className={`relative w-full ${className}`.trim()}>
       {label && <label className="mb-1 block text-xs font-medium text-muted">{label}</label>}
 
       <button
@@ -205,22 +226,26 @@ export default function DatePicker({
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-2 w-72 rounded-lg border border-border bg-surface p-3 shadow-xl">
-          <div className="flex items-center justify-between gap-2">
+        <div
+          className={`absolute left-0 z-60 w-64 rounded-md border border-border bg-surface p-1.5 shadow-xl ${
+            popupPlacement === "bottom" ? "top-full mt-2" : "bottom-full mb-2"
+          }`}
+        >
+          <div className="flex items-center justify-between gap-1 px-0.5">
             <button
               type="button"
               onClick={handlePrevMonth}
-              className="rounded-lg p-1.5 text-muted hover:bg-surface-2 hover:text-white"
+              className="rounded-lg p-1 text-muted hover:bg-surface-2 hover:text-white"
             >
               <ChevronLeft size={16} />
             </button>
 
             <div className="flex items-center gap-1.5">
-              <span className="text-sm font-semibold">{MONTH_NAMES[viewMonth]}</span>
+              <span className="text-[11px] font-semibold">{MONTH_NAMES[viewMonth]}</span>
               <select
                 value={viewYear}
                 onChange={(e) => setViewYear(Number(e.target.value))}
-                className="rounded-lg border border-border bg-surface-2 px-2 py-1 text-sm outline-none focus:border-white/30"
+                className="rounded border border-border bg-surface-2 px-1.5 py-0.5 text-[10px] outline-none focus:border-white/30"
               >
                 {yearOptions.map((y) => (
                   <option key={y} value={y}>
@@ -233,19 +258,19 @@ export default function DatePicker({
             <button
               type="button"
               onClick={handleNextMonth}
-              className="rounded-lg p-1.5 text-muted hover:bg-surface-2 hover:text-white"
+              className="rounded-lg p-1 text-muted hover:bg-surface-2 hover:text-white"
             >
               <ChevronRight size={16} />
             </button>
           </div>
 
-          <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[10px] font-medium text-muted">
+          <div className="mt-1.5 grid grid-cols-7 gap-0.5 text-center text-[8px] font-medium text-muted">
             {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
               <span key={i}>{d}</span>
             ))}
           </div>
 
-          <div className="mt-1 grid grid-cols-7 gap-1">
+          <div className="mt-1 grid grid-cols-7 gap-0.5">
             {cells.map((d, i) => {
               if (d === null) return <span key={i} />;
 
@@ -263,7 +288,7 @@ export default function DatePicker({
                   type="button"
                   disabled={disabled}
                   onClick={() => handleSelectDay(d)}
-                  className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs transition-colors ${
+                  className={`flex h-6 w-6 items-center justify-center rounded text-[10px] transition-colors ${
                     isSelected
                       ? "bg-gold font-bold text-bg"
                       : disabled
