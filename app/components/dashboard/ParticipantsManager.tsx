@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Trash2, Check, X } from "lucide-react";
 import { createClient } from "@/app/lib/supabase/client";
 import ConfirmActionButton from "@/app/components/ConfirmActionButton";
+import { ConfirmDialog } from "@/app/components/ConfirmDialog";
 import { MultiSelectField } from "@/app/components/SelectField.multi";
 import FillButton from "@/app/components/FillButton";
 
@@ -49,14 +50,29 @@ export default function ParticipantsManager({
   const router = useRouter();
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
+  const [infoModalMessage, setInfoModalMessage] = useState("");
 
   const pending = participants.filter((p) => p.status === "pending");
   const approved = participants.filter((p) => p.status === "approved");
 
+  async function getApprovedCount() {
+    const { count } = await supabase
+      .from("tournament_participants")
+      .select("*", { count: "exact", head: true })
+      .eq("tournament_id", tournamentId)
+      .eq("status", "approved");
+    return count ?? 0;
+  }
+
   async function handleDecision(participantId: string, status: "approved" | "rejected") {
-    if (status === "approved" && maxParticipants && approved.length >= maxParticipants) {
-      alert("Slots are already full. Reject some pending requests or increase max participants.");
-      return;
+    if (status === "approved" && maxParticipants) {
+      const currentApproved = await getApprovedCount();
+      if (currentApproved >= maxParticipants) {
+        setInfoModalMessage("Slots are already full. Reject some pending requests or increase max participants.");
+        setInfoModalOpen(true);
+        return;
+      }
     }
     setLoading(true);
     await supabase.from("tournament_participants").update({ status }).eq("id", participantId);
@@ -67,17 +83,20 @@ export default function ParticipantsManager({
   async function handleAddDirect() {
     if (selectedPlayers.length === 0) return;
 
-    const remainingSlots = maxParticipants ? maxParticipants - approved.length : null;
+    setLoading(true);
+
+    const currentApproved = await getApprovedCount();
+    const remainingSlots = maxParticipants ? maxParticipants - currentApproved : null;
+
     if (remainingSlots !== null && remainingSlots <= 0) {
-      alert("Slots are already full. Reject some pending requests or increase max participants.");
+      setLoading(false);
+      setInfoModalMessage("Slots are already full. Reject some pending requests or increase max participants.");
+      setInfoModalOpen(true);
       return;
     }
 
-    setLoading(true);
-
-    const playersToAdd = remainingSlots === null
-      ? selectedPlayers
-      : selectedPlayers.slice(0, remainingSlots);
+    const playersToAdd =
+      remainingSlots === null ? selectedPlayers : selectedPlayers.slice(0, remainingSlots);
 
     await supabase.from("tournament_participants").insert(
       playersToAdd.map((playerId) => ({
@@ -105,6 +124,15 @@ export default function ParticipantsManager({
 
   return (
     <div className="mt-6">
+      <ConfirmDialog
+        isOpen={infoModalOpen}
+        title="Slots Full"
+        message={infoModalMessage}
+        confirmText="OK"
+        cancelText="Close"
+        onConfirm={() => setInfoModalOpen(false)}
+        onCancel={() => setInfoModalOpen(false)}
+      />
       {/* Pending Requests */}
       {pending.length > 0 && (
         <div className="mb-6">

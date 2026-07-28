@@ -26,7 +26,7 @@ export default async function TournamentBracketPage({
   const { data: participantsRaw } = await supabase
     .from("tournament_participants")
     .select(
-      "player_id, group_name, points, matches_played, wins, draws, losses, goals_for, goals_against, manual_rank, player_details(id, efootball_username)"
+      "player_id, group_name, points, matches_played, wins, draws, losses, goals_for, goals_against, manual_rank, player_details(id, efootball_username, avatar_url)"
     )
     .eq("tournament_id", id)
     .eq("status", "approved");
@@ -34,9 +34,9 @@ export default async function TournamentBracketPage({
   const participants = (participantsRaw ?? [])
     .map((p: any) => {
       const pd = Array.isArray(p.player_details) ? p.player_details[0] : p.player_details;
-      return pd ? { id: pd.id, username: pd.efootball_username } : null;
+      return pd ? { id: pd.id, username: pd.efootball_username, avatarUrl: pd.avatar_url ?? null } : null;
     })
-    .filter((p): p is { id: string; username: string } => !!p);
+    .filter((p): p is { id: string; username: string; avatarUrl: string | null } => !!p);
 
   const { data: matches } = await supabase
     .from("tournament_matches")
@@ -47,8 +47,11 @@ export default async function TournamentBracketPage({
     .order("round")
     .order("match_order");
 
-  const nameOf = (playerId: string | null) =>
-    playerId ? participants.find((p) => p.id === playerId)?.username ?? "Unknown" : "— BYE —";
+  const infoOf = (playerId: string | null) => {
+    if (!playerId) return null;
+    const p = participants.find((x) => x.id === playerId);
+    return p ? { username: p.username, avatarUrl: p.avatarUrl ?? null } : null;
+  };
 
   const knockoutMatches = (matches ?? []).filter((m) => m.stage === "knockout" || m.stage == null);
   const bracketMatches = knockoutMatches.filter((m) => !m.is_third_place);
@@ -113,8 +116,12 @@ export default async function TournamentBracketPage({
           <BracketView
             matches={bracketMatches.map((m: any) => ({
               ...m,
-              player1: m.player1_id ? { efootball_username: nameOf(m.player1_id) } : null,
-              player2: m.player2_id ? { efootball_username: nameOf(m.player2_id) } : null,
+              player1: m.player1_id
+                ? { efootball_username: infoOf(m.player1_id)!.username, avatar_url: infoOf(m.player1_id)!.avatarUrl }
+                : null,
+              player2: m.player2_id
+                ? { efootball_username: infoOf(m.player2_id)!.username, avatar_url: infoOf(m.player2_id)!.avatarUrl }
+                : null,
             }))}
             mode="knockout"
           />
@@ -128,13 +135,13 @@ export default async function TournamentBracketPage({
             3rd Place Match
           </h2>
           <div className="card flex items-center justify-between p-4 text-sm">
-            <span className="font-medium">{nameOf(thirdPlaceMatch.player1_id)}</span>
+            <span className="font-medium">{infoOf(thirdPlaceMatch.player1_id)?.username ?? "Unknown"}</span>
             <span className="text-muted">
               {thirdPlaceMatch.status === "completed"
                 ? `${thirdPlaceMatch.player1_score} - ${thirdPlaceMatch.player2_score}`
                 : "vs"}
             </span>
-            <span className="font-medium">{nameOf(thirdPlaceMatch.player2_id)}</span>
+            <span className="font-medium">{infoOf(thirdPlaceMatch.player2_id)?.username ?? "Unknown"}</span>
           </div>
         </div>
       )}

@@ -31,16 +31,16 @@ export default async function FixturesPage({
 
   const { data: participantsRaw } = await supabase
     .from("tournament_participants")
-    .select("player_id, player_details(id, efootball_username)")
+    .select("player_id, player_details(id, efootball_username, avatar_url)")
     .eq("tournament_id", id)
     .eq("status", "approved");
 
   const participants = (participantsRaw ?? [])
     .map((p: any) => {
       const pd = Array.isArray(p.player_details) ? p.player_details[0] : p.player_details;
-      return pd ? { id: pd.id, username: pd.efootball_username } : null;
+      return pd ? { id: pd.id, username: pd.efootball_username, avatarUrl: pd.avatar_url ?? null } : null;
     })
-    .filter((p): p is { id: string; username: string } => !!p);
+    .filter((p): p is { id: string; username: string; avatarUrl: string | null } => !!p);
 
   const { data: matches } = await supabase
     .from("tournament_matches")
@@ -112,10 +112,16 @@ export default async function FixturesPage({
             matches={(matches ?? []).map((m: any) => ({
               ...m,
               player1: participants.find((p) => p.id === m.player1_id)
-                ? { efootball_username: participants.find((p) => p.id === m.player1_id)!.username }
+                ? {
+                    efootball_username: participants.find((p) => p.id === m.player1_id)!.username,
+                    avatar_url: participants.find((p) => p.id === m.player1_id)!.avatarUrl,
+                  }
                 : null,
               player2: participants.find((p) => p.id === m.player2_id)
-                ? { efootball_username: participants.find((p) => p.id === m.player2_id)!.username }
+                ? {
+                    efootball_username: participants.find((p) => p.id === m.player2_id)!.username,
+                    avatar_url: participants.find((p) => p.id === m.player2_id)!.avatarUrl,
+                  }
                 : null,
             }))}
             mode={tournament.format === "knockout" ? "knockout" : "league"}

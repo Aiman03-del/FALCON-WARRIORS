@@ -26,11 +26,11 @@ export async function getTournamentDetail(id: string) {
   const { data: matches } = await supabase
     .from("tournament_matches")
     .select(
-      "id, round, match_order, player1_id, player2_id, player1_score, player2_score, status, stage, group_name, is_third_place, player1:player1_id(efootball_username), player2:player2_id(efootball_username)"
+      "id, round, match_order, player1_id, player2_id, player1_score, player2_score, status, stage, group_name, is_third_place, player1:player1_id(efootball_username, avatar_url), player2:player2_id(efootball_username, avatar_url)"
     )
-    .eq("tournament_id", id)
-    .order("round")
-    .order("match_order");
+      .eq("tournament_id", id)
+      .order("round")
+      .order("match_order");
 
   const { data: squadRows } = await supabase
     .from("tournament_squad")
@@ -196,11 +196,11 @@ export async function getTournamentUpcomingMatches(tournamentId: string) {
 
   const { data: matches, error } = await supabase
     .from("tournament_matches")
-    .select("id, round, match_order, player1_id, player2_id, player1_score, player2_score, status, player1:player1_id(efootball_username), player2:player2_id(efootball_username)")
-    .eq("tournament_id", tournamentId)
-    .in("status", ["pending", "live"])
-    .order("round")
-    .order("match_order");
+    .select("id, round, match_order, player1_id, player2_id, player1_score, player2_score, status, player1:player1_id(efootball_username, avatar_url), player2:player2_id(efootball_username, avatar_url)")
+      .eq("tournament_id", tournamentId)
+      .in("status", ["pending", "live"])
+      .order("round")
+      .order("match_order");
 
   if (error) throw error;
   return matches ?? [];
@@ -211,11 +211,11 @@ export async function getTournamentCompletedMatches(tournamentId: string) {
 
   const { data: matches, error } = await supabase
     .from("tournament_matches")
-    .select("id, round, match_order, player1_id, player2_id, player1_score, player2_score, status, player1:player1_id(efootball_username), player2:player2_id(efootball_username)")
-    .eq("tournament_id", tournamentId)
-    .eq("status", "completed")
-    .order("round", { ascending: false })
-    .order("match_order", { ascending: false });
+    .select("id, round, match_order, player1_id, player2_id, player1_score, player2_score, status, player1:player1_id(efootball_username, avatar_url), player2:player2_id(efootball_username, avatar_url)")
+      .eq("tournament_id", tournamentId)
+      .eq("status", "completed")
+      .order("round", { ascending: false })
+      .order("match_order", { ascending: false });
 
   if (error) throw error;
   return matches ?? [];
