@@ -26,7 +26,7 @@ export default async function ManageMatchPage({
   const p1 = Array.isArray(match.player1) ? match.player1[0] : match.player1;
   const p2 = Array.isArray(match.player2) ? match.player2[0] : match.player2;
 
-  // ===== Official Tournament ম্যাচ (Squad Battle System) =====
+  // ===== Official Tournament match (Squad Battle System) =====
   if (match.match_type === "external" && match.tournament_id) {
     const { data: battleRows } = await supabase
       .from("match_squad_battles")
@@ -72,7 +72,7 @@ export default async function ManageMatchPage({
     );
   }
 
-  // ===== Internal ম্যাচ (single player vs player) =====
+  // ===== Internal match (single player vs player) =====
   const { data: players } = await supabase
     .from("player_details")
     .select("id, efootball_username")

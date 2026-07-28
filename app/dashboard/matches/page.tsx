@@ -18,7 +18,7 @@ async function fetchMatches() {
   setFetchError(null);
   const supabase = await createClient();
 
-  // Official — matches টেবিল থেকে
+  // Official — from the matches table
   const { data: officialMatches, error: err1 } = await supabase
     .from("matches")
     .select(
@@ -28,7 +28,7 @@ async function fetchMatches() {
     .eq("tournaments.type", "official")
     .order("match_date", { ascending: false });
 
-  // Internal — tournament_matches টেবিল থেকে (player vs player)
+  // Internal — from the tournament_matches table (player vs player)
   const { data: internalMatches, error: err2 } = await supabase
     .from("tournament_matches")
     .select(

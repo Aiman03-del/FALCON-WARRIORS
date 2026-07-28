@@ -14,7 +14,7 @@ export type H2HResult = {
   }[];
 };
 
-// Internal ম্যাচ: দুই প্লেয়ারের মধ্যে H2H
+// Internal match: H2H between two players
 export async function getPlayerH2H(
   player1Id: string,
   player2Id: string,
@@ -67,7 +67,7 @@ export async function getPlayerH2H(
   const recentMeetings = normalized
     .filter((m) => m.scoreP1 !== null && m.scoreP2 !== null)
     .map((m) => {
-      // "home" মানে সবসময় player1Id (function argument)
+      // "home" always means player1Id (function argument)
       const isP1Home = m.p1 === player1Id;
       const scoreHome = isP1Home ? m.scoreP1! : m.scoreP2!;
       const scoreAway = isP1Home ? m.scoreP2! : m.scoreP1!;
@@ -89,7 +89,7 @@ export async function getPlayerH2H(
   };
 }
 
-// External ম্যাচ: Falcon বনাম নির্দিষ্ট opponent ক্লাব
+// External match: Falcon vs a specific opponent club
 export async function getClubH2H(
   opponentName: string,
   excludeMatchId?: string

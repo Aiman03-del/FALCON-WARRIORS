@@ -17,7 +17,7 @@ type StandingRow = {
 type Props = {
   tournamentId: string;
   matches: { status: string; stage: string | null }[];
-  standings: StandingRow[]; // getTournamentStandings() থেকে আসা, already ranked
+  standings: StandingRow[]; // data from getTournamentStandings(), already ranked
   playoffSize: number;
 };
 
@@ -41,12 +41,12 @@ export default function LeaguePlayoffTransition({ tournamentId, matches, standin
   const alreadyGenerated = knockoutMatches.length > 0;
   const notEnoughForPlayoff = standings.length < playoffSize;
 
-  // লিগ পর্ব এখনো শেষ না হলে এই সেকশনটা দেখানোর দরকার নেই।
+  // If the league stage is not complete, this section is not displayed.
   if (!allLeagueDone) return null;
 
   async function runGeneration() {
-    // আগের playoff ড্র থাকলে শুধু সেটাই মুছব — লিগ পর্বের ম্যাচ/রেজাল্ট অক্ষত থাকবে
-    // (getTournamentStandings ইতিমধ্যেই stage !== "knockout" ফিল্টার করে টেবিল বানায়)।
+    // If an existing playoff draw exists, delete only that — league matches/results remain intact.
+    // (getTournamentStandings already filters out stage !== "knockout".)
     if (alreadyGenerated) {
       await supabase
         .from("tournament_matches")
@@ -58,7 +58,7 @@ export default function LeaguePlayoffTransition({ tournamentId, matches, standin
     const topN = standings.slice(0, playoffSize).map((row, i) => ({
       id: row.player_id,
       username: getUsername(row.player_details),
-      seed: i + 1, // লিগ টেবিলের অবস্থানই এখানে সিড
+      seed: i + 1, // the league table position becomes the seed
     }));
 
     const drafts = generateSeededKnockoutRound1(topN);
@@ -81,7 +81,7 @@ export default function LeaguePlayoffTransition({ tournamentId, matches, standin
   function handleClick() {
     setError(null);
     if (notEnoughForPlayoff) {
-      setError(`Playoff-এর জন্য অন্তত ${playoffSize} জন র‍্যাংকড প্লেয়ার দরকার।`);
+      setError(`At least ${playoffSize} ranked players are required for the playoff.`);
       return;
     }
     runGeneration().catch((e) =>
@@ -103,11 +103,11 @@ export default function LeaguePlayoffTransition({ tournamentId, matches, standin
         <ConfirmActionButton
           onConfirm={runGeneration}
           confirmTitle="Re-generate Playoff Bracket?"
-          confirmMessage="এটা বিদ্যমান playoff ব্র্যাকেট মুছে লিগ টেবিল থেকে আবার নতুন করে বানাবে। লিগ পর্বের ম্যাচ/রেজাল্ট এতে প্রভাবিত হবে না। এটা আর ফিরিয়ে আনা যাবে না।"
-          confirmText="হ্যাঁ, ব্র্যাকেট আবার জেনারেট করুন"
-          cancelText="বর্তমান ব্র্যাকেট রাখুন"
-          successMessage="Playoff ব্র্যাকেট আবার জেনারেট হয়েছে।"
-          errorMessage="ব্র্যাকেট জেনারেট করতে সমস্যা হয়েছে।"
+          confirmMessage="This will delete the existing playoff bracket and rebuild it from the league standings. League stage matches/results will not be affected. This cannot be undone."
+          confirmText="Yes, regenerate the bracket"
+          cancelText="Keep current bracket"
+          successMessage="Playoff bracket has been regenerated."
+          errorMessage="Failed to generate playoff bracket."
           isDangerous
           buttonClassName="btn-primary text-sm disabled:opacity-50"
         >

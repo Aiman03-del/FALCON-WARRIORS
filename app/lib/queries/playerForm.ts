@@ -13,7 +13,7 @@ export async function getPlayerForm(playerId: string, limit = 10): Promise<FormE
   const supabase = await createClient();
   const entries: FormEntry[] = [];
 
-  // ১. Internal ম্যাচ (single, player vs player)
+  // 1. Internal match (single, player vs player)
   const { data: internalMatches } = await supabase
     .from("matches")
     .select(
@@ -40,7 +40,7 @@ export async function getPlayerForm(playerId: string, limit = 10): Promise<FormE
     });
   }
 
-  // ২. External ম্যাচ (single "played by")
+  // 2. External match (single "played by")
   const { data: squadRows } = await supabase
     .from("match_squad")
     .select("match_id, matches(id, match_date, score_home, score_away, opponent_name, status)")
@@ -59,7 +59,7 @@ export async function getPlayerForm(playerId: string, limit = 10): Promise<FormE
     });
   }
 
-  // ৩. Internal Tournament ম্যাচ
+  // 3. Internal Tournament match
   const { data: tournamentMatches } = await supabase
     .from("tournament_matches")
     .select(
@@ -84,7 +84,7 @@ export async function getPlayerForm(playerId: string, limit = 10): Promise<FormE
     });
   }
 
-  // তারিখ অনুযায়ী নতুন থেকে পুরনো সাজিয়ে সীমিত করুন
+  // Sort by date from newest to oldest and limit the result.
   return entries
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, limit);

@@ -10,7 +10,7 @@ export async function ensureSquadBattles(
     .select("id")
     .eq("match_id", matchId);
 
-  if (existing && existing.length > 0) return; // ইতিমধ্যে জেনারেট করা আছে
+  if (existing && existing.length > 0) return; // already generated
 
   const rows = falconSquad.map((p, idx) => ({
     match_id: matchId,

@@ -92,8 +92,7 @@ function stageLabel(stage: string | null | undefined) {
   return "";
 }
 
-// নকআউট রাউন্ডকে সুন্দর নাম দেয় (Final/Semi-final/Quarter-final), বাকি
-// স্টেজে সাধারণ "Round N"
+// Converts knockout rounds to display names (Final/Semi-final/Quarter-final), otherwise uses Round N.
 function roundHeading(stage: string | null | undefined, round: number, totalKnockoutRounds: number) {
   if (stage === "knockout" && totalKnockoutRounds > 0) {
     const fromEnd = totalKnockoutRounds - round;
@@ -147,7 +146,7 @@ function FixtureCard({ m }: { m: Match }) {
     return (
       <div className="card flex items-center justify-between gap-2 p-3 sm:p-4">
         <p className="text-sm font-medium">
-          {p1Name} <span className="text-muted">— BYE (স্বয়ংক্রিয়ভাবে পরের রাউন্ডে)</span>
+          {p1Name} <span className="text-muted">— BYE (auto-advance to next round)</span>
         </p>
       </div>
     );
@@ -179,7 +178,7 @@ function FixtureCard({ m }: { m: Match }) {
   );
 }
 
-// পরের নকআউট রাউন্ড এখনো তৈরি হয়নি — কে কার সাথে খেললে জিতলে এখানে আসবে সেটার প্রিভিউ
+// Preview for the next knockout round before it is generated.
 function PreviewCard({ left, right }: { left: string; right: string }) {
   return (
     <div className="card flex items-center justify-between gap-2 border-dashed p-3 opacity-80 sm:p-4">
@@ -224,7 +223,7 @@ export default function TournamentMatchesDisplay({ matches }: Props) {
     return rounds.length > 0 ? Math.max(...rounds) : 0;
   }, [groups]);
 
-  // ডিফল্ট: প্রথম অসম্পূর্ণ রাউন্ড, নাহলে একদম শেষ রাউন্ড
+  // Default: first incomplete round, otherwise the last round.
   const defaultIndex = useMemo(() => {
     const idx = groups.findIndex((g) => !g.matches.every(isMatchDone));
     return idx === -1 ? Math.max(groups.length - 1, 0) : idx;
@@ -240,7 +239,7 @@ export default function TournamentMatchesDisplay({ matches }: Props) {
     );
   }
 
-  const isPreviewStep = index === groups.length; // বাস্তবের বাইরের ভার্চুয়াল "পরের রাউন্ড" স্টেপ
+  const isPreviewStep = index === groups.length; // virtual preview step for the next round
   const current = isPreviewStep ? null : groups[index];
   const currentComplete = current ? current.matches.every(isMatchDone) : false;
 
@@ -249,7 +248,7 @@ export default function TournamentMatchesDisplay({ matches }: Props) {
   const lastComplete = lastGroup.matches.every(isMatchDone);
   const canPreviewNext =
     lastIsKnockout && lastComplete && lastGroup.matches.length > 1 &&
-    // ফাইনাল হলে আর কোনো পরের রাউন্ড নেই
+    // no next round after the final
     !(totalKnockoutRounds > 0 && lastGroup.round === totalKnockoutRounds);
 
   const atLastRealStep = index === groups.length - 1;
@@ -257,7 +256,7 @@ export default function TournamentMatchesDisplay({ matches }: Props) {
     ? false
     : atLastRealStep
     ? currentComplete && canPreviewNext
-    : currentComplete; // পরের বাস্তব রাউন্ডে যেতেও আগেরটা শেষ হতে হবে
+    : currentComplete; // the current round must finish before moving to the next real round
   const canGoPrev = index > 0;
 
   return (
@@ -301,10 +300,10 @@ export default function TournamentMatchesDisplay({ matches }: Props) {
               const a = lastGroup.matches[i * 2];
               const b = lastGroup.matches[i * 2 + 1];
               const left = a
-                ? winnerName(a) ?? `${getPlayerName(a, 1)} বনাম ${getPlayerName(a, 2)} — বিজয়ী নির্ধারিত হয়নি`
+                ? winnerName(a) ?? `${getPlayerName(a, 1)} vs ${getPlayerName(a, 2)} — winner not determined`
                 : "TBD";
               const right = b
-                ? winnerName(b) ?? `${getPlayerName(b, 1)} বনাম ${getPlayerName(b, 2)} — বিজয়ী নির্ধারিত হয়নি`
+                ? winnerName(b) ?? `${getPlayerName(b, 1)} vs ${getPlayerName(b, 2)} — winner not determined`
                 : "BYE";
               return <PreviewCard key={`preview-${i}`} left={left} right={right} />;
             })
@@ -314,17 +313,17 @@ export default function TournamentMatchesDisplay({ matches }: Props) {
       {/* Helper / status text */}
       {!isPreviewStep && !currentComplete && (
         <p className="mt-4 text-center text-xs text-muted">
-          এই রাউন্ডের সব ম্যাচ শেষ হলে পরের রাউন্ড এখানে দেখা যাবে।
+          Once every match in this round is complete, the next round will appear here.
         </p>
       )}
       {!isPreviewStep && atLastRealStep && currentComplete && !canPreviewNext && lastIsKnockout && (
         <p className="mt-4 flex items-center justify-center gap-2 text-center text-xs font-semibold text-gold">
-          <Trophy size={14} /> চ্যাম্পিয়ন নির্ধারিত হয়ে গেছে!
+          <Trophy size={14} /> Champion has been determined!
         </p>
       )}
       {isPreviewStep && (
         <p className="mt-4 text-center text-xs text-muted">
-          পরের রাউন্ডের ম্যাচ এখনো তৈরি হয়নি — উপরে যাদের নাম দেখাচ্ছে তাদের মধ্যে যে জিতবে সে এখানে খেলবে।
+          Matches for the next round have not been generated yet — the winners shown above will play here.
         </p>
       )}
       <style>{`

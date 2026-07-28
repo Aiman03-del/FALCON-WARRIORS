@@ -36,7 +36,7 @@ export default async function FixturesPage({
   const participants = (participantsRaw ?? [])
     .map((p: any) => {
       const pd = Array.isArray(p.player_details) ? p.player_details[0] : p.player_details;
-      // ⚠️ avatar_url কী-নেম snake_case রাখা হয়েছে — FixtureRow ঠিক এই নামেই এভাটার খোঁজে।
+      // ⚠️ Keep the avatar_url key in snake_case — FixtureRow expects this exact name.
       return pd ? { id: pd.id, username: pd.efootball_username, avatar_url: pd.avatar_url ?? null } : null;
     })
     .filter((p): p is { id: string; username: string; avatar_url: string | null } => !!p);
@@ -53,8 +53,8 @@ export default async function FixturesPage({
   const groupStandings =
     tournament.format === "group_knockout" ? await getGroupStandings(tournament.id) : [];
 
-  // লিগ + প্লে-অফ ফরম্যাটে স্ট্যান্ডিং লাগে knockout সিডিং-এর জন্য, আর প্লেইন
-  // লিগেও লাগে — শেষ রাউন্ড কমপ্লিট হলে চ্যাম্পিয়ন দেখানোর জন্য।
+  // League and league_playoff formats need standings for knockout seeding, and plain
+  // league also needs standings to determine the champion when the final round completes.
   const leagueStandings =
     tournament.format === "league_playoff" || tournament.format === "league"
       ? await getTournamentStandings(tournament.id)

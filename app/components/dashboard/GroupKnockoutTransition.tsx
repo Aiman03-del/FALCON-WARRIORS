@@ -45,11 +45,11 @@ export default function GroupKnockoutTransition({
 
   const alreadyGenerated = knockoutMatches.length > 0;
 
-  // গ্রুপ পর্ব এখনো শেষ না হলে এই সেকশনটাই দেখানোর দরকার নেই।
+  // If the group stage is not complete, this section is not needed.
   if (!allGroupsDone) return null;
 
   async function runGeneration() {
-    // আগের knockout ড্র থাকলে শুধু সেটাই মুছব — গ্রুপ পর্বের ম্যাচ/রেজাল্ট অক্ষত থাকবে।
+    // If a previous knockout bracket exists, delete only that — group stage matches/results remain intact.
     if (alreadyGenerated) {
       await supabase
         .from("tournament_matches")
@@ -104,11 +104,11 @@ export default function GroupKnockoutTransition({
         <ConfirmActionButton
           onConfirm={runGeneration}
           confirmTitle="Re-generate Knockout Bracket?"
-          confirmMessage="এটা বিদ্যমান knockout ব্র্যাকেট মুছে গ্রুপ স্ট্যান্ডিং থেকে আবার নতুন করে বানাবে। গ্রুপ পর্বের ম্যাচ/রেজাল্ট এতে প্রভাবিত হবে না। এটা আর ফিরিয়ে আনা যাবে না।"
-          confirmText="হ্যাঁ, ব্র্যাকেট আবার জেনারেট করুন"
-          cancelText="বর্তমান ব্র্যাকেট রাখুন"
-          successMessage="Knockout ব্র্যাকেট আবার জেনারেট হয়েছে।"
-          errorMessage="ব্র্যাকেট জেনারেট করতে সমস্যা হয়েছে।"
+          confirmMessage="This will delete the existing knockout bracket and rebuild it from the group standings. Group stage matches/results will not be affected. This cannot be undone."
+          confirmText="Yes, regenerate the bracket"
+          cancelText="Keep current bracket"
+          successMessage="Knockout bracket has been regenerated."
+          errorMessage="Failed to generate bracket."
           isDangerous
           buttonClassName="btn-primary text-sm disabled:opacity-50"
         >

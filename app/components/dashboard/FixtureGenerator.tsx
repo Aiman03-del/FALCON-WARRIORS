@@ -155,11 +155,11 @@ export default function FixtureGenerator({
         <ConfirmActionButton
           onConfirm={runGeneration}
           confirmTitle="Re-generate Fixtures?"
-          confirmMessage="এটা এই টুর্নামেন্টের সব বিদ্যমান ম্যাচ স্থায়ীভাবে মুছে ফেলবে — ইতিমধ্যে এন্টার করা রেজাল্টসহ — এবং নতুন করে ড্র বানাবে (গ্রুপ বণ্টনও রিসেট হবে)। এটা আর ফিরিয়ে আনা যাবে না।"
-          confirmText="হ্যাঁ, মুছে নতুন করে জেনারেট করুন"
-          cancelText="বর্তমান ফিক্সচার রাখুন"
-          successMessage="ফিক্সচার আবার জেনারেট হয়েছে।"
-          errorMessage="ফিক্সচার জেনারেট করতে সমস্যা হয়েছে।"
+          confirmMessage="This will permanently delete all existing fixtures for this tournament — including entered results — and regenerate the draw (group assignments will also reset). This cannot be undone."
+          confirmText="Yes, delete and regenerate"
+          cancelText="Keep current fixtures"
+          successMessage="Fixtures have been regenerated."
+          errorMessage="Failed to regenerate fixtures."
           isDangerous
           buttonClassName="btn-primary flex items-center gap-2 text-sm disabled:opacity-50"
         >

@@ -16,8 +16,8 @@ function getJoinedPlayer(pd: any) {
   return Array.isArray(pd) ? pd[0] ?? null : pd;
 }
 
-// টুর্নামেন্ট সম্পূর্ণ হলে চ্যাম্পিয়ন বের করে — নকআউট থাকলে ফাইনাল ম্যাচের
-// বিজয়ী, নাহলে (pure league) পয়েন্ট টেবিলের ১ নম্বর টিম।
+// Determine the champion when the tournament is complete — if knockout exists, use the final match winner,
+// otherwise (pure league) use the top team from the points table.
 function computeChampion({
   tournament,
   matches,

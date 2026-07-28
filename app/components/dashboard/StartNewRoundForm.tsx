@@ -21,7 +21,7 @@ export default function StartNewRoundForm({
 
   async function handleStart() {
     if (falconSquad.length === 0) {
-      setError("আগে টুর্নামেন্টের স্কোয়াড সিলেক্ট করুন।");
+      setError("Select a tournament squad first.");
       return;
     }
 

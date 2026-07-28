@@ -79,7 +79,7 @@ export default function MatchResultForm({
   const [player1Rating, setPlayer1Rating] = useState("");
   const [player2Rating, setPlayer2Rating] = useState("");
 
-  // একাধিক প্লেয়ার এখন ম্যাচ খেলতে পারবে, প্রত্যেকের গোল/রেটিং আলাদা
+  // Multiple players can play the match now, each with separate goals and ratings.
   const [playedEntries, setPlayedEntries] = useState<PlayedEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -148,7 +148,7 @@ export default function MatchResultForm({
     setError(null);
 
     if (matchType === "external" && status === "completed" && playedEntries.length === 0) {
-      setError("যারা এই ম্যাচ খেলেছে তাদের কমপক্ষে একজনকে সিলেক্ট করুন।");
+      setError("Select at least one player who played in this match.");
       return;
     }
 
@@ -191,7 +191,7 @@ export default function MatchResultForm({
       await supabase.from("match_ratings").delete().eq("match_id", matchId);
 
       if (playedEntries.length > 0) {
-        // যারা খেলেছে সবাইকে squad-এ যোগ (matches/win-loss স্ট্যাটসের জন্য)
+        // Add all players who played to the squad (for matches/win-loss stats).
         await supabase.from("match_squad").insert(
           playedEntries.map((entry) => ({ match_id: matchId, player_id: entry.playerId }))
         );
@@ -265,7 +265,7 @@ export default function MatchResultForm({
       {matchType === "external" && status !== "upcoming" && (
         <div>
           <p className="mb-2 text-xs font-medium text-muted">
-            কারা এই ম্যাচ খেলেছে? (একাধিক সিলেক্ট করা যাবে)
+            Which players participated in this match? (multiple selections allowed)
           </p>
           {rosterPool.length === 0 ? (
             <p className="text-sm text-muted">
@@ -367,7 +367,7 @@ export default function MatchResultForm({
 
           {status === "completed" && matchType === "external" && playedEntries.length > 0 && (
             <div className="mt-4 flex flex-col gap-2">
-              <p className="text-xs font-medium text-muted">প্রতিটি প্লেয়ারের গোল ও রেটিং দিন</p>
+              <p className="text-xs font-medium text-muted">Enter each player's goals and rating</p>
               {playedEntries.map((entry) => {
                 const p = rosterPool.find((x) => x.id === entry.playerId);
                 return (
@@ -400,9 +400,9 @@ export default function MatchResultForm({
               })}
               {totalEnteredGoals !== scoreHome && (
                 <p className="text-xs text-gold/80">
-                  সতর্কতা: এখন পর্যন্ত এন্ট্রি করা গোল ({totalEnteredGoals}) টিমের স্কোরের ({scoreHome})
-                  সাথে মিলছে না। বাকি গোল সম্ভবত own-goal বা অজানা স্কোরার থেকে এসেছে — তাহলে সমস্যা নেই,
-                  নাহলে চেক করে নিন।
+                  Warning: entered goals ({totalEnteredGoals}) do not match the team score ({scoreHome}).
+                  The remainder may be due to own goals or unknown scorers — if so, this is fine.
+                  Otherwise, please verify the totals.
                 </p>
               )}
             </div>
@@ -412,7 +412,7 @@ export default function MatchResultForm({
 
       {matchType === "internal" && status === "completed" && (
         <p className="rounded-lg bg-gold/10 px-3 py-2 text-xs text-gold">
-          বিজয়ী স্বয়ংক্রিয়ভাবে MOTM পাবে, এবং গোল/ম্যাচ/win-loss উভয় প্লেয়ারের স্ট্যাটসে যোগ হবে।
+          The winner will automatically receive MOTM, and both players will receive goal/match/win-loss stat updates.
         </p>
       )}
 

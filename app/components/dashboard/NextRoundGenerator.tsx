@@ -22,7 +22,7 @@ export default function NextRoundGenerator({
   allParticipants,
   tournamentStatus,
   byeMethod = "seed",
-  thirdPlaceMatch = false, // নতুন prop
+  thirdPlaceMatch = false, // new prop
 }: {
   tournamentId: string;
   matches: Match[];
@@ -51,8 +51,8 @@ export default function NextRoundGenerator({
     ? allParticipants.find((p) => p.id === championId)?.username ?? "Unknown"
     : null;
 
-  // ফাইনাল রাউন্ডে একজন বিজয়ী বেরিয়ে এলে টুর্নামেন্ট নিজে থেকেই "completed" হয়ে যাবে —
-  // স্টাফকে আর মনে করে স্ট্যাটাস ড্রপডাউন বদলাতে হবে না।
+  // When a final round winner emerges, the tournament can automatically move to "completed" —
+  // staff do not need to manually change the status dropdown.
   useEffect(() => {
     if (!championId || tournamentStatus === "completed") return;
 
@@ -80,7 +80,7 @@ export default function NextRoundGenerator({
 
   if (!allDone || winners.length < 2) return null;
 
- // ... winners গণনা করার পরে, handleGenerateNext-এর ভেতরে ...
+ // ... after counting winners, inside handleGenerateNext ...
 
   async function handleGenerateNext() {
     setError(null);
@@ -107,9 +107,9 @@ export default function NextRoundGenerator({
       is_third_place: false,
     }));
 
-    // ৩য়-স্থান ম্যাচ: শুধু তখনই, যখন আমরা এইমাত্র ফাইনাল জেনারেট করছি (২ জন
-    // বিজয়ী থেকে ১টা ম্যাচ) — অর্থাৎ বর্তমান রাউন্ডটাই ছিল সেমিফাইনাল (ঠিক ২টা ম্যাচ)।
-    // দুটো সেমিফাইনালই bye ছাড়া real ম্যাচ হলে তবেই real loser পাওয়া যাবে।
+    // Third-place match: only when generating the final just now (2 winners -> 1 match),
+    // meaning the current round was the semifinal (exactly 2 matches).
+    // Both semifinals must be real matches, not byes, to determine the real losers.
     if (thirdPlaceMatch && winners.length === 2 && roundMatches.length === 2) {
       const losers = roundMatches
         .filter((m) => m.status === "completed" && m.player1_id && m.player2_id && m.winner_id)

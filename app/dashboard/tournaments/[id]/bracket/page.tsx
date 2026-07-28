@@ -81,7 +81,7 @@ export default async function TournamentBracketPage({
         </Link>
       </div>
 
-      {/* Group Stage standings — শুধু group_knockout-এ */}
+      {/* Group Stage standings — only for group_knockout */}
       {tournament.format === "group_knockout" &&
         groupNames.map((groupName) => (
           <div key={groupName} className="mt-8">
@@ -97,7 +97,7 @@ export default async function TournamentBracketPage({
           </div>
         ))}
 
-      {/* League টেবিল — league ও league_playoff দুটোতেই */}
+      {/* League table — for both league and league_playoff */}
       {(tournament.format === "league" || tournament.format === "league_playoff") && (
         <div className="mt-8">
           <StandingsTable
@@ -107,7 +107,7 @@ export default async function TournamentBracketPage({
         </div>
       )}
 
-      {/* Knockout bracket — pure knockout-এ সবসময়, বাকি দুই ফরম্যাটে জেনারেট হলে */}
+      {/* Knockout bracket — always for pure knockout, generated for other formats when available */}
       {(tournament.format === "knockout" || hasBracket) && (
         <div className="mt-8">
           <h2 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-gold">
@@ -128,7 +128,7 @@ export default async function TournamentBracketPage({
         </div>
       )}
 
-      {/* ৩য়-স্থান ম্যাচ */}
+      {/* 3rd place match */}
       {thirdPlaceMatch && (
         <div className="mt-6">
           <h2 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-gold">

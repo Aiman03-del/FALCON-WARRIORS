@@ -18,7 +18,7 @@ type Match = {
   player1_score: number | null;
   player2_score: number | null;
   status: string;
-  is_third_place?: boolean; // নতুন
+  is_third_place?: boolean; // new
 };
 
 export default function FixtureRow({
@@ -74,9 +74,9 @@ export default function FixtureRow({
     router.refresh();
   }
 
-  // League/round-robin-এ পরবর্তী কোনো রাউন্ড জেনারেট করার দরকার নেই, তাই সব ম্যাচ
-  // (completed/bye) শেষ হলে টুর্নামেন্ট নিরাপদে "completed" করে দেওয়া যায়।
-  // Knockout আলাদাভাবে NextRoundGenerator হ্যান্ডেল করে।
+  // In league/round-robin, no next round needs to be generated, so once all matches
+  // (completed/bye) finish the tournament can safely be marked "completed".
+  // Knockout is handled separately by NextRoundGenerator.
   async function maybeAutoCompleteLeague() {
     if (format !== "league") return;
 

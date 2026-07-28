@@ -118,7 +118,7 @@ function UploadableAvatar({
   );
 }
 
-// Inline-editable টেক্সট — ক্লিক করলেই input হয়ে যায়
+// Inline-editable text — click to edit
 function InlineEditableText({
   value,
   placeholder,
@@ -262,7 +262,7 @@ export default function CurrentRoundBoard({
 
     const incomplete = rows.some((r) => r.fs === "" || r.os === "");
     if (incomplete) {
-      setError("সব রো-তে স্কোর বসান — যেটাতে খেলা হয়নি সেটাতেও ০ দিন।");
+      setError("Fill all rows with scores — enter 0 for matches that were not played.");
       return;
     }
 
@@ -307,7 +307,7 @@ export default function CurrentRoundBoard({
       {/* ===== Header ===== */}
       <div className="relative bg-gradient-to-b from-gold/10 via-surface to-surface px-3 sm:px-4 md:px-6 pb-6 pt-6">
         <div className="mx-auto flex w-full max-w-md items-center justify-between gap-3">
-          {/* Falcon Warriors — ফিক্সড লোগো */}
+          {/* Falcon Warriors — fixed logo */}
           <div className="flex flex-1 flex-col items-center gap-2">
             <div className="relative h-[52px] w-[52px] shrink-0 overflow-hidden rounded-full ring-2 ring-gold/40">
               <Image src="/logo.jpg" alt="Falcon Warriors" fill className="object-cover" />
@@ -315,7 +315,7 @@ export default function CurrentRoundBoard({
             <span className="text-sm font-semibold text-white">Falcon Warriors</span>
           </div>
 
-          {/* Score */}
+          {/* Falcon Warriors — fixed logo */}
           <div className="flex shrink-0 flex-col items-center gap-1 px-2">
             <span className="font-display text-4xl font-bold tabular-nums">
               {totalFalcon}
@@ -324,7 +324,7 @@ export default function CurrentRoundBoard({
             </span>
           </div>
 
-          {/* Opponent — inline editable নাম + আপলোডযোগ্য লোগো */}
+          {/* Opponent — inline editable name + uploadable logo */}
           <div className="flex flex-1 flex-col items-center gap-2">
             <UploadableAvatar url={opponentLogoUrl} size={52} onUploaded={handleOpponentLogoUpload} />
             <InlineEditableText
@@ -335,7 +335,7 @@ export default function CurrentRoundBoard({
           </div>
         </div>
 
-        {/* Round Stage — সবসময় visible dropdown */}
+        {/* Round Stage — always visible dropdown */}
         <div className="mx-auto mt-5 max-w-[220px]">
           <RoundStageSelect value={roundStage} onChange={handleRoundStageChange} />
         </div>
@@ -379,7 +379,7 @@ export default function CurrentRoundBoard({
                   <NumberStepper value={r.os} onChange={(v) => updateRow(r.id, { os: v })} />
                 </div>
 
-                {/* Opponent slot — inline editable নাম + আপলোডযোগ্য ছবি */}
+                {/* Opponent slot — inline editable name + uploadable image */}
                 <div className="flex min-w-0 flex-1 items-center justify-end gap-2.5">
                   <InlineEditableText
                     value={r.opponent_label}

@@ -92,8 +92,8 @@ export default function FixturesStepper({
     });
   }, [matches]);
 
-  // ডিফল্ট: প্রথম অসম্পূর্ণ রাউন্ড, নাহলে একদম শেষ রাউন্ড — শুধু প্রথমবার সেট করি,
-  // পরে ইউজারের নেভিগেশন/জেনারেট-করা ইনডেক্সকেই সম্মান করি
+  // Default: first incomplete round, otherwise the very last round — only set once,
+  // then respect the user's navigation/generated index.
   useEffect(() => {
     if (index !== null) return;
     if (groups.length === 0) return;
@@ -107,14 +107,15 @@ export default function FixturesStepper({
   const currentComplete = current ? current.matches.every(isDone) : false;
   const atLastStep = currentIndex === groups.length - 1;
 
-  // এই রাউন্ডের পর সত্যিই আর কিছু জেনারেট করার আছে কিনা
+  // Check whether there is actually anything to generate after this round.
   const needsAction =
     !!current &&
     ((current.stage === "knockout" && current.matches.filter((m) => !m.is_third_place).length > 1) ||
       (current.stage === "group" && format === "group_knockout") ||
       (current.stage === "league" && format === "league_playoff"));
 
-  // চ্যাম্পিয়ন নির্ধারিত হলে (নকআউট ফাইনাল শেষ) টুর্নামেন্ট স্বয়ংক্রিয়ভাবে "completed" হয়ে যায়
+  // When the knockout final is finished and a champion is decided, the tournament
+  // can automatically move to "completed".
   const championId = useMemo(() => {
     if (!current || current.stage !== "knockout" || !atLastStep) return null;
     const realMatches = current.matches.filter((m) => !m.is_third_place);
@@ -127,7 +128,8 @@ export default function FixturesStepper({
 
   const championName = championId ? participants.find((p) => p.id === championId)?.username ?? "Unknown" : null;
 
-  // pure "league" ফরম্যাটে নকআউট নেই — শেষ রাউন্ড শেষ হলে পয়েন্ট টেবিলের ১ নম্বরই চ্যাম্পিয়ন
+  // In a pure "league" format there is no knockout stage — when the final round
+  // finishes, the top team in the points table is the champion.
   const leagueChampionName = useMemo(() => {
     if (format !== "league") return null;
     if (!current || current.stage !== "league" || !atLastStep || !currentComplete) return null;
@@ -241,7 +243,7 @@ export default function FixturesStepper({
         }
 
         if (leagueStandings.length < playoffSize) {
-          setError(`Playoff-এর জন্য অন্তত ${playoffSize} জন র‍্যাংকড প্লেয়ার দরকার।`);
+          setError(`At least ${playoffSize} ranked players are required for the playoff.`);
           setGenerating(false);
           return;
         }
@@ -267,10 +269,10 @@ export default function FixturesStepper({
         if (insertError) throw new Error(insertError.message);
       }
 
-      setIndex(groups.length); // নতুন রাউন্ড ঠিক এই ইনডেক্সেই বসবে
+      setIndex(groups.length); // the new round will be at this index
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "পরের রাউন্ড জেনারেট করতে সমস্যা হয়েছে।");
+      setError(e instanceof Error ? e.message : "Failed to generate the next round.");
     } finally {
       setGenerating(false);
     }
@@ -344,7 +346,7 @@ export default function FixturesStepper({
 
       {!currentComplete && (
         <p className="mt-4 text-center text-xs text-muted">
-          এই রাউন্ডের সব ম্যাচের রেজাল্ট সেভ করলে "Next" বাটন চালু হবে।
+          Once all match results in this round are saved, the Next button will be enabled.
         </p>
       )}
 
@@ -367,7 +369,7 @@ export default function FixturesStepper({
       )}
 
       {currentComplete && atLastStep && !needsAction && !championId && !leagueChampionName && (
-        <p className="mt-4 text-center text-xs text-muted">টুর্নামেন্ট সম্পন্ন — আর কোনো রাউন্ড নেই।</p>
+        <p className="mt-4 text-center text-xs text-muted">Tournament complete — no further rounds.</p>
       )}
 
       {error && <p className="mt-3 text-center text-xs text-gold">{error}</p>}
