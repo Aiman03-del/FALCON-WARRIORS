@@ -138,16 +138,14 @@ export default function FixtureGenerator({
 
   function handleClick() {
     setError(null);
-    if (notEnoughPlayers) {
-      setError(
-        format === "group_knockout"
-          ? `At least ${minRequired} approved participants are required for ${effectiveGroupCount} groups (min ${minPerGroup} per group).`
-          : "At least 2 approved participants are required."
-      );
-      return;
-    }
+    if (notEnoughPlayers) return; // button is disabled anyway; the hint below explains why
     runGeneration().catch((e) => setError(e instanceof Error ? e.message : "Failed to generate fixtures."));
   }
+
+  const requirementHint =
+    format === "group_knockout"
+      ? `At least ${minRequired} approved participants are required to generate fixtures (${effectiveGroupCount} groups × minimum ${minPerGroup} per group) — currently ${participants.length} are available.`
+      : `At least 2 approved participants are required to generate fixtures — currently ${participants.length} are available.`;
 
   return (
     <div>
@@ -175,6 +173,9 @@ export default function FixtureGenerator({
           <Shuffle size={16} />
           {label}
         </button>
+      )}
+      {notEnoughPlayers && !alreadyGenerated && (
+        <p className="mt-2 text-xs text-gold">{requirementHint}</p>
       )}
       {error && <p className="mt-2 text-xs text-gold">{error}</p>}
     </div>

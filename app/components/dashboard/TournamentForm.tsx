@@ -237,6 +237,17 @@ export default function TournamentForm({ mode, tournamentId, initial }: Tourname
       )}
 
       {format === "group_knockout" && (
+        <p className="rounded-lg border border-gold/30 bg-gold/10 px-4 py-2.5 text-xs text-gold">
+          To generate fixtures for this format, you need at least{" "}
+          <strong>
+            {(Number(groupCount) || 1) * Math.max(2, Number(qualifiersPerGroup) || 2)} participants
+          </strong>{" "}
+          approved ({groupCount || "?"} groups × minimum{" "}
+          {Math.max(2, Number(qualifiersPerGroup) || 2)} per group). Fixtures cannot be generated if fewer participants are approved.
+        </p>
+      )}
+
+      {format === "group_knockout" && (
         <div className="grid gap-4 md:grid-cols-2">
           <div className="flex-1">
             <label className="mb-1 block text-xs font-medium text-muted">Number of Groups</label>

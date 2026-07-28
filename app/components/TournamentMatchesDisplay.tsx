@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Lock, Trophy } from "lucide-react";
+import { knockoutRoundName, countTeamsInRound } from "@/app/lib/utils/roundNames";
 
 type RawPlayer = { efootball_username: string; avatar_url?: string | null };
 
@@ -20,6 +21,7 @@ type Match = {
   player2_score?: number | null;
   status: "pending" | "completed" | "live" | "bye" | string;
   stage?: string | null;
+  is_third_place?: boolean;
   player1?: RawPlayer | RawPlayer[] | null;
   player2?: RawPlayer | RawPlayer[] | null;
 };
@@ -92,14 +94,11 @@ function stageLabel(stage: string | null | undefined) {
   return "";
 }
 
-// Converts knockout rounds to display names (Final/Semi-final/Quarter-final), otherwise uses Round N.
-function roundHeading(stage: string | null | undefined, round: number, totalKnockoutRounds: number) {
-  if (stage === "knockout" && totalKnockoutRounds > 0) {
-    const fromEnd = totalKnockoutRounds - round;
-    if (fromEnd === 0) return "Final";
-    if (fromEnd === 1) return "Semi-final";
-    if (fromEnd === 2) return "Quarter-final";
-  }
+// Converts a knockout round into "Round of 32" / "Quarter-final" / "Semi-final" / "Final"
+// based on how many real teams are actually in that round (3rd-place match excluded —
+// it never counts towards the round's size). Non-knockout stages keep "Stage — Round N".
+function roundHeading(stage: string | null | undefined, round: number, teamCount: number) {
+  if (stage === "knockout") return knockoutRoundName(teamCount);
   const label = stageLabel(stage);
   return label ? `${label} — Round ${round}` : `Round ${round}`;
 }
@@ -242,13 +241,15 @@ export default function TournamentMatchesDisplay({ matches }: Props) {
   const isPreviewStep = index === groups.length; // virtual preview step for the next round
   const current = isPreviewStep ? null : groups[index];
   const currentComplete = current ? current.matches.every(isMatchDone) : false;
+  // 3rd-place ম্যাচ ফাইনালের একই রাউন্ডে থাকে — তাই team-count হিসাবে এটা বাদ দিতে হবে
+  const currentRealMatches = current ? current.matches.filter((m) => !m.is_third_place) : [];
 
   const lastGroup = groups[groups.length - 1];
+  const lastRealMatches = lastGroup.matches.filter((m) => !m.is_third_place);
   const lastIsKnockout = lastGroup.stage === "knockout";
   const lastComplete = lastGroup.matches.every(isMatchDone);
   const canPreviewNext =
-    lastIsKnockout && lastComplete && lastGroup.matches.length > 1 &&
-    // no next round after the final
+    lastIsKnockout && lastComplete && lastRealMatches.length > 1 &&
     !(totalKnockoutRounds > 0 && lastGroup.round === totalKnockoutRounds);
 
   const atLastRealStep = index === groups.length - 1;
@@ -275,8 +276,8 @@ export default function TournamentMatchesDisplay({ matches }: Props) {
         <div className="text-center">
           <h3 className="font-display text-sm font-bold uppercase tracking-wide text-gold">
             {isPreviewStep
-              ? roundHeading("knockout", lastGroup.round + 1, totalKnockoutRounds)
-              : roundHeading(current!.stage, current!.round, totalKnockoutRounds)}
+              ? roundHeading("knockout", lastGroup.round + 1, lastRealMatches.length)
+              : roundHeading(current!.stage, current!.round, countTeamsInRound(currentRealMatches))}
           </h3>
           <p className="mt-0.5 text-[11px] text-muted">
             Step {index + 1} of {groups.length + (canPreviewNext ? 1 : 0)}
@@ -296,9 +297,9 @@ export default function TournamentMatchesDisplay({ matches }: Props) {
       {/* Fixtures for current step */}
       <div key={index} className="round-step-slide flex flex-col gap-3">
         {isPreviewStep
-          ? Array.from({ length: Math.ceil(lastGroup.matches.length / 2) }).map((_, i) => {
-              const a = lastGroup.matches[i * 2];
-              const b = lastGroup.matches[i * 2 + 1];
+          ? Array.from({ length: Math.ceil(lastRealMatches.length / 2) }).map((_, i) => {
+              const a = lastRealMatches[i * 2];
+              const b = lastRealMatches[i * 2 + 1];
               const left = a
                 ? winnerName(a) ?? `${getPlayerName(a, 1)} vs ${getPlayerName(a, 2)} — winner not determined`
                 : "TBD";
@@ -307,7 +308,18 @@ export default function TournamentMatchesDisplay({ matches }: Props) {
                 : "BYE";
               return <PreviewCard key={`preview-${i}`} left={left} right={right} />;
             })
-          : current!.matches.map((m) => <FixtureCard key={m.id} m={m} />)}
+          : current!.matches.map((m) =>
+              m.is_third_place ? (
+                <div key={m.id}>
+                  <p className="mb-1.5 text-center text-[11px] font-bold uppercase tracking-wide text-muted">
+                    3rd Place Match
+                  </p>
+                  <FixtureCard m={m} />
+                </div>
+              ) : (
+                <FixtureCard key={m.id} m={m} />
+              )
+            )}
       </div>
 
       {/* Helper / status text */}

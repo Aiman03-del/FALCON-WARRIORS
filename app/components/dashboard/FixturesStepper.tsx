@@ -10,6 +10,7 @@ import {
   generateKnockoutNextRound,
   generateSeededKnockoutRound1,
 } from "@/app/lib/fixtures/generateFixtures";
+import { knockoutRoundName, countTeamsInRound } from "@/app/lib/utils/roundNames";
 
 type Match = {
   id: string;
@@ -291,11 +292,16 @@ export default function FixturesStepper({
   const stageLabel =
     current.stage === "group"
       ? "Group Stage"
-      : current.stage === "knockout"
-      ? "Knockout"
       : current.stage === "league"
       ? "League"
       : null;
+
+  const roundHeading =
+    current.stage === "knockout"
+      ? knockoutRoundName(countTeamsInRound(current.matches.filter((m) => !m.is_third_place)))
+      : stageLabel
+      ? `${stageLabel} — Round ${current.round}`
+      : `Round ${current.round}`;
 
   return (
     <div className="mt-8">
@@ -311,7 +317,7 @@ export default function FixturesStepper({
 
         <div className="text-center">
           <h2 className="font-display text-sm font-bold uppercase tracking-wide text-gold">
-            {stageLabel ? `${stageLabel} — Round ${current.round}` : `Round ${current.round}`}
+            {roundHeading}
           </h2>
           <p className="mt-0.5 text-[11px] text-muted">
             Step {currentIndex + 1} of {groups.length}

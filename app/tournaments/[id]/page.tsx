@@ -177,12 +177,14 @@ export default async function TournamentDetailPage({
           <ChampionBanner name={champion.name} avatarUrl={champion.avatarUrl} subtitle={champion.subtitle} />
         )}
 
-        <div className="mt-8">
-          <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-gold">
-            Fixtures & Results
-          </h2>
-          <TournamentMatchesDisplay matches={matches as any} />
-        </div>
+        {!hasBracket && (
+          <div className="mt-8">
+            <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-gold">
+              Fixtures & Results
+            </h2>
+            <TournamentMatchesDisplay matches={matches as any} />
+          </div>
+        )}
 
         {tournament.format === "group_knockout" &&
           groupNames.map((groupName) => (

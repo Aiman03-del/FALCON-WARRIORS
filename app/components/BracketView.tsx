@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Trophy } from "lucide-react";
+import { knockoutRoundName, countTeamsInRound } from "@/app/lib/utils/roundNames";
 
 type PlayerRef = {
   efootball_username: string;
@@ -30,14 +31,6 @@ function infoOf(p: PlayerRef | undefined): PlayerInfo {
   if (!player) return null;
   return { name: player.efootball_username, avatarUrl: player.avatar_url ?? null };
 }
-
-const roundLabel = (round: number, totalRounds: number) => {
-  const fromEnd = totalRounds - round;
-  if (fromEnd === 0) return "Final";
-  if (fromEnd === 1) return "Semi-final";
-  if (fromEnd === 2) return "Quarter-final";
-  return `Round ${round}`;
-};
 
 // Layout constants
 const BOX_W = 190;
@@ -171,13 +164,13 @@ export default function BracketView({
       <div style={{ width: chartWidth, position: "relative" }} className="min-w-max">
         {/* Round labels */}
         <div className="flex" style={{ height: LABEL_H }}>
-          {rounds.map((round) => (
+          {rounds.map((round, ri) => (
             <p
               key={round}
               className="text-center text-xs font-bold uppercase tracking-wide text-gold"
               style={{ width: BOX_W, marginRight: COL_GAP }}
             >
-              {roundLabel(round, totalRounds)}
+              {knockoutRoundName(countTeamsInRound(byRound[ri]))}
             </p>
           ))}
           <p className="text-center text-xs font-bold uppercase tracking-wide text-gold" style={{ width: BOX_W }}>
