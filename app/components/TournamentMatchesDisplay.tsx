@@ -241,7 +241,7 @@ export default function TournamentMatchesDisplay({ matches }: Props) {
   const isPreviewStep = index === groups.length; // virtual preview step for the next round
   const current = isPreviewStep ? null : groups[index];
   const currentComplete = current ? current.matches.every(isMatchDone) : false;
-  // 3rd-place ম্যাচ ফাইনালের একই রাউন্ডে থাকে — তাই team-count হিসাবে এটা বাদ দিতে হবে
+  // Exclude the 3rd-place match from team-count calculations for the round.
   const currentRealMatches = current ? current.matches.filter((m) => !m.is_third_place) : [];
 
   const lastGroup = groups[groups.length - 1];
