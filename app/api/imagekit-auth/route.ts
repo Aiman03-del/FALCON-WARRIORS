@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import ImageKit from "imagekit";
+import { createClient } from "@/app/lib/supabase/server";
 
 function getImageKitClient() {
   const publicKey = process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY;
@@ -17,14 +18,30 @@ function getImageKitClient() {
   });
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const imagekit = getImageKitClient();
 
   if (!imagekit) {
-    return NextResponse.json(
-      { error: "ImageKit is not configured" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "ImageKit is not configured" }, { status: 500 });
+  }
+
+  // Require an authenticated user (server-side). If not authenticated, return 401.
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error) {
+      return NextResponse.json({ error: "Failed to verify user" }, { status: 500 });
+    }
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+  } catch (e) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const authParams = imagekit.getAuthenticationParameters();

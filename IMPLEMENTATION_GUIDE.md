@@ -5,7 +5,47 @@ This guide explains how to use all the new UI/UX components and utilities that h
 
 ---
 
-## 1. Validation System
+## 1. Radius and Shadow System
+
+For new or edited components, follow this lightweight design system so the UI stays visually consistent without needing a full rewrite.
+
+| Element type | Radius | Shadow | Notes |
+| --- | --- | --- | --- |
+| Button | `rounded-lg` | None | Keep it flat by default; use a color change on hover for interaction feedback. |
+| Card | `rounded-xl` | `shadow-md` by default, `shadow-lg` on hover | Use for standard content cards and list items. |
+| Modal / Dialog | `rounded-2xl` | `shadow-2xl` | Use for overlays and high-priority surfaces. |
+| Avatar / Icon | `rounded-full` | None | Use for profile images, badges, and small icon containers. |
+| Achievement / Winner Highlight | `rounded-xl` | `shadow-gold` | Use for premium emphasis, winner states, or featured achievements. |
+
+### Usage Examples
+
+```tsx
+<button className="rounded-lg transition-colors hover:bg-gold/10">
+  Save
+</button>
+
+<div className="rounded-xl border border-border bg-surface p-4 shadow-md transition-shadow hover:shadow-lg">
+  Content card
+</div>
+
+<div className="rounded-2xl border border-border bg-surface p-6 shadow-2xl">
+  Modal content
+</div>
+
+<div className="flex h-12 w-12 items-center justify-center rounded-full bg-gold/15">
+  A
+</div>
+
+<div className="rounded-xl bg-gold/10 p-4 shadow-gold">
+  Featured achievement
+</div>
+```
+
+> Apply this pattern to newly created components first. Existing components can be migrated gradually over time.
+
+---
+
+## 2. Validation System
 
 ### Location
 `app/lib/utils/validation.ts`

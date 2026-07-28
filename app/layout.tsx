@@ -72,7 +72,7 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/favicon.png" type="image/png" />
       </head>
-      <body className={`${body.className} bg-background text-foreground antialiased`}>
+      <body className={`${display.variable} ${body.variable} ${body.className} bg-background text-foreground antialiased`}>
         <ToastProvider>
           {children}
         </ToastProvider>

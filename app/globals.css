@@ -20,9 +20,6 @@
     transparent 1px
   ),
   linear-gradient(90deg, rgba(233, 185, 73, 0.06) 1px, transparent 1px);
-
-  --font-display: var(--font-display);
-  --font-body: var(--font-body);
 }
 
 html {
@@ -36,6 +33,19 @@ body {
   font-family: var(--font-body), Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+}
+
+button, a, input, select, textarea {
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
 }
 
 @layer utilities {

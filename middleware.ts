@@ -6,7 +6,6 @@ const DEMO_MODE = false;
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
-
   // Check if Supabase credentials are available
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     // If no Supabase credentials and demo mode is on, allow all protected paths
@@ -15,6 +14,9 @@ export async function middleware(request: NextRequest) {
     }
     return response;
   }
+
+  const protectedPaths = ["/dashboard", "/profile/edit"];
+  const isProtected = protectedPaths.some((p) => request.nextUrl.pathname.startsWith(p));
 
   try {
     const supabase = createServerClient(
@@ -58,9 +60,15 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
   } catch (error) {
-    // If Supabase fails, continue without auth (demo mode)
+    // If Supabase fails, don't silently fail-open for protected paths.
+    // In demo mode allow access; otherwise, if the path is protected redirect to login.
     if (DEMO_MODE) {
       return response;
+    }
+    if (isProtected) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
     }
   }
 
