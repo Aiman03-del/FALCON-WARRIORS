@@ -1,10 +1,6 @@
-
 import BracketView from "@/app/components/BracketView";
 import FixtureGenerator from "@/app/components/dashboard/FixtureGenerator";
-import FixtureRow from "@/app/components/dashboard/FixtureRow";
-import GroupKnockoutTransition from "@/app/components/dashboard/GroupKnockoutTransition";
-import LeaguePlayoffTransition from "@/app/components/dashboard/LeaguePlayoffTransition";
-import NextRoundGenerator from "@/app/components/dashboard/NextRoundGenerator";
+import FixturesStepper from "@/app/components/dashboard/FixturesStepper";
 import { getGroupStandings, getTournamentStandings } from "@/app/lib/queries/tournaments";
 import { requireStaff } from "@/app/lib/queries/dashboard";
 import { createClient } from "@/app/lib/supabase/server";
@@ -23,7 +19,9 @@ export default async function FixturesPage({
 
   const { data: tournament } = await supabase
     .from("tournaments")
-    .select("id, name, format, double_round, status, bye_method, group_count, qualifiers_per_group, playoff_size")
+    .select(
+      "id, name, format, double_round, status, bye_method, group_count, qualifiers_per_group, playoff_size, third_place_match"
+    )
     .eq("id", id)
     .single();
 
@@ -38,13 +36,16 @@ export default async function FixturesPage({
   const participants = (participantsRaw ?? [])
     .map((p: any) => {
       const pd = Array.isArray(p.player_details) ? p.player_details[0] : p.player_details;
-      return pd ? { id: pd.id, username: pd.efootball_username, avatarUrl: pd.avatar_url ?? null } : null;
+      // ⚠️ avatar_url কী-নেম snake_case রাখা হয়েছে — FixtureRow ঠিক এই নামেই এভাটার খোঁজে।
+      return pd ? { id: pd.id, username: pd.efootball_username, avatar_url: pd.avatar_url ?? null } : null;
     })
-    .filter((p): p is { id: string; username: string; avatarUrl: string | null } => !!p);
+    .filter((p): p is { id: string; username: string; avatar_url: string | null } => !!p);
 
   const { data: matches } = await supabase
     .from("tournament_matches")
-    .select("id, round, match_order, player1_id, player2_id, player1_score, player2_score, winner_id, status, stage, group_name")
+    .select(
+      "id, round, match_order, player1_id, player2_id, player1_score, player2_score, winner_id, status, stage, group_name, is_third_place"
+    )
     .eq("tournament_id", id)
     .order("round")
     .order("match_order");
@@ -52,17 +53,12 @@ export default async function FixturesPage({
   const groupStandings =
     tournament.format === "group_knockout" ? await getGroupStandings(tournament.id) : [];
 
+  // লিগ + প্লে-অফ ফরম্যাটে স্ট্যান্ডিং লাগে knockout সিডিং-এর জন্য, আর প্লেইন
+  // লিগেও লাগে — শেষ রাউন্ড কমপ্লিট হলে চ্যাম্পিয়ন দেখানোর জন্য।
   const leagueStandings =
-    tournament.format === "league_playoff" ? await getTournamentStandings(tournament.id) : [];
-
-  const roundKeys = Array.from(
-    new Set((matches ?? []).map((m) => `${m.stage ?? "main"}::${m.round}`))
-  ).sort((a, b) => {
-    const [stageA, roundA] = a.split("::");
-    const [stageB, roundB] = b.split("::");
-    if (stageA !== stageB) return stageA.localeCompare(stageB);
-    return Number(roundA) - Number(roundB);
-  });
+    tournament.format === "league_playoff" || tournament.format === "league"
+      ? await getTournamentStandings(tournament.id)
+      : [];
 
   const formatLabels: Record<string, string> = {
     league: "League",
@@ -103,7 +99,7 @@ export default async function FixturesPage({
         />
       </div>
 
-      {roundKeys.length > 0 && (
+      {(matches ?? []).length > 0 && (
         <div className="mt-8">
           <h2 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-gold">
             Bracket Preview
@@ -114,13 +110,13 @@ export default async function FixturesPage({
               player1: participants.find((p) => p.id === m.player1_id)
                 ? {
                     efootball_username: participants.find((p) => p.id === m.player1_id)!.username,
-                    avatar_url: participants.find((p) => p.id === m.player1_id)!.avatarUrl,
+                    avatar_url: participants.find((p) => p.id === m.player1_id)!.avatar_url,
                   }
                 : null,
               player2: participants.find((p) => p.id === m.player2_id)
                 ? {
                     efootball_username: participants.find((p) => p.id === m.player2_id)!.username,
-                    avatar_url: participants.find((p) => p.id === m.player2_id)!.avatarUrl,
+                    avatar_url: participants.find((p) => p.id === m.player2_id)!.avatar_url,
                   }
                 : null,
             }))}
@@ -129,73 +125,23 @@ export default async function FixturesPage({
         </div>
       )}
 
-      {roundKeys.length === 0 ? (
+      {(matches ?? []).length === 0 ? (
         <p className="mt-10 text-center text-sm text-muted">
           No fixtures generated yet. Click the button above to randomly generate matchups.
         </p>
       ) : (
-        roundKeys.map((key) => {
-          const [stage, roundStr] = key.split("::");
-          const round = Number(roundStr);
-          const stageLabel =
-            stage === "group"
-              ? "Group Stage"
-              : stage === "knockout"
-              ? "Knockout"
-              : stage === "league"
-              ? "League"
-              : null;
-
-          return (
-            <div key={key} className="mt-8">
-              <h2 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-gold">
-                {stageLabel ? `${stageLabel} — Round ${round}` : `Round ${round}`}
-              </h2>
-              <div className="flex flex-col gap-3">
-                {(matches ?? [])
-                  .filter((m) => (m.stage ?? "main") === stage && m.round === round)
-                  .map((m) => (
-                    <FixtureRow
-                      key={m.id}
-                      match={m}
-                      allParticipants={participants}
-                      tournamentId={tournament.id}
-                      format={tournament.format}
-                    />
-                  ))}
-              </div>
-            </div>
-          );
-        })
-      )}
-
-      {tournament.format === "group_knockout" && (
-        <GroupKnockoutTransition
+        <FixturesStepper
           tournamentId={tournament.id}
-          matches={matches ?? []}
+          tournamentStatus={tournament.status}
+          format={tournament.format}
+          matches={(matches ?? []) as any}
+          participants={participants}
+          byeMethod={(tournament.bye_method as "seed" | "random") ?? "seed"}
+          thirdPlaceMatch={tournament.third_place_match ?? false}
           groupStandings={groupStandings.map((g) => ({ groupName: g.groupName, standings: g.standings }))}
           qualifiersPerGroup={tournament.qualifiers_per_group ?? 2}
-        />
-      )}
-
-      {tournament.format === "league_playoff" && (
-        <LeaguePlayoffTransition
-          tournamentId={tournament.id}
-          matches={matches ?? []}
-          standings={leagueStandings}
+          leagueStandings={leagueStandings as any}
           playoffSize={tournament.playoff_size ?? 4}
-        />
-      )}
-
-      {(tournament.format === "knockout" ||
-        tournament.format === "group_knockout" ||
-        tournament.format === "league_playoff") && (
-        <NextRoundGenerator
-          tournamentId={tournament.id}
-          matches={matches ?? []}
-          allParticipants={participants}
-          tournamentStatus={tournament.status}
-          byeMethod={tournament.bye_method ?? "seed"}
         />
       )}
     </div>

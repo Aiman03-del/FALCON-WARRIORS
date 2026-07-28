@@ -106,7 +106,7 @@ export default function TournamentForm({ mode, tournamentId, initial }: Tourname
       group_count: format === "group_knockout" ? Number(groupCount) : null,
       qualifiers_per_group: format === "group_knockout" ? Number(qualifiersPerGroup) : null,
       playoff_size: format === "league_playoff" ? Number(playoffSize) : null,
-      bye_method: format === "knockout" || format === "group_knockout" || format === "league_playoff" ? byeMethod : null,
+      bye_method: byeMethod,
       third_place_match: format === "group_knockout" || format === "league_playoff" ? thirdPlaceMatch : false,
     };
 

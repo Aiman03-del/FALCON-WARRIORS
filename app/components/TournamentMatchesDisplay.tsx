@@ -1,5 +1,9 @@
-import Link from "next/link";
-import { Calendar, CheckCircle2 } from "lucide-react";
+"use client";
+
+import { useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Lock, Trophy } from "lucide-react";
+
+type RawPlayer = { efootball_username: string; avatar_url?: string | null };
 
 type Match = {
   id: string;
@@ -14,133 +18,322 @@ type Match = {
   player2Score?: number | null;
   player1_score?: number | null;
   player2_score?: number | null;
-  status: "pending" | "completed" | "live";
-  player1?: { efootball_username: string };
-  player2?: { efootball_username: string };
+  status: "pending" | "completed" | "live" | "bye" | string;
+  stage?: string | null;
+  player1?: RawPlayer | RawPlayer[] | null;
+  player2?: RawPlayer | RawPlayer[] | null;
 };
 
 type Props = {
   matches: Match[];
 };
 
-function getResult(score1: number, score2: number): "W" | "D" | "L" {
-  if (score1 > score2) return "W";
-  if (score1 === score2) return "D";
-  return "L";
+// ---------- helpers ----------
+
+function normalizePlayer(p: Match["player1"]) {
+  if (!p) return null;
+  return Array.isArray(p) ? p[0] ?? null : p;
 }
 
-function getPlayerLabel(playerName: string | undefined, playerId?: string | null) {
-  if (playerName) return playerName;
-  if (playerId) return `Player ${playerId.slice(0, 4)}`;
+function getMatchOrder(m: Match) {
+  return m.matchOrder ?? m.match_order ?? 0;
+}
+function getPlayer1Id(m: Match) {
+  return m.player1Id ?? m.player1_id ?? null;
+}
+function getPlayer2Id(m: Match) {
+  return m.player2Id ?? m.player2_id ?? null;
+}
+function getPlayer1Score(m: Match) {
+  return m.player1Score ?? m.player1_score ?? null;
+}
+function getPlayer2Score(m: Match) {
+  return m.player2Score ?? m.player2_score ?? null;
+}
+function getPlayerName(m: Match, which: 1 | 2) {
+  const p = normalizePlayer(which === 1 ? m.player1 : m.player2);
+  if (p?.efootball_username) return p.efootball_username;
+  const id = which === 1 ? getPlayer1Id(m) : getPlayer2Id(m);
+  if (id) return `Player ${id.slice(0, 4)}`;
   return "TBD";
 }
-
-function getMatchOrder(match: Match) {
-  return match.matchOrder ?? match.match_order ?? 0;
+function getPlayerAvatar(m: Match, which: 1 | 2) {
+  const p = normalizePlayer(which === 1 ? m.player1 : m.player2);
+  return p?.avatar_url ?? null;
+}
+function initialsOf(name: string) {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? "")
+      .join("") || "P"
+  );
+}
+function isMatchDone(m: Match) {
+  return m.status === "completed" || m.status === "bye";
+}
+function winnerName(m: Match): string | null {
+  if (m.status === "bye") return getPlayerName(m, 1);
+  if (m.status !== "completed") return null;
+  const s1 = getPlayer1Score(m);
+  const s2 = getPlayer2Score(m);
+  if (s1 === null || s2 === null || s1 === s2) return null;
+  return s1 > s2 ? getPlayerName(m, 1) : getPlayerName(m, 2);
 }
 
-function getPlayer1Id(match: Match) {
-  return match.player1Id ?? match.player1_id ?? null;
+const STAGE_PRIORITY: Record<string, number> = { group: 0, league: 1, knockout: 2 };
+
+function stageLabel(stage: string | null | undefined) {
+  if (stage === "group") return "Group Stage";
+  if (stage === "league") return "League Stage";
+  if (stage === "knockout") return "Knockout";
+  return "";
 }
 
-function getPlayer2Id(match: Match) {
-  return match.player2Id ?? match.player2_id ?? null;
+// নকআউট রাউন্ডকে সুন্দর নাম দেয় (Final/Semi-final/Quarter-final), বাকি
+// স্টেজে সাধারণ "Round N"
+function roundHeading(stage: string | null | undefined, round: number, totalKnockoutRounds: number) {
+  if (stage === "knockout" && totalKnockoutRounds > 0) {
+    const fromEnd = totalKnockoutRounds - round;
+    if (fromEnd === 0) return "Final";
+    if (fromEnd === 1) return "Semi-final";
+    if (fromEnd === 2) return "Quarter-final";
+  }
+  const label = stageLabel(stage);
+  return label ? `${label} — Round ${round}` : `Round ${round}`;
 }
 
-function getPlayer1Score(match: Match) {
-  return match.player1Score ?? match.player1_score ?? null;
+// ---------- small UI bits ----------
+
+function PlayerAvatar({
+  name,
+  url,
+  gradient,
+}: {
+  name: string;
+  url: string | null;
+  gradient: "gold-indigo" | "indigo-gold";
+}) {
+  const gradientClass =
+    gradient === "gold-indigo"
+      ? "from-gold to-indigo shadow-gold/20"
+      : "from-indigo to-gold shadow-indigo/20";
+
+  return (
+    <div
+      className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-linear-to-br ${gradientClass} text-sm font-bold text-white shadow-lg sm:h-14 sm:w-14 sm:text-lg`}
+    >
+      {url ? (
+        <img src={url} alt={name} className="h-full w-full object-cover" />
+      ) : (
+        initialsOf(name)
+      )}
+    </div>
+  );
 }
 
-function getPlayer2Score(match: Match) {
-  return match.player2Score ?? match.player2_score ?? null;
+function FixtureCard({ m }: { m: Match }) {
+  const p1Name = getPlayerName(m, 1);
+  const p2Name = getPlayerName(m, 2);
+  const s1 = getPlayer1Score(m);
+  const s2 = getPlayer2Score(m);
+  const done = isMatchDone(m);
+  const p1Win = done && s1 !== null && s2 !== null && s1 > s2;
+  const p2Win = done && s1 !== null && s2 !== null && s2 > s1;
+
+  if (m.status === "bye") {
+    return (
+      <div className="card flex items-center justify-between gap-2 p-3 sm:p-4">
+        <p className="text-sm font-medium">
+          {p1Name} <span className="text-muted">— BYE (স্বয়ংক্রিয়ভাবে পরের রাউন্ডে)</span>
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card flex items-center justify-between gap-2 p-3 sm:p-4">
+      <div className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center">
+        <PlayerAvatar name={p1Name} url={getPlayerAvatar(m, 1)} gradient="gold-indigo" />
+        <p className={`truncate text-sm font-semibold ${p1Win ? "text-gold" : ""}`}>{p1Name}</p>
+      </div>
+
+      <div className="flex shrink-0 flex-col items-center gap-1 px-2">
+        {done && s1 !== null && s2 !== null ? (
+          <span className="font-display text-lg font-bold tabular-nums">
+            {s1} - {s2}
+          </span>
+        ) : (
+          <span className="text-xs font-bold uppercase text-muted">VS</span>
+        )}
+        <span className="text-[10px] text-muted">Match {getMatchOrder(m)}</span>
+      </div>
+
+      <div className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center">
+        <PlayerAvatar name={p2Name} url={getPlayerAvatar(m, 2)} gradient="indigo-gold" />
+        <p className={`truncate text-sm font-semibold ${p2Win ? "text-gold" : ""}`}>{p2Name}</p>
+      </div>
+    </div>
+  );
 }
+
+// পরের নকআউট রাউন্ড এখনো তৈরি হয়নি — কে কার সাথে খেললে জিতলে এখানে আসবে সেটার প্রিভিউ
+function PreviewCard({ left, right }: { left: string; right: string }) {
+  return (
+    <div className="card flex items-center justify-between gap-2 border-dashed p-3 opacity-80 sm:p-4">
+      <div className="min-w-0 flex-1 text-center">
+        <p className="truncate text-sm font-medium text-muted">{left}</p>
+      </div>
+      <div className="flex shrink-0 items-center gap-1 px-2 text-muted">
+        <Lock size={12} />
+        <span className="text-xs font-bold uppercase">VS</span>
+      </div>
+      <div className="min-w-0 flex-1 text-center">
+        <p className="truncate text-sm font-medium text-muted">{right}</p>
+      </div>
+    </div>
+  );
+}
+
+// ---------- main component ----------
 
 export default function TournamentMatchesDisplay({ matches }: Props) {
-  const upcoming = matches
-    .filter((m) => m.status !== "completed")
-    .sort((a, b) => a.round - b.round || (a.matchOrder ?? a.match_order ?? 0) - (b.matchOrder ?? b.match_order ?? 0));
-  const completed = matches
-    .filter((m) => m.status === "completed")
-    .sort((a, b) => b.round - a.round || (b.matchOrder ?? b.match_order ?? 0) - (a.matchOrder ?? a.match_order ?? 0));
+  const groups = useMemo(() => {
+    const map = new Map<string, { stage: string | null; round: number; matches: Match[] }>();
+    for (const m of matches) {
+      const stage = m.stage ?? null;
+      const key = `${stage ?? "main"}::${m.round}`;
+      if (!map.has(key)) map.set(key, { stage, round: m.round, matches: [] });
+      map.get(key)!.matches.push(m);
+    }
+    for (const g of map.values()) {
+      g.matches.sort((a, b) => getMatchOrder(a) - getMatchOrder(b));
+    }
+    return Array.from(map.values()).sort((a, b) => {
+      const pa = STAGE_PRIORITY[a.stage ?? ""] ?? 1;
+      const pb = STAGE_PRIORITY[b.stage ?? ""] ?? 1;
+      if (pa !== pb) return pa - pb;
+      return a.round - b.round;
+    });
+  }, [matches]);
 
-  const resultStyles = {
-    W: "bg-indigo/20 text-indigo-light",
-    D: "bg-white/10 text-muted",
-    L: "bg-gold/15 text-gold",
-  };
+  const totalKnockoutRounds = useMemo(() => {
+    const rounds = groups.filter((g) => g.stage === "knockout").map((g) => g.round);
+    return rounds.length > 0 ? Math.max(...rounds) : 0;
+  }, [groups]);
+
+  // ডিফল্ট: প্রথম অসম্পূর্ণ রাউন্ড, নাহলে একদম শেষ রাউন্ড
+  const defaultIndex = useMemo(() => {
+    const idx = groups.findIndex((g) => !g.matches.every(isMatchDone));
+    return idx === -1 ? Math.max(groups.length - 1, 0) : idx;
+  }, [groups]);
+
+  const [index, setIndex] = useState(defaultIndex);
+
+  if (groups.length === 0) {
+    return (
+      <div className="card flex flex-col items-center gap-2 py-8 text-center">
+        <p className="text-sm text-muted">No matches scheduled for this tournament yet.</p>
+      </div>
+    );
+  }
+
+  const isPreviewStep = index === groups.length; // বাস্তবের বাইরের ভার্চুয়াল "পরের রাউন্ড" স্টেপ
+  const current = isPreviewStep ? null : groups[index];
+  const currentComplete = current ? current.matches.every(isMatchDone) : false;
+
+  const lastGroup = groups[groups.length - 1];
+  const lastIsKnockout = lastGroup.stage === "knockout";
+  const lastComplete = lastGroup.matches.every(isMatchDone);
+  const canPreviewNext =
+    lastIsKnockout && lastComplete && lastGroup.matches.length > 1 &&
+    // ফাইনাল হলে আর কোনো পরের রাউন্ড নেই
+    !(totalKnockoutRounds > 0 && lastGroup.round === totalKnockoutRounds);
+
+  const atLastRealStep = index === groups.length - 1;
+  const canGoNext = isPreviewStep
+    ? false
+    : atLastRealStep
+    ? currentComplete && canPreviewNext
+    : currentComplete; // পরের বাস্তব রাউন্ডে যেতেও আগেরটা শেষ হতে হবে
+  const canGoPrev = index > 0;
 
   return (
     <div>
-      {/* Upcoming Matches */}
-      {upcoming.length > 0 && (
-        <div className="mb-8">
-          <h3 className="mb-4 flex items-center gap-2 font-display text-sm font-bold uppercase text-gold">
-            <Calendar size={14} />
-            Upcoming Matches
-          </h3>
-          <div className="flex flex-col gap-3">
-            {upcoming.map((m) => (
-              <div key={m.id} className="card flex items-center justify-between gap-4 p-3 sm:p-4">
-                <div className="flex flex-1 items-center justify-between gap-2 sm:justify-center">
-                  <div className="text-center">
-                    <p className="text-sm font-semibold">{getPlayerLabel(m.player1?.efootball_username, getPlayer1Id(m))}</p>
-                    <p className="text-xs text-muted">Round {m.round}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold uppercase text-muted">VS</span>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm font-semibold">{getPlayerLabel(m.player2?.efootball_username, getPlayer2Id(m))}</p>
-                    <p className="text-xs text-muted">Match {getMatchOrder(m)}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Step header */}
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <button
+          onClick={() => canGoPrev && setIndex((i) => i - 1)}
+          disabled={!canGoPrev}
+          className="btn-outline flex items-center gap-1 px-3 py-2 text-xs disabled:opacity-30"
+        >
+          <ChevronLeft size={14} />
+          Prev
+        </button>
 
-      {/* Completed Matches */}
-      {completed.length > 0 && (
-        <div>
-          <h3 className="mb-4 flex items-center gap-2 font-display text-sm font-bold uppercase text-gold">
-            <CheckCircle2 size={14} />
-            Results
+        <div className="text-center">
+          <h3 className="font-display text-sm font-bold uppercase tracking-wide text-gold">
+            {isPreviewStep
+              ? roundHeading("knockout", lastGroup.round + 1, totalKnockoutRounds)
+              : roundHeading(current!.stage, current!.round, totalKnockoutRounds)}
           </h3>
-          <div className="flex flex-col gap-3">
-            {completed.map((m) => {
-              const result = getResult(getPlayer1Score(m) ?? 0, getPlayer2Score(m) ?? 0);
-              const resultStyle = resultStyles[result];
-              return (
-                <div key={m.id} className="card flex items-center justify-between gap-4 p-3 sm:p-4">
-                  <div className="flex flex-1 items-center justify-between gap-2 sm:justify-center">
-                    <div className="min-w-0 text-center">
-                      <p className="truncate text-sm font-semibold">{getPlayerLabel(m.player1?.efootball_username, getPlayer1Id(m))}</p>
-                      <p className="text-xs text-muted">Round {m.round}</p>
-                    </div>
-                    <div className="flex flex-col items-center gap-1 shrink-0">
-                      <span className="font-display text-lg font-bold tabular-nums">
-                        {getPlayer1Score(m)} - {getPlayer2Score(m)}
-                      </span>
-                      <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${resultStyle}`}>{result}</span>
-                    </div>
-                    <div className="min-w-0 text-center">
-                      <p className="truncate text-sm font-semibold">{getPlayerLabel(m.player2?.efootball_username, getPlayer2Id(m))}</p>
-                      <p className="text-xs text-muted">Match {getMatchOrder(m)}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <p className="mt-0.5 text-[11px] text-muted">
+            Step {index + 1} of {groups.length + (canPreviewNext ? 1 : 0)}
+          </p>
         </div>
-      )}
 
-      {matches.length === 0 && (
-        <div className="card flex flex-col items-center gap-2 py-8 text-center">
-          <p className="text-sm text-muted">No matches scheduled for this tournament yet.</p>
-        </div>
+        <button
+          onClick={() => canGoNext && setIndex((i) => i + 1)}
+          disabled={!canGoNext}
+          className="btn-outline flex items-center gap-1 px-3 py-2 text-xs disabled:opacity-30"
+        >
+          Next
+          <ChevronRight size={14} />
+        </button>
+      </div>
+
+      {/* Fixtures for current step */}
+      <div key={index} className="round-step-slide flex flex-col gap-3">
+        {isPreviewStep
+          ? Array.from({ length: Math.ceil(lastGroup.matches.length / 2) }).map((_, i) => {
+              const a = lastGroup.matches[i * 2];
+              const b = lastGroup.matches[i * 2 + 1];
+              const left = a
+                ? winnerName(a) ?? `${getPlayerName(a, 1)} বনাম ${getPlayerName(a, 2)} — বিজয়ী নির্ধারিত হয়নি`
+                : "TBD";
+              const right = b
+                ? winnerName(b) ?? `${getPlayerName(b, 1)} বনাম ${getPlayerName(b, 2)} — বিজয়ী নির্ধারিত হয়নি`
+                : "BYE";
+              return <PreviewCard key={`preview-${i}`} left={left} right={right} />;
+            })
+          : current!.matches.map((m) => <FixtureCard key={m.id} m={m} />)}
+      </div>
+
+      {/* Helper / status text */}
+      {!isPreviewStep && !currentComplete && (
+        <p className="mt-4 text-center text-xs text-muted">
+          এই রাউন্ডের সব ম্যাচ শেষ হলে পরের রাউন্ড এখানে দেখা যাবে।
+        </p>
       )}
+      {!isPreviewStep && atLastRealStep && currentComplete && !canPreviewNext && lastIsKnockout && (
+        <p className="mt-4 flex items-center justify-center gap-2 text-center text-xs font-semibold text-gold">
+          <Trophy size={14} /> চ্যাম্পিয়ন নির্ধারিত হয়ে গেছে!
+        </p>
+      )}
+      {isPreviewStep && (
+        <p className="mt-4 text-center text-xs text-muted">
+          পরের রাউন্ডের ম্যাচ এখনো তৈরি হয়নি — উপরে যাদের নাম দেখাচ্ছে তাদের মধ্যে যে জিতবে সে এখানে খেলবে।
+        </p>
+      )}
+      <style>{`
+        @keyframes roundStepSlide {
+          from { opacity: 0; transform: translateX(24px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        .round-step-slide { animation: roundStepSlide 0.35s ease-out; }
+      `}</style>
     </div>
   );
 }

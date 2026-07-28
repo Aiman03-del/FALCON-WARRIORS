@@ -1,5 +1,5 @@
-
 import BracketView from "@/app/components/BracketView";
+import ChampionBanner from "@/app/components/ChampionBanner";
 import Footer from "@/app/components/Footer";
 import JoinTournamentButton from "@/app/components/JoinTournamentButton";
 import Navbar from "@/app/components/Navbar";
@@ -9,8 +9,77 @@ import TournamentSquadList from "@/app/components/TournamentSquadList";
 import ExternalTournamentInfo from "@/app/components/ExternalTournamentInfo";
 import TournamentMatchesDisplay from "@/app/components/TournamentMatchesDisplay";
 import { getMyJoinStatus, getTournamentDetail } from "@/app/lib/queries/tournaments";
+import { rankStandings } from "@/app/lib/fixtures/tiebreakers";
 import { notFound } from "next/navigation";
 
+function getJoinedPlayer(pd: any) {
+  return Array.isArray(pd) ? pd[0] ?? null : pd;
+}
+
+// টুর্নামেন্ট সম্পূর্ণ হলে চ্যাম্পিয়ন বের করে — নকআউট থাকলে ফাইনাল ম্যাচের
+// বিজয়ী, নাহলে (pure league) পয়েন্ট টেবিলের ১ নম্বর টিম।
+function computeChampion({
+  tournament,
+  matches,
+  participants,
+  bracketMatches,
+}: {
+  tournament: any;
+  matches: any[];
+  participants: any[];
+  bracketMatches: any[];
+}): { name: string; avatarUrl: string | null; subtitle: string } | null {
+  if (bracketMatches.length > 0) {
+    const finalRound = Math.max(...bracketMatches.map((m) => m.round));
+    const finalMatches = bracketMatches.filter((m) => m.round === finalRound);
+    if (finalMatches.length !== 1) return null;
+
+    const finalMatch = finalMatches[0];
+
+    if (finalMatch.status === "bye") {
+      const p = getJoinedPlayer(finalMatch.player1);
+      return p ? { name: p.efootball_username, avatarUrl: p.avatar_url ?? null, subtitle: "Tournament Champion" } : null;
+    }
+
+    if (finalMatch.status !== "completed") return null;
+    const s1 = finalMatch.player1_score;
+    const s2 = finalMatch.player2_score;
+    if (s1 === null || s2 === null || s1 === s2) return null;
+
+    const winner = getJoinedPlayer(s1 > s2 ? finalMatch.player1 : finalMatch.player2);
+    if (!winner) return null;
+    return {
+      name: winner.efootball_username,
+      avatarUrl: winner.avatar_url ?? null,
+      subtitle: `Won the Final ${s1} - ${s2}`,
+    };
+  }
+
+  if (tournament.format === "league") {
+    const leagueMatches = matches.filter((m) => m.stage !== "knockout");
+    const allDone = leagueMatches.length > 0 && leagueMatches.every((m) => m.status === "completed" || m.status === "bye");
+    if (!allDone) return null;
+
+    const withPlayerId = participants.map((p: any) => ({
+      ...p,
+      player_id: getJoinedPlayer(p.player_details)?.id ?? p.id,
+    }));
+    const ranked = rankStandings(withPlayerId, leagueMatches);
+    const top = ranked[0];
+    if (!top) return null;
+
+    const player = getJoinedPlayer((top as any).player_details);
+    if (!player) return null;
+
+    return {
+      name: player.efootball_username,
+      avatarUrl: player.avatar_url ?? null,
+      subtitle: `League Champion · ${(top as any).points} pts`,
+    };
+  }
+
+  return null;
+}
 
 export default async function TournamentDetailPage({
   params,
@@ -33,6 +102,8 @@ export default async function TournamentDetailPage({
     tournament.format === "group_knockout"
       ? Array.from(new Set(participants.map((p: any) => p.group_name).filter(Boolean))).sort()
       : [];
+
+  const champion = computeChampion({ tournament, matches: matches as any[], participants, bracketMatches });
 
   return (
     <main>
@@ -100,6 +171,10 @@ export default async function TournamentDetailPage({
             </h2>
             <TournamentSquadList squad={squad} />
           </div>
+        )}
+
+        {champion && (
+          <ChampionBanner name={champion.name} avatarUrl={champion.avatarUrl} subtitle={champion.subtitle} />
         )}
 
         <div className="mt-8">
