@@ -9,6 +9,8 @@ import ImageUploadInput from "@/app/components/ImageUploadInput";
 import SelectField from "@/app/components/SelectField";
 import { COUNTRIES, getCitiesForCountry } from "@/app/lib/data/countries";
 import { FOOTBALL_CLUBS, NATIONAL_TEAMS } from "@/app/lib/data/clubs";
+import { useAccountStatus } from "@/app/providers/AccountStatusProvider";
+import { useToast } from "@/app/providers/ToastProvider";
 
 const POSITIONS = [
   { value: "GK", label: "GK — Goalkeeper" },
@@ -54,6 +56,8 @@ type PlayerDetails = {
 export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
   const supabase = createClient();
   const router = useRouter();
+  const { isSuspended } = useAccountStatus();
+  const { addToast } = useToast();
 
   const [form, setForm] = useState({
     real_name: player.real_name ?? "",
@@ -85,6 +89,10 @@ export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (isSuspended) {
+      addToast("Your account has been suspended. You cannot update your profile.", "error");
+      return;
+    }
     setError(null);
     setLoading(true);
 

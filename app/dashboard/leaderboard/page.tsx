@@ -1,14 +1,12 @@
-import { getTopScorers, getTopWinRate, getTopMotm, getTopRating } from "@/app/lib/queries/leaderboards";
+import { getLeaderboardData } from "@/app/lib/queries/leaderboards";
 import LeaderboardTabs from "@/app/components/LeaderboardTabs";
 import { requireStaff } from "@/app/lib/queries/dashboard";
 
 export default async function DashboardLeaderboardPage() {
   const { role } = await requireStaff();
-  const [goals, winrate, motm, rating] = await Promise.all([
-    getTopScorers(),
-    getTopWinRate(),
-    getTopMotm(),
-    getTopRating(),
+  const [official, unofficial] = await Promise.all([
+    getLeaderboardData("official"),
+    getLeaderboardData("unofficial"),
   ]);
 
   return (
@@ -20,7 +18,7 @@ export default async function DashboardLeaderboardPage() {
         </div>
       </div>
 
-      <LeaderboardTabs data={{ goals, winrate, motm, rating }} />
+      <LeaderboardTabs data={{ official, unofficial }} />
     </div>
   );
 }

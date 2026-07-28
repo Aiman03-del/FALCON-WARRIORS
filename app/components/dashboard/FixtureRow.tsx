@@ -43,6 +43,7 @@ export default function FixtureRow({
   const [r2, setR2] = useState("");
   const [loading, setLoading] = useState(false);
   const [editingOpponents, setEditingOpponents] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   function nameOf(id: string | null) {
     if (!id) return "— BYE —";
@@ -99,40 +100,48 @@ export default function FixtureRow({
     if (s1 === "" || s2 === "") return;
 
     setLoading(true);
+    setSaveError(null);
 
-    const score1 = Number(s1);
-    const score2 = Number(s2);
-    const winnerId =
-      score1 > score2 ? match.player1_id : score2 > score1 ? match.player2_id : null;
+    try {
+      const score1 = Number(s1);
+      const score2 = Number(s2);
+      const winnerId =
+        score1 > score2 ? match.player1_id : score2 > score1 ? match.player2_id : null;
 
-    await supabase
-      .from("tournament_matches")
-      .update({
-        player1_score: score1,
-        player2_score: score2,
-        winner_id: winnerId,
-        status: "completed",
-      })
-      .eq("id", match.id);
+      const { error: matchError } = await supabase
+        .from("tournament_matches")
+        .update({
+          player1_score: score1,
+          player2_score: score2,
+          winner_id: winnerId,
+          status: "completed",
+        })
+        .eq("id", match.id);
 
-    await supabase.from("match_ratings").delete().eq("tournament_match_id", match.id);
-    const ratingsToInsert = [] as Array<{ tournament_match_id: string; player_id: string; rating: number }>;
-    if (r1 && match.player1_id) {
-      ratingsToInsert.push({ tournament_match_id: match.id, player_id: match.player1_id, rating: Number(r1) });
+      if (matchError) throw new Error(matchError.message);
+
+      await supabase.from("match_ratings").delete().eq("tournament_match_id", match.id);
+      const ratingsToInsert = [] as Array<{ tournament_match_id: string; player_id: string; rating: number }>;
+      if (r1 && match.player1_id) {
+        ratingsToInsert.push({ tournament_match_id: match.id, player_id: match.player1_id, rating: Number(r1) });
+      }
+      if (r2 && match.player2_id) {
+        ratingsToInsert.push({ tournament_match_id: match.id, player_id: match.player2_id, rating: Number(r2) });
+      }
+      if (ratingsToInsert.length > 0) {
+        await supabase.from("match_ratings").insert(ratingsToInsert);
+      }
+
+      await recalcStandings(supabase, tournamentId);
+      await recalcAllPlayerStats(supabase);
+      await maybeAutoCompleteLeague();
+
+      router.refresh();
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "Failed to save result.");
+    } finally {
+      setLoading(false);
     }
-    if (r2 && match.player2_id) {
-      ratingsToInsert.push({ tournament_match_id: match.id, player_id: match.player2_id, rating: Number(r2) });
-    }
-    if (ratingsToInsert.length > 0) {
-      await supabase.from("match_ratings").insert(ratingsToInsert);
-    }
-
-    await recalcStandings(supabase, tournamentId);
-    await recalcAllPlayerStats(supabase);
-    await maybeAutoCompleteLeague();
-
-    setLoading(false);
-    router.refresh();
   }
 
   if (match.status === "bye") {
@@ -267,6 +276,8 @@ export default function FixtureRow({
                 Completed
               </span>
             )}
+
+            {saveError && <p className="text-center text-xs text-gold">{saveError}</p>}
           </div>
 
           <div className="flex min-w-37.5 flex-1 flex-col items-center gap-2 rounded-2xl border border-white/10 bg-surface-2/70 p-3">

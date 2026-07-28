@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Shuffle } from "lucide-react";
 import { createClient } from "@/app/lib/supabase/client";
 import ConfirmActionButton from "@/app/components/ConfirmActionButton";
+import { recalcStandings } from "@/app/lib/fixtures/recalcStandings";
 import {
   generateGroups,
   generateGroupStageFixtures,
@@ -64,11 +65,11 @@ export default function FixtureGenerator({
   async function runGeneration() {
     if (alreadyGenerated) {
       await supabase.from("tournament_matches").delete().eq("tournament_id", tournamentId);
-      // Also reset any previous group draw so re-generating starts clean.
       await supabase
         .from("tournament_participants")
         .update({ group_name: null })
         .eq("tournament_id", tournamentId);
+      await recalcStandings(supabase, tournamentId);
     }
 
     const drawPlayers = participants.map((p) => ({ id: p.id, username: p.username, seed: p.seed ?? null }));

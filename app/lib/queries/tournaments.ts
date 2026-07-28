@@ -1,4 +1,5 @@
 import { createClient } from "../supabase/server";
+import { computeStandingsFromMatches } from "../fixtures/computeStandings";
 import { rankStandings } from "../fixtures/tiebreakers";
 
 export async function getTournamentDetail(id: string) {
@@ -139,15 +140,24 @@ export async function getTournamentStandings(tournamentId: string) {
 
   const matches = (rawMatches ?? []).filter((m) => m.stage !== "knockout");
 
-  const withComputed = participants.map((p: any) => ({
-    ...p,
-    playerId: p.player_id,
-    matchesPlayed: p.matches_played,
-    goalsFor: p.goals_for,
-    goalsAgainst: p.goals_against,
-    goalDifference: (p.goals_for ?? 0) - (p.goals_against ?? 0),
-    player: p.player_details,
-  }));
+  const statsMap = computeStandingsFromMatches(
+    participants.map((p) => p.player_id),
+    matches
+  );
+
+  const withComputed = participants.map((p: any) => {
+    const stats = statsMap[p.player_id];
+    return {
+      ...p,
+      ...stats,
+      playerId: p.player_id,
+      matchesPlayed: stats.matches_played,
+      goalsFor: stats.goals_for,
+      goalsAgainst: stats.goals_against,
+      goalDifference: stats.goals_for - stats.goals_against,
+      player: p.player_details,
+    };
+  });
 
   return rankStandings(withComputed, matches ?? []);
 }
@@ -187,7 +197,12 @@ export async function getGroupStandings(tournamentId: string) {
       const groupMatches = (rawMatches ?? []).filter(
         (m) => m.stage === "group" && m.group_name === groupName
       );
-      return { groupName, standings: rankStandings(rows, groupMatches) };
+      const statsMap = computeStandingsFromMatches(
+        rows.map((p) => p.player_id),
+        groupMatches
+      );
+      const withStats = rows.map((p) => ({ ...p, ...statsMap[p.player_id] }));
+      return { groupName, standings: rankStandings(withStats, groupMatches) };
     });
 }
 

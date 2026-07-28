@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Trophy } from "lucide-react";
 import FormBadges from "./FormBadges";
+import { computeStandingsFromMatches } from "@/app/lib/fixtures/computeStandings";
 import { rankStandings, type MatchForTiebreak } from "@/app/lib/fixtures/tiebreakers";
 
 type Participant = {
@@ -33,11 +34,26 @@ export default function PointsTable({
   formMap?: Record<string, ("W" | "D" | "L")[]>;
   matches?: MatchForTiebreak[];
 }) {
-  const withPlayerId = participants.map((p) => ({
+  const withPlayerId = participants.map((p) => {
+    const playerId = getPlayer(p)?.id ?? p.id;
+    return {
+      ...p,
+      player_id: playerId,
+    };
+  });
+
+  const completedMatches = matches.filter((m) => m.status === "completed");
+  const statsMap = computeStandingsFromMatches(
+    withPlayerId.map((p) => p.player_id),
+    completedMatches
+  );
+
+  const withStats = withPlayerId.map((p) => ({
     ...p,
-    player_id: getPlayer(p)?.id ?? p.id,
+    ...statsMap[p.player_id],
   }));
-  const sorted = rankStandings(withPlayerId, matches);
+
+  const sorted = rankStandings(withStats, completedMatches);
 
   if (sorted.length === 0) {
     return (

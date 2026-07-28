@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Rajdhani, Inter } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "./providers/ToastProvider";
+import AccountStatusShell from "./components/AccountStatusShell";
 
 const display = Rajdhani({
   subsets: ["latin"],
@@ -74,7 +75,7 @@ export default function RootLayout({
       </head>
       <body className={`${display.variable} ${body.variable} ${body.className} bg-background text-foreground antialiased`}>
         <ToastProvider>
-          {children}
+          <AccountStatusShell>{children}</AccountStatusShell>
         </ToastProvider>
       </body>
     </html>

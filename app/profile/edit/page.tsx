@@ -2,10 +2,15 @@ import Footer from "@/app/components/Footer";
 import Navbar from "@/app/components/Navbar";
 import ProfileEditForm from "@/app/components/ProfileEditForm";
 import { getMyProfile } from "@/app/lib/queries/profile";
+import { redirect } from "next/navigation";
 
 
 export default async function EditProfilePage() {
   const player = await getMyProfile();
+
+  if (player.membership_status === "suspended") {
+    redirect("/?suspended=1");
+  }
 
   return (
     <main>

@@ -59,6 +59,27 @@ export async function middleware(request: NextRequest) {
       url.pathname = "/login";
       return NextResponse.redirect(url);
     }
+
+    if (user) {
+      const blockedForSuspended = ["/dashboard", "/profile/edit"].some((p) =>
+        request.nextUrl.pathname.startsWith(p)
+      );
+
+      if (blockedForSuspended) {
+        const { data: player } = await supabase
+          .from("player_details")
+          .select("membership_status")
+          .eq("profile_id", user.id)
+          .maybeSingle();
+
+        if (player?.membership_status === "suspended") {
+          const url = request.nextUrl.clone();
+          url.pathname = "/";
+          url.searchParams.set("suspended", "1");
+          return NextResponse.redirect(url);
+        }
+      }
+    }
   } catch (error) {
     // If Supabase fails, don't silently fail-open for protected paths.
     // In demo mode allow access; otherwise, if the path is protected redirect to login.

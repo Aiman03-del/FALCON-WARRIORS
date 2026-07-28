@@ -5,7 +5,7 @@ import LeaderboardTabs from "../components/LeaderboardTabs";
 import Navbar from "../components/Navbar";
 import PeriodPerformerCard from "../components/PeriodPerformerCard";
 import { getClubRecord } from "../lib/queries/clubRecord";
-import { getTopScorers, getTopWinRate, getTopMotm, getTopRating } from "../lib/queries/leaderboards";
+import { getLeaderboardData } from "../lib/queries/leaderboards";
 
 export const metadata: Metadata = {
   title: "Leaderboards | Falcon Warriors - Player Rankings",
@@ -13,12 +13,10 @@ export const metadata: Metadata = {
 };
 
 export default async function LeaderboardsPage() {
-  const [clubRecord, goals, winrate, motm, rating] = await Promise.all([
+  const [clubRecord, official, unofficial] = await Promise.all([
     getClubRecord(),
-    getTopScorers(),
-    getTopWinRate(),
-    getTopMotm(),
-    getTopRating(),
+    getLeaderboardData("official"),
+    getLeaderboardData("unofficial"),
   ]);
 
   return (
@@ -45,7 +43,7 @@ export default async function LeaderboardsPage() {
         </div>
 
         <div className="mt-8">
-          <LeaderboardTabs data={{ goals, winrate, motm, rating }} />
+          <LeaderboardTabs data={{ official, unofficial }} />
         </div>
       </section>
       <Footer />

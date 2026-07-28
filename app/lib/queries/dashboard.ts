@@ -33,6 +33,16 @@ export async function requireStaff() {
       redirect("/");
     }
 
+    const { data: playerRow } = await supabase
+      .from("player_details")
+      .select("membership_status")
+      .eq("profile_id", user.id)
+      .maybeSingle();
+
+    if (playerRow?.membership_status === "suspended") {
+      redirect("/?suspended=1");
+    }
+
     return { user, role: profile.role as "admin" | "moderator" };
   } catch (error) {
     // If Supabase is not available, allow access for demo purposes

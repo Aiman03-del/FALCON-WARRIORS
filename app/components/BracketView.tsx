@@ -120,6 +120,53 @@ export default function BracketView({
     );
   }
 
+  if (mode === "league") {
+    const rounds = Array.from(new Set(matches.map((m) => m.round))).sort((a, b) => a - b);
+    const byRound = rounds.map((r) =>
+      matches.filter((m) => m.round === r).sort((a, b) => a.match_order - b.match_order)
+    );
+    const maxRows = Math.max(...byRound.map((r) => r.length), 1);
+
+    return (
+      <div className="card overflow-x-auto p-4 sm:p-6">
+        <div className="flex min-w-max gap-6">
+          {rounds.map((round, ri) => (
+            <div key={round} className="shrink-0" style={{ width: BOX_W }}>
+              <p className="mb-3 text-center text-xs font-bold uppercase tracking-wide text-gold">
+                Round {round}
+              </p>
+              <div className="flex flex-col gap-3">
+                {byRound[ri].map((m) => {
+                  const p1 = infoOf(m.player1);
+                  const p2 = infoOf(m.player2);
+                  const isBye = m.status === "bye";
+                  const s1 = m.player1_score;
+                  const s2 = m.player2_score;
+                  const p1Winner = s1 !== null && s2 !== null && s1 > s2;
+                  const p2Winner = s1 !== null && s2 !== null && s2 > s1;
+
+                  return (
+                    <div
+                      key={m.id}
+                      className="overflow-visible rounded-lg border border-border bg-surface shadow-sm"
+                      style={{ minHeight: BOX_H }}
+                    >
+                      <PlayerRow info={p1} score={s1} isWinner={p1Winner} borderBottom />
+                      <PlayerRow info={p2} score={s2} isWinner={p2Winner} isBye={isBye} />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+        {maxRows === 0 && (
+          <p className="text-center text-sm text-muted">No matches in this stage yet.</p>
+        )}
+      </div>
+    );
+  }
+
   if (mode !== "knockout") return null;
 
   const rounds = Array.from(new Set(matches.map((m) => m.round))).sort((a, b) => a - b);

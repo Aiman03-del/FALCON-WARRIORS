@@ -131,7 +131,7 @@ export default function TournamentsPage() {
                 <td className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-3">
                     <Link
-                      href={`/dashboard/tournaments/${t.id}/edit`}
+                      href={`/dashboard/tournaments/${t.id}?tab=edit`}
                       className="inline-flex items-center justify-center rounded-lg p-2 text-gold transition hover:bg-gold/10 hover:text-gold-light"
                       aria-label="Edit tournament"
                     >

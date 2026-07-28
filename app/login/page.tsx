@@ -49,6 +49,29 @@ export default function LoginPage() {
       return;
     }
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      const { data: player } = await supabase
+        .from("player_details")
+        .select("membership_status")
+        .eq("profile_id", user.id)
+        .maybeSingle();
+
+      if (player?.membership_status === "suspended") {
+        addToast(
+          "Your account has been suspended. You can log in to view the notice, but actions are disabled.",
+          "error",
+          9000
+        );
+        router.push("/");
+        router.refresh();
+        return;
+      }
+    }
+
     addToast("Logged in successfully.", "success");
     router.push("/");
     router.refresh();

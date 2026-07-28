@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Trash2 } from "lucide-react";
 import { createClient } from "@/app/lib/supabase/client";
+import ConfirmActionButton from "@/app/components/ConfirmActionButton";
+import { deleteUserAccount } from "@/app/lib/actions/deleteUser";
 
 type Player = {
   id: string;
@@ -43,6 +46,14 @@ export default function UsersTable({
       .update({ membership_status: status })
       .eq("id", playerId);
     setUpdatingId(null);
+    router.refresh();
+  }
+
+  async function handleDelete(playerId: string) {
+    const result = await deleteUserAccount(playerId);
+    if (!result.ok) {
+      throw new Error(result.error);
+    }
     router.refresh();
   }
 
@@ -111,6 +122,21 @@ export default function UsersTable({
                       >
                         {p.membership_status === "active" ? "Suspend" : "Reactivate"}
                       </button>
+
+                      <ConfirmActionButton
+                        onConfirm={() => handleDelete(p.id)}
+                        confirmTitle="Delete user permanently?"
+                        confirmMessage={`This will permanently delete ${p.efootball_username}'s account, profile, stats, and auth login. Match history may be updated to remove their player links. This cannot be undone.`}
+                        confirmText="Yes, delete user"
+                        cancelText="Cancel"
+                        successMessage="User deleted permanently."
+                        errorMessage="Failed to delete user."
+                        isDangerous
+                        buttonClassName="inline-flex items-center gap-1 rounded-lg border border-red-500/40 px-2 py-1 text-xs text-red-400 hover:bg-red-500/10 disabled:opacity-50"
+                      >
+                        <Trash2 size={12} />
+                        Delete
+                      </ConfirmActionButton>
                     </div>
                   </td>
                 )}

@@ -18,7 +18,7 @@ export default async function UsersPage() {
       </h1>
       <p className="mt-1 text-sm text-muted">
         {role === "admin"
-          ? "Assign roles, suspend or remove members."
+          ? "Assign roles, suspend, reactivate, or permanently delete members."
           : "Review and approve player accounts."}
       </p>
 

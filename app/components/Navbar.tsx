@@ -193,6 +193,7 @@ export default function Navbar() {
                 type="button"
                 onClick={() => setUserMenuOpen((open) => !open)}
                 aria-label="Open user menu"
+                data-suspension-allowed
                 className="flex h-8 w-8 items-center justify-center rounded-full text-white hover:bg-surface-2 hover:text-gold"
               >
                 <UserCircle2 size={17} />
@@ -229,6 +230,7 @@ export default function Navbar() {
                       setUserMenuOpen(false);
                       handleLogout();
                     }}
+                    data-suspension-allowed="logout"
                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-white/80 hover:bg-surface-2 hover:text-gold"
                   >
                     <LogOut size={16} />
@@ -308,6 +310,7 @@ export default function Navbar() {
                     setMenuOpen(false);
                     handleLogout();
                   }}
+                  data-suspension-allowed="logout"
                   className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-left text-sm font-medium text-white/80 hover:bg-surface-2"
                 >
                   <LogOut size={15} />
