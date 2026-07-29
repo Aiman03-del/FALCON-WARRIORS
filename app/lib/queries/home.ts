@@ -94,23 +94,34 @@ export async function getRecentResults() {
     const { data, error } = await supabase
       .from("matches")
       .select(
-        "id, opponent_name, opponent_tag, opponent_logo_url, competition, match_type, score_home, score_away, match_date, tournament:tournament_id(id, name)"
+        "id, opponent_name, opponent_tag, opponent_logo_url, competition, match_type, score_home, score_away, match_date, tournament_id"
       )
       .eq("status", "completed")
       .order("match_date", { ascending: false })
       .limit(3);
 
-    if (error || !data) return MOCK_RECENT_RESULTS;
+    if (error || !data) return [];
+
+    // Tournament names fetched separately — no embedded FK join needed, so this
+    // works even without a real foreign key constraint set up on tournament_id.
+    const tournamentIds = [...new Set(data.map((m) => m.tournament_id).filter(Boolean))];
+    const tournamentNames = new Map<string, string>();
+    if (tournamentIds.length > 0) {
+      const { data: tournaments } = await supabase
+        .from("tournaments")
+        .select("id, name")
+        .in("id", tournamentIds as string[]);
+      for (const t of tournaments ?? []) tournamentNames.set(t.id, t.name);
+    }
 
     return data.map((m: any) => {
       const home = m.score_home ?? 0;
       const away = m.score_away ?? 0;
       const result = home > away ? "WIN" : home === away ? "DRAW" : "LOSS";
-      const tournament = Array.isArray(m.tournament) ? m.tournament[0] : m.tournament;
 
       return {
         id: m.id,
-        competition: tournament?.name ?? m.competition ?? "Friendly Match",
+        competition: (m.tournament_id && tournamentNames.get(m.tournament_id)) || m.competition || "Friendly Match",
         isOfficial: m.match_type === "external",
         opponent: m.opponent_name,
         opponentTag: m.opponent_tag ?? m.opponent_name.slice(0, 4).toUpperCase(),
@@ -122,7 +133,7 @@ export async function getRecentResults() {
       };
     });
   } catch (error) {
-    return MOCK_RECENT_RESULTS;
+    return [];
   }
 }
 
