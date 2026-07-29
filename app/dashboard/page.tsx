@@ -1,34 +1,31 @@
-
 import { Users, Swords, Trophy, Newspaper } from "lucide-react";
 import { requireStaff } from "../lib/queries/dashboard";
 import { createClient } from "../lib/supabase/server";
 
 export default async function DashboardOverview() {
   await requireStaff();
-  
-  let users = 0, matches = 0, tournaments = 0, news = 0;
-  
-  try {
-    const supabase = await createClient();
+  const supabase = await createClient();
 
-    const results = await Promise.all([
+  const [playersRes, officialMatchesRes, internalMatchesRes, tournamentsRes, newsRes] =
+    await Promise.all([
       supabase.from("player_details").select("*", { count: "exact", head: true }),
       supabase.from("matches").select("*", { count: "exact", head: true }),
+      supabase.from("tournament_matches").select("*", { count: "exact", head: true }),
       supabase.from("tournaments").select("*", { count: "exact", head: true }),
       supabase.from("news").select("*", { count: "exact", head: true }),
     ]);
 
-    users = results[0].count ?? 0;
-    matches = results[1].count ?? 0;
-    tournaments = results[2].count ?? 0;
-    news = results[3].count ?? 0;
-  } catch (error) {
-    // Use mock data if Supabase fails
-    users = 24;
-    matches = 45;
-    tournaments = 4;
-    news = 12;
-  }
+  const fetchError =
+    playersRes.error ||
+    officialMatchesRes.error ||
+    internalMatchesRes.error ||
+    tournamentsRes.error ||
+    newsRes.error;
+
+  const users = playersRes.count ?? 0;
+  const matches = (officialMatchesRes.count ?? 0) + (internalMatchesRes.count ?? 0);
+  const tournaments = tournamentsRes.count ?? 0;
+  const news = newsRes.count ?? 0;
 
   const cards = [
     { label: "Total Players", value: users, icon: Users },
@@ -43,6 +40,12 @@ export default async function DashboardOverview() {
         Dashboard Overview
       </h1>
       <p className="mt-1 text-sm text-muted">Club-wide stats at a glance.</p>
+
+      {fetchError && (
+        <p className="mt-4 rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          Failed to load some stats: {fetchError.message}
+        </p>
+      )}
 
       <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
         {cards.map((c) => (

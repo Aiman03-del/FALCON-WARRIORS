@@ -11,7 +11,7 @@ const statusStyles: Record<string, string> = {
 
 type MatchCardProps = {
   id: string;
-  opponentName: string;
+  opponentName: string | null;   // null অনুমতি দিন
   opponentLogoUrl?: string | null;
   competition?: string | null;
   matchDate: string;
@@ -95,12 +95,12 @@ export default function MatchCard({
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center font-display text-xs font-bold text-white/70">
-                  {opponentName.slice(0, 2).toUpperCase()}
+                  {opponentName?.trim() ? opponentName.slice(0, 2).toUpperCase() : "?"}
                 </div>
               )}
             </div>
             <span className="text-center text-xs font-semibold leading-tight text-foreground">
-              {opponentName}
+              {opponentName?.trim() ? opponentName : "TBD"}
             </span>
           </div>
         </div>

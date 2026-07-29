@@ -46,7 +46,7 @@ async function fetchMatches() {
   const normalizedOfficial = (officialMatches ?? []).map((m: any) => ({
     id: m.id,
     kind: "official" as const,
-    opponent_name: m.opponent_name,
+    opponent_name: m.opponent_name?.trim() ? m.opponent_name : "TBD Opponent",
     opponent_logo_url: m.opponent_logo_url,
     competition: m.competition ?? m.round_stage,
     match_date: m.match_date,
