@@ -1,8 +1,8 @@
-import DeleteGalleryButton from "@/app/components/dashboard/DeleteGalleryButton";
 import GalleryUploadForm from "@/app/components/dashboard/GalleryUploadForm";
 import { requireStaff } from "@/app/lib/queries/dashboard";
 import { createClient } from "@/app/lib/supabase/client";
 import Image from "next/image";
+import DeleteGalleryButton from '@/app/components/dashboard/DeleteGalleryButton';
 
 export default async function GalleryDashboardPage() {
   await requireStaff();

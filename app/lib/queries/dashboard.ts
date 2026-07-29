@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "../supabase/server";
+import { createClient } from "../supabase/client";
 
 // Demo mode - set to true to allow dashboard access without authentication
 const DEMO_MODE = false;

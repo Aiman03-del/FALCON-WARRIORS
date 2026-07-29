@@ -3,7 +3,7 @@ import AssociatedCommunities from "../components/AssociatedCommunities";
 import WipeAllDataButton from "../components/dashboard/WipeAllDataButton";
 import { getAssociatedCommunities } from "../lib/queries/communities";
 import { requireStaff } from "../lib/queries/dashboard";
-import { createClient } from "../lib/supabase/server";
+import { createClient } from "../lib/supabase/client";
 
 export default async function DashboardOverview() {
   await requireStaff();

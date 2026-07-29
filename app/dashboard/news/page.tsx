@@ -2,7 +2,7 @@ import FillButton from "@/app/components/FillButton";
 import Link from "next/link";
 import { Edit3, Plus } from "lucide-react";
 import { requireStaff } from "@/app/lib/queries/dashboard";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient } from "@/app/lib/supabase/client";
 import DeleteNewsButton from "@/app/components/dashboard/DeleteNewsButton";
 
 export default async function NewsListPage() {

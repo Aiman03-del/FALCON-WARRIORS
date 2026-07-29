@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient } from "@/app/lib/supabase/client";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import TournamentStatusBadge from "@/app/components/TournamentStatusBadge";

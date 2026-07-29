@@ -1,4 +1,4 @@
-import { createClient } from "../supabase/server";
+import { createClient } from "../supabase/client";
 import { computeStandingsFromMatches } from "../fixtures/computeStandings";
 import { rankStandings } from "../fixtures/tiebreakers";
 

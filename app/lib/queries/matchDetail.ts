@@ -1,4 +1,4 @@
-import { createClient } from "../supabase/server";
+import { createClient } from "../supabase/client";
 
 export async function getMatchDetail(id: string) {
   try {

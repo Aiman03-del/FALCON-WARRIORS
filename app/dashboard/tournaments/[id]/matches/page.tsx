@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Plus } from "lucide-react";
 import { requireStaff } from "@/app/lib/queries/dashboard";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient } from "@/app/lib/supabase/client";
 import BackLink from "@/app/components/BackLink";
 
 export default async function OfficialTournamentMatchesPage({

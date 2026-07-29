@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import ImageKit from "imagekit";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient } from "@/app/lib/supabase/client";
 
 function getImageKitClient() {
   const publicKey = process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY;

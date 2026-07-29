@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient } from "@/app/lib/supabase/client";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import { Newspaper, Calendar } from "lucide-react";

@@ -2,7 +2,7 @@ import FillButton from "@/app/components/FillButton";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { requireStaff } from "@/app/lib/queries/dashboard";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient } from "@/app/lib/supabase/client";
 import DeleteAchievementButton from "@/app/components/dashboard/DeleteAchievementButton";
 
 export default async function AchievementsPage() {

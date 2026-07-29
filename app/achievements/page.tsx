@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient } from "@/app/lib/supabase/client";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import { Trophy, Medal, Star } from "lucide-react";

@@ -1,6 +1,6 @@
 
 import { redirect } from "next/navigation";
-import { createClient } from "../supabase/server";
+import { createClient } from "../supabase/client";
 
 export async function getMyProfile() {
   const supabase = await createClient();

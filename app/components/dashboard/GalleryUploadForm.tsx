@@ -10,10 +10,16 @@ export default function GalleryUploadForm() {
   const router = useRouter();
 
   const [imageUrl, setImageUrl] = useState("");
+  const [imageFileId, setImageFileId] = useState<string | undefined>(undefined);
   const [caption, setCaption] = useState("");
   const [eventTag, setEventTag] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  function handleUploaded(url: string, fileId?: string) {
+    setImageUrl(url);
+    setImageFileId(fileId);
+  }
 
   async function handleSave() {
     if (!imageUrl) {
@@ -27,6 +33,7 @@ export default function GalleryUploadForm() {
 
     const { error: insertError } = await supabase.from("gallery").insert({
       image_url: imageUrl,
+      image_file_id: imageFileId ?? null,
       caption: caption || null,
       event_tag: eventTag || null,
       uploaded_by: userData.user?.id ?? null,
@@ -40,6 +47,7 @@ export default function GalleryUploadForm() {
     }
 
     setImageUrl("");
+    setImageFileId(undefined);
     setCaption("");
     setEventTag("");
     router.refresh();
@@ -47,7 +55,7 @@ export default function GalleryUploadForm() {
 
   return (
     <div className="card mt-6 flex flex-col gap-4 p-6 sm:flex-row sm:items-end">
-      <ImageUploadInput folder="/falcon-warriors/gallery" onUploaded={setImageUrl} />
+      <ImageUploadInput folder="/falcon-warriors/gallery" onUploaded={handleUploaded} />
 
       <div className="flex flex-1 flex-col gap-3">
         <div>

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient } from "@/app/lib/supabase/client";
 import { requireStaff } from "@/app/lib/queries/dashboard";
 import NewsForm from "@/app/components/dashboard/NewsForm";
 

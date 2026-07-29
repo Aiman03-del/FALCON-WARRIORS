@@ -1,4 +1,4 @@
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient } from "@/app/lib/supabase/client";
 import CurrentRoundBoard from "@/app/components/dashboard/CurrentRoundBoard";
 import OfficialTournamentTabs, {
   type OfficialTournamentTab,

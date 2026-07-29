@@ -1,4 +1,4 @@
-import { createClient } from "../supabase/server";
+import { createClient } from "../supabase/client";
 
 export async function globalSearch(query: string) {
   const supabase = await createClient();

@@ -13,7 +13,7 @@ import ParticipantsManager from "@/app/components/dashboard/ParticipantsManager"
 import StandingsTable from "@/app/components/dashboard/StandingsTable";
 import TournamentForm from "@/app/components/dashboard/TournamentForm";
 import { getGroupStandings, getTournamentStandings } from "@/app/lib/queries/tournaments";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient } from "@/app/lib/supabase/client";
 
 export default async function InternalTournamentDashboard({
   tournamentId,

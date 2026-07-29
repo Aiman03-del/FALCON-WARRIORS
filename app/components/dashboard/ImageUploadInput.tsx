@@ -7,7 +7,7 @@ import { uploadToImageKit } from "@/app/lib/imagekit/upload";
 type Props = {
   folder?: string;
   value?: string;
-  onUploaded: (url: string) => void;
+  onUploaded: (url: string, fileId?: string) => void;
   label?: string;
 };
 
@@ -32,7 +32,7 @@ export default function ImageUploadInput({
     try {
       const result = await uploadToImageKit(file, folder);
       setPreview(result.url);
-      onUploaded(result.url);
+      onUploaded(result.url, result.fileId);
     } catch (err: any) {
       setError(err.message ?? "Upload failed");
     } finally {
@@ -43,7 +43,7 @@ export default function ImageUploadInput({
 
   function handleRemove() {
     setPreview(null);
-    onUploaded("");
+    onUploaded("", undefined);
   }
 
   return (

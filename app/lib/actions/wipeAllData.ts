@@ -2,7 +2,7 @@
 
 import { createAdminClient } from "@/app/lib/supabase/admin";
 import { requireAdmin } from "@/app/lib/queries/dashboard";
-
+import { deleteImageKitFiles } from "../supabase/server";
 export async function wipeAllData(confirmationPhrase: string) {
   if (confirmationPhrase !== "DELETE ALL DATA") {
     return { ok: false as const, error: "Confirmation phrase did not match." };
@@ -11,6 +11,25 @@ export async function wipeAllData(confirmationPhrase: string) {
   await requireAdmin();
 
   const admin = createAdminClient();
+
+  // Clean up ImageKit files for the gallery before wiping the table,
+  // otherwise the file_ids are gone and the files become orphaned forever.
+  const { data: galleryRows, error: galleryFetchError } = await admin
+    .from("gallery")
+    .select("image_file_id");
+
+  if (galleryFetchError) {
+    return {
+      ok: false as const,
+      error: `Failed while reading gallery for cleanup: ${galleryFetchError.message}`,
+    };
+  }
+
+  const fileIds = (galleryRows ?? []).map((row) => row.image_file_id);
+  // Best-effort - if ImageKit cleanup fails we still proceed with wiping
+  // the database, since leaving orphaned remote files is far better than
+  // blocking the wipe (and thus the tables staying inconsistent).
+  await deleteImageKitFiles(fileIds);
 
   const tables = [
     "match_ratings",

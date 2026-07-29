@@ -1,4 +1,4 @@
-import { createClient } from "../supabase/server";
+import { createClient } from "../supabase/client";
 import { getTopScorers } from "./leaderboards";
 
 const MOCK_RECENT_RESULTS = [

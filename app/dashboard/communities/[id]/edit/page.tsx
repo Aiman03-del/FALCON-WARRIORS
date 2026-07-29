@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import CommunityForm from "@/app/components/dashboard/CommunityForm";
 import { requireStaff } from "@/app/lib/queries/dashboard";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient } from "@/app/lib/supabase/client";
 
 export default async function EditCommunityPage({
   params,

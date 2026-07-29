@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import MatchResultForm from "@/app/components/dashboard/MatchResultForm";
 import CurrentRoundBoard from "@/app/components/dashboard/CurrentRoundBoard";
 import { requireStaff } from "@/app/lib/queries/dashboard";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient } from "@/app/lib/supabase/client";
 
 export default async function ManageMatchPage({
   params,

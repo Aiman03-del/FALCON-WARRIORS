@@ -2,8 +2,8 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import FillButton from "@/app/components/FillButton";
 import { requireStaff } from "@/app/lib/queries/dashboard";
-import { createClient } from "@/app/lib/supabase/server";
 import DeleteCommunityButton from "@/app/components/dashboard/DeleteCommunityButton";
+import { createClient } from "@/app/lib/supabase/client";
 export default async function CommunitiesPage() {
   await requireStaff();
   const supabase = await createClient();

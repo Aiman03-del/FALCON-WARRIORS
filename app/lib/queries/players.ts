@@ -1,5 +1,5 @@
 import { createClient as createServerClient } from "../supabase/server";
-import { createClient } from "../supabase/server";
+import { createClient } from "../supabase/client";
 
 
 export async function getAllPlayers() {

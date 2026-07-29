@@ -1,4 +1,4 @@
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient } from "@/app/lib/supabase/client";
 import CurrentRoundBoard from "./CurrentRoundBoard";
 import StartNewRoundForm from "./StartNewRoundForm";
 import { RoundHistoryList } from "./RoundHistoryList";

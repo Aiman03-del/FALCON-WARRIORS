@@ -1,5 +1,6 @@
-import { createClient } from "@/app/lib/supabase/server";
+
 import { AccountStatusProvider } from "@/app/providers/AccountStatusProvider";
+import { createClient } from "../lib/supabase/client";
 
 export default async function AccountStatusShell({
   children,
