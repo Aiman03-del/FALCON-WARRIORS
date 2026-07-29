@@ -118,7 +118,7 @@ export default function UsersTable({
                             p.membership_status === "active" ? "suspended" : "active"
                           )
                         }
-                        className="rounded-lg border border-border px-2 py-1 text-xs hover:bg-surface-2 disabled:opacity-50"
+                        className="btn-outline-sm disabled:opacity-50"
                       >
                         {p.membership_status === "active" ? "Suspend" : "Reactivate"}
                       </button>

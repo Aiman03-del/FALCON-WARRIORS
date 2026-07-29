@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { Plus, Star } from "lucide-react";
 import { requireStaff } from "@/app/lib/queries/dashboard";
 import { createClient } from "@/app/lib/supabase/server";
 import BackLink from "@/app/components/BackLink";
 import BallonDorActions from "@/app/components/dashboard/BallonDorActions";
+import FillButton from "@/app/components/FillButton";
 
 export default async function BallonDorDashboardPage() {
   await requireStaff();
@@ -32,10 +32,10 @@ export default async function BallonDorDashboardPage() {
           <h1 className="font-display text-2xl font-bold uppercase tracking-wide">Ballon d'Or</h1>
           <p className="mt-1 text-sm text-muted">Manage yearly nominees and winners.</p>
         </div>
-        <Link href="/dashboard/ballon-dor/new" className="btn-primary flex items-center gap-2 text-sm">
+        <FillButton href="/dashboard/ballon-dor/new" className="px-3 py-2 text-sm">
           <Plus size={16} />
           Add Nominee
-        </Link>
+        </FillButton>
       </div>
 
       {years.length === 0 ? (

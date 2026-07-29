@@ -47,7 +47,7 @@ export default function BallonDorActions({ id, isWinner }: { id: string; isWinne
         <button
           onClick={handleSetWinner}
           disabled={loading}
-          className="flex items-center gap-1 text-xs font-medium text-gold hover:text-gold-light disabled:opacity-50"
+          className="btn-outline-sm disabled:opacity-50"
         >
           <Star size={13} />
           Mark Winner

@@ -105,13 +105,13 @@ export default function TournamentParticipantsManager({
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleApprove(p.id)}
-                      className="rounded bg-indigo/20 px-2.5 py-1.5 text-xs font-semibold text-indigo-light hover:bg-indigo/30"
+                      className="btn-primary-sm"
                     >
                       Approve
                     </button>
                     <button
                       onClick={() => handleReject(p.id)}
-                      className="rounded bg-white/10 px-2.5 py-1.5 text-xs font-semibold text-muted hover:bg-white/15"
+                      className="btn-outline-sm"
                     >
                       Reject
                     </button>
@@ -153,7 +153,7 @@ export default function TournamentParticipantsManager({
             {isAdmin ? "No participants yet. Add players to get started." : "No registered participants."}
           </p>
           {isAdmin && (
-            <button className="mt-2 flex items-center gap-2 rounded bg-indigo px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-light">
+            <button className="btn-primary-sm mt-2">
               <Plus size={14} />
               Add Participant
             </button>

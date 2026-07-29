@@ -44,7 +44,7 @@ export default function ManualRankInput({
       <button
         onClick={handleSave}
         disabled={saving}
-        className="rounded-md border border-border px-2 py-1 text-[10px] uppercase text-muted hover:text-white disabled:opacity-50"
+        className="btn-outline-sm disabled:opacity-50"
       >
         {saving ? "..." : "Set"}
       </button>

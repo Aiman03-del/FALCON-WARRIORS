@@ -150,7 +150,7 @@ export default function ParticipantsManager({
                         <button
                           onClick={() => handleDecision(p.id, "approved")}
                           disabled={loading}
-                          className="flex items-center gap-1 rounded-lg bg-indigo/20 px-3 py-1.5 text-xs font-semibold text-indigo-light hover:bg-indigo/30 disabled:opacity-50"
+                          className="btn-primary-sm disabled:opacity-50"
                         >
                           <Check size={13} />
                           Approve
@@ -158,7 +158,7 @@ export default function ParticipantsManager({
                         <button
                           onClick={() => handleDecision(p.id, "rejected")}
                           disabled={loading}
-                          className="flex items-center gap-1 rounded-lg bg-red-500/15 px-3 py-1.5 text-xs font-semibold text-gold hover:bg-red-500/25 disabled:opacity-50"
+                          className="btn-danger-sm disabled:opacity-50"
                         >
                           <X size={13} />
                           Reject
