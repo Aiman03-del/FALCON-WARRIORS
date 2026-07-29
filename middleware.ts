@@ -79,6 +79,22 @@ export async function middleware(request: NextRequest) {
           return NextResponse.redirect(url);
         }
       }
+
+      // NEW: role check for dashboard specifically (not /profile/edit)
+      const isDashboard = request.nextUrl.pathname.startsWith("/dashboard");
+      if (isDashboard) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (!profile || !["admin", "moderator"].includes(profile.role)) {
+          const url = request.nextUrl.clone();
+          url.pathname = "/unauthorized";
+          return NextResponse.redirect(url);
+        }
+      }
     }
   } catch (error) {
     // If Supabase fails, don't silently fail-open for protected paths.

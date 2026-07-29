@@ -29,7 +29,7 @@ export async function requireStaff() {
       .single();
 
     if (!profile || !["admin", "moderator"].includes(profile.role)) {
-      redirect("/");
+      redirect("/unauthorized");
     }
 
     const { data: playerRow } = await supabase
