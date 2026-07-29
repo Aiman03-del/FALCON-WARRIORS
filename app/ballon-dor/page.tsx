@@ -37,7 +37,7 @@ export default async function BallonDorPage() {
 
                 {winner && (
                   <Link
-                    href={`/players/${winner.player_details.id}`}
+                    href={`/players/${winner.player_details.slug ?? winner.player_details.id}`}
                     className="card mb-4 flex items-center gap-4 border-gold/40 bg-gradient-to-r from-gold/10 to-surface p-6"
                   >
                     <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-gold bg-surface-2">
@@ -75,7 +75,7 @@ export default async function BallonDorPage() {
                       {others.map((n: any) => (
                         <Link
                           key={n.id}
-                          href={`/players/${n.player_details.id}`}
+                          href={`/players/${n.player_details.slug ?? n.player_details.id}`}
                           className="card flex items-center gap-3 p-3"
                         >
                           <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-surface-2">

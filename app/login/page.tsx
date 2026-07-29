@@ -31,6 +31,20 @@ export default function LoginPage() {
 
   const { addToast } = useToast();
 
+  async function handleGoogleSignIn() {
+    setError(null);
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?next=/`,
+      },
+    });
+    if (oauthError) {
+      setError(oauthError.message);
+      addToast(oauthError.message, "error");
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -97,7 +111,27 @@ export default function LoginPage() {
           Login to your Falcon Warriors account.
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
+        <button
+          type="button"
+          onClick={handleGoogleSignIn}
+          className="mt-8 flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-white transition hover:border-white/30"
+        >
+          <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+            <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.6 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.2 5.1 29.4 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.4-.1-2.7-.4-3.9z" />
+            <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.1 18.9 12 24 12c3.1 0 5.8 1.1 8 3l6-6C34.2 5.1 29.4 3 24 3c-7.5 0-14 4.2-17.7 10.7z" />
+            <path fill="#4CAF50" d="M24 45c5.2 0 10-2 13.6-5.2l-6.3-5.3C29.3 36 26.8 37 24 37c-5.3 0-9.7-3.4-11.3-8.1l-6.6 5.1C9.9 40.6 16.4 45 24 45z" />
+            <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.7l6.3 5.3C39.9 37.4 43 31.3 43 24c0-1.4-.1-2.7-.4-3.9z" />
+          </svg>
+          Continue with Google
+        </button>
+
+        <div className="my-6 flex items-center gap-3">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-xs uppercase tracking-widest text-muted">or</span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+
+        <form onSubmit={handleSubmit} className="mt-2 flex flex-col gap-4">
           <div>
             <label className="mb-1 block text-xs font-medium text-muted">
               Email

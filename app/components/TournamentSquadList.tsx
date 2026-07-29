@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 
-type SquadPlayer = { id: string; efootball_username: string; avatar_url: string | null };
+type SquadPlayer = { id: string; slug?: string | null; efootball_username: string; avatar_url: string | null };
 
 export default function TournamentSquadList({ squad }: { squad: SquadPlayer[] }) {
   if (squad.length === 0) {
@@ -13,7 +13,7 @@ export default function TournamentSquadList({ squad }: { squad: SquadPlayer[] })
       {squad.map((p) => (
         <Link
           key={p.id}
-          href={`/players/${p.id}`}
+          href={`/players/${p.slug ?? p.id}`}
           className="card flex flex-col items-center gap-2 p-3 hover:border-gold/40"
           title={p.efootball_username}
         >

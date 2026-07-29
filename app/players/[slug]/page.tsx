@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { MapPin, Briefcase, GraduationCap, Shirt, Flag, Star, ArrowLeft } from "lucide-react";
-import { getPlayerById } from "@/app/lib/queries/players";
+import { getPlayerBySlug } from "@/app/lib/queries/players";
 import { getPlayerForm } from "@/app/lib/queries/playerForm";
 import Navbar from "@/app/components/Navbar";
 import PlayerStatsGrid from "@/app/components/PlayerStatsGrid";
@@ -18,11 +18,11 @@ function normalizeStats(stats: any) {
 export default async function PlayerProfilePage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { id } = await params;
+  const { slug } = await params;
 
-  const player = await getPlayerById(id);
+  const player = await getPlayerBySlug(slug);
   if (!player) notFound();
 
   const form = await getPlayerForm(player.id);

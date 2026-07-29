@@ -77,7 +77,7 @@ export default function LeaderboardList({
                       </div>
                     )}
                   </div>
-                  <Link href={`/players/${entry.playerId}`} className="block truncate font-medium text-white">
+                  <Link href={`/players/${entry.slug ?? entry.playerId}`} className="block truncate font-medium text-white">
                     {entry.username}
                   </Link>
                 </div>

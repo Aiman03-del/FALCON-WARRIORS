@@ -16,6 +16,7 @@ const periodLabels: Record<Period, string> = {
 
 type Performer = {
   playerId: string;
+  slug?: string | null;
   username: string;
   avatarUrl: string | null;
   wins: number;
@@ -53,13 +54,13 @@ export default function PeriodPerformerCard() {
       const goalMap: Record<string, number> = {};
       const winMap: Record<string, number> = {};
       const motmMap: Record<string, number> = {};
-      const playerInfo: Record<string, { username: string; avatarUrl: string | null }> = {};
+      const playerInfo: Record<string, { username: string; avatarUrl: string | null; slug: string | null }> = {};
 
       // 1. Internal matches (player vs player)
       const { data: internalMatches } = await supabase
         .from("matches")
         .select(
-          "player1_id, player2_id, score_home, score_away, match_date, player1:player1_id(id, efootball_username, avatar_url), player2:player2_id(id, efootball_username, avatar_url)"
+          "player1_id, player2_id, score_home, score_away, match_date, player1:player1_id(id, slug, efootball_username, avatar_url), player2:player2_id(id, slug, efootball_username, avatar_url)"
         )
         .eq("match_type", "internal")
         .eq("status", "completed")
@@ -71,11 +72,19 @@ export default function PeriodPerformerCard() {
         const p2 = Array.isArray(m.player2) ? m.player2[0] : m.player2;
         if (p1) {
           goalMap[p1.id] = (goalMap[p1.id] ?? 0) + m.score_home;
-          playerInfo[p1.id] = { username: p1.efootball_username, avatarUrl: p1.avatar_url };
+          playerInfo[p1.id] = {
+            username: p1.efootball_username,
+            avatarUrl: p1.avatar_url,
+            slug: p1.slug ?? null,
+          };
         }
         if (p2) {
           goalMap[p2.id] = (goalMap[p2.id] ?? 0) + m.score_away;
-          playerInfo[p2.id] = { username: p2.efootball_username, avatarUrl: p2.avatar_url };
+          playerInfo[p2.id] = {
+            username: p2.efootball_username,
+            avatarUrl: p2.avatar_url,
+            slug: p2.slug ?? null,
+          };
         }
         if (m.score_home > m.score_away && p1) winMap[p1.id] = (winMap[p1.id] ?? 0) + 1;
         else if (m.score_away > m.score_home && p2) winMap[p2.id] = (winMap[p2.id] ?? 0) + 1;
@@ -93,7 +102,7 @@ export default function PeriodPerformerCard() {
         const ids = externalMatches.map((m) => m.id);
         const { data: squadRows } = await supabase
           .from("match_squad")
-          .select("match_id, player_id, player_details(id, efootball_username, avatar_url)")
+          .select("match_id, player_id, player_details(id, slug, efootball_username, avatar_url)")
           .in("match_id", ids);
 
         const byMatch: Record<string, any> = {};
@@ -107,7 +116,7 @@ export default function PeriodPerformerCard() {
           const p = byMatch[m.id];
           if (!p || m.score_home === null) continue;
           goalMap[p.id] = (goalMap[p.id] ?? 0) + m.score_home;
-          playerInfo[p.id] = { username: p.efootball_username, avatarUrl: p.avatar_url };
+          playerInfo[p.id] = { username: p.efootball_username, avatarUrl: p.avatar_url, slug: p.slug ?? null };
           if (m.score_away !== null && m.score_home > m.score_away) {
             winMap[p.id] = (winMap[p.id] ?? 0) + 1;
           }
@@ -131,7 +140,7 @@ export default function PeriodPerformerCard() {
         );
         const { data: playerRows } = await supabase
           .from("player_details")
-          .select("id, efootball_username, avatar_url")
+          .select("id, slug, efootball_username, avatar_url")
           .in("id", playerIds);
 
         const playerLookup: Record<string, any> = {};
@@ -145,11 +154,11 @@ export default function PeriodPerformerCard() {
           const p2 = playerLookup[m.player2_id];
           if (p1) {
             goalMap[p1.id] = (goalMap[p1.id] ?? 0) + m.player1_score;
-            playerInfo[p1.id] = { username: p1.efootball_username, avatarUrl: p1.avatar_url };
+            playerInfo[p1.id] = { username: p1.efootball_username, avatarUrl: p1.avatar_url, slug: p1.slug ?? null };
           }
           if (p2) {
             goalMap[p2.id] = (goalMap[p2.id] ?? 0) + m.player2_score;
-            playerInfo[p2.id] = { username: p2.efootball_username, avatarUrl: p2.avatar_url };
+            playerInfo[p2.id] = { username: p2.efootball_username, avatarUrl: p2.avatar_url, slug: p2.slug ?? null };
           }
           if (m.player1_score > m.player2_score && p1) winMap[p1.id] = (winMap[p1.id] ?? 0) + 1;
           else if (m.player2_score > m.player1_score && p2) winMap[p2.id] = (winMap[p2.id] ?? 0) + 1;
@@ -231,8 +240,8 @@ export default function PeriodPerformerCard() {
           <div className="card h-24 animate-pulse" />
         ) : performer ? (
           <Link
-            href={`/players/${performer.playerId}`}
-            className="card flex items-center gap-4 border-gold/30 bg-gradient-to-r from-gold/10 to-surface p-5"
+            href={`/players/${performer.slug ?? performer.playerId}`}
+            className="card flex items-center gap-4 border-gold/30 bg-linear-to-r from-gold/10 to-surface p-5"
           >
             <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border-2 border-gold/50 bg-surface-2">
               {performer.avatarUrl ? (

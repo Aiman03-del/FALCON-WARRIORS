@@ -21,7 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const supabase = await createClient();
 
     const [players, matches, tournaments, news] = await Promise.all([
-      supabase.from("player_details").select("id, created_at"),
+      supabase.from("player_details").select("id, slug, created_at"),
       supabase.from("matches").select("id, created_at"),
       supabase.from("tournaments").select("id, created_at"),
       supabase.from("news").select("id, created_at"),
@@ -29,7 +29,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     dynamicRoutes = [
       ...(players.data ?? []).map((row) => ({
-        url: `${BASE_URL}/players/${row.id}`,
+        url: `${BASE_URL}/players/${row.slug ?? row.id}`,
         lastModified: row.created_at,
         changeFrequency: "weekly" as const,
         priority: 0.6,

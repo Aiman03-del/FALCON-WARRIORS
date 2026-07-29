@@ -6,7 +6,7 @@ export async function getBallonDorData() {
 
   const { data } = await supabase
     .from("ballon_dor_nominees")
-    .select("id, year, is_winner, player_details(id, efootball_username, avatar_url)")
+    .select("id, year, is_winner, player_details(id, slug, efootball_username, avatar_url)")
     .order("year", { ascending: false });
 
   const grouped = (data ?? []).reduce((acc: Record<number, any[]>, n: any) => {

@@ -4,6 +4,7 @@ import { MapPin, Shield } from "lucide-react";
 
 type Player = {
   id: string;
+  slug?: string | null;
   efootball_username: string;
   real_name?: string | null;
   avatar_url?: string | null;
@@ -100,7 +101,7 @@ export default function PlayerCard({
 
   if (canViewDetails) {
     return (
-      <Link href={`/players/${player.id}`} className={baseClass}>
+      <Link href={`/players/${player.slug ?? player.id}`} className={baseClass}>
         <CardContent player={player} />
         <span className="mt-4 rounded-lg border border-gold/30 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-gold opacity-0 transition-opacity group-hover:opacity-100">
           View Details →

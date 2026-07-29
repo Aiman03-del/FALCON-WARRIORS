@@ -8,7 +8,7 @@ export async function getAllPlayers() {
   const { data, error } = await supabase
     .from("player_details")
     .select(
-      "id, efootball_username, real_name, avatar_url, preferred_position, platform, rank_division, membership_status"
+      "id, slug, efootball_username, real_name, avatar_url, preferred_position, platform, rank_division, membership_status"
     )
     .eq("membership_status", "active")
     .order("efootball_username");
@@ -35,18 +35,18 @@ export async function getCurrentUserRole(): Promise<string | null> {
   return data?.role ?? null;
 }
 
-export async function getPlayerById(id: string) {
+export async function getPlayerBySlug(slug: string) {
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("player_details")
     .select(
-      `id, efootball_username, real_name, age, country, city, supported_club,
+      `id, slug, efootball_username, real_name, age, country, city, supported_club,
        national_team, favorite_player, education, profession, platform,
        preferred_position, rank_division, avatar_url, join_date, membership_status,
        player_stats(goals, assists, matches, wins, draws, losses, motm_count)`
     )
-    .eq("id", id)
+    .eq("slug", slug)
     .single();
 
   if (error || !data) return null;

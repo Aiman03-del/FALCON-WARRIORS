@@ -3,6 +3,7 @@ import { createClient } from "../supabase/client";
 
 export type LeaderboardEntry = {
   playerId: string;
+  slug?: string | null;
   username: string;
   avatarUrl: string | null;
   value: number;
@@ -25,7 +26,7 @@ export type LeaderboardData = {
   rating: LeaderboardEntry[];
 };
 
-type PlayerInfo = { username: string; avatarUrl: string | null };
+type PlayerInfo = { username: string; avatarUrl: string | null; slug: string | null };
 
 type StatAccumulator = {
   goals: number;
@@ -76,13 +77,16 @@ async function getActivePlayers(): Promise<Record<string, PlayerInfo>> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("player_details")
-    .select("id, efootball_username, avatar_url, membership_status")
+    .select("id, slug, efootball_username, avatar_url, membership_status")
     .eq("membership_status", "active");
 
   if (error || !data) return {};
 
   return Object.fromEntries(
-    data.map((p) => [p.id, { username: p.efootball_username, avatarUrl: p.avatar_url }])
+    data.map((p) => [
+      p.id,
+      { username: p.efootball_username, avatarUrl: p.avatar_url, slug: p.slug ?? null },
+    ])
   );
 }
 
@@ -274,6 +278,7 @@ async function getBaseStats(scope: LeaderboardScope) {
     .filter(([playerId]) => players[playerId])
     .map(([playerId, stat]) => ({
       playerId,
+      slug: players[playerId].slug,
       username: players[playerId].username,
       avatarUrl: players[playerId].avatarUrl,
       goals: stat.goals,

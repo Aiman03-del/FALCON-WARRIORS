@@ -4,6 +4,7 @@ import MatchStatusBadge from "./MatchStatusBadge";
 
 type PlayerResult = {
   id: string;
+  slug?: string | null;
   efootball_username: string;
   avatar_url: string | null;
   preferred_position: string | null;
@@ -29,7 +30,7 @@ type NewsResult = {
 
 export function PlayerResultCard({ player }: { player: PlayerResult }) {
   return (
-    <Link href={`/players/${player.id}`} className="card flex items-center gap-3 p-4">
+    <Link href={`/players/${player.slug ?? player.id}`} className="card flex items-center gap-3 p-4">
       <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-surface-2">
         {player.avatar_url ? (
           <Image src={player.avatar_url} alt={player.efootball_username} fill className="object-cover" />
