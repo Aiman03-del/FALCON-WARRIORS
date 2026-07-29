@@ -206,8 +206,17 @@ export default function CurrentRoundBoard({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const totalFalcon = rows.reduce((s, r) => s + (r.fs === "" ? 0 : Number(r.fs)), 0);
-  const totalOpponent = rows.reduce((s, r) => s + (r.os === "" ? 0 : Number(r.os)), 0);
+  // এখন গোল যোগফল না — প্রতিটা স্কোয়াড ব্যাটলে কে জিতেছে সেই ব্যাটল-জয়ের সংখ্যা গোনা হয়
+  const totalFalcon = rows.reduce((s, r) => {
+    const fs = r.fs === "" ? null : Number(r.fs);
+    const os = r.os === "" ? null : Number(r.os);
+    return s + (fs !== null && os !== null && fs > os ? 1 : 0);
+  }, 0);
+  const totalOpponent = rows.reduce((s, r) => {
+    const fs = r.fs === "" ? null : Number(r.fs);
+    const os = r.os === "" ? null : Number(r.os);
+    return s + (fs !== null && os !== null && os > fs ? 1 : 0);
+  }, 0);
 
   function updateRow(id: string, patch: Partial<(typeof rows)[number]>) {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
@@ -305,11 +314,11 @@ export default function CurrentRoundBoard({
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-surface">
       {/* ===== Header ===== */}
-      <div className="relative bg-gradient-to-b from-gold/10 via-surface to-surface px-3 sm:px-4 md:px-6 pb-6 pt-6">
+      <div className="relative bg-linear-to-b from-gold/10 via-surface to-surface px-3 sm:px-4 md:px-6 pb-6 pt-6">
         <div className="mx-auto flex w-full max-w-md items-center justify-between gap-3">
           {/* Falcon Warriors — fixed logo */}
           <div className="flex flex-1 flex-col items-center gap-2">
-            <div className="relative h-[52px] w-[52px] shrink-0 overflow-hidden rounded-full ring-2 ring-gold/40">
+            <div className="relative h-13 w-13 shrink-0 overflow-hidden rounded-full ring-2 ring-gold/40">
               <Image src="/logo.jpg" alt="Falcon Warriors" fill className="object-cover" />
             </div>
             <span className="text-sm font-semibold text-white">Falcon Warriors</span>
@@ -336,7 +345,7 @@ export default function CurrentRoundBoard({
         </div>
 
         {/* Round Stage — always visible dropdown */}
-        <div className="mx-auto mt-5 max-w-[220px]">
+        <div className="mx-auto mt-5 max-w-55">
           <RoundStageSelect value={roundStage} onChange={handleRoundStageChange} />
         </div>
       </div>

@@ -1,11 +1,14 @@
-type Fixture = {
+import Link from "next/link";
+import { Layers, Trophy } from "lucide-react";
+
+type Tournament = {
   id: string;
-  day: string;
-  month: string;
-  opponent: string;
-  competition: string;
-  status: string;
-  live?: boolean;
+  name: string;
+  type: "internal" | "official";
+  format: string | null;
+  status: "ongoing" | "upcoming";
+  startDate: string | null;
+  endDate: string | null;
 };
 
 type Performer = {
@@ -15,48 +18,85 @@ type Performer = {
 };
 
 type Props = {
-  fixtures: Fixture[];
+  tournaments: Tournament[];
   performers: Performer[];
 };
 
-export default function FixturesAndPerformers({ fixtures, performers }: Props) {
+const formatLabels: Record<string, string> = {
+  league: "League",
+  knockout: "Knockout",
+  group_knockout: "Group + Knockout",
+  league_playoff: "League + Playoff",
+};
+
+function formatDate(d: string | null) {
+  if (!d) return null;
+  return new Date(d).toLocaleDateString("en-US", { day: "2-digit", month: "short" });
+}
+
+export default function FixturesAndPerformers({ tournaments, performers }: Props) {
   return (
     <section className="border-b border-border">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:px-6 sm:py-14 md:grid-cols-2">
-        {/* Fixtures */}
+        {/* Running Tournaments */}
         <div>
           <div className="section-divider" />
-          <h2 className="mb-5 font-display text-xl font-bold uppercase tracking-wide sm:text-2xl">
-            Fixtures
-          </h2>
+          <div className="mb-5 flex items-center justify-between gap-2">
+            <h2 className="font-display text-xl font-bold uppercase tracking-wide sm:text-2xl">
+              Tournaments
+            </h2>
+            <Link href="/tournaments" className="text-sm font-medium text-gold hover:text-gold-light">
+              View All →
+            </Link>
+          </div>
 
-          {fixtures.length === 0 ? (
-            <p className="text-sm text-muted">No upcoming fixtures scheduled.</p>
+          {tournaments.length === 0 ? (
+            <p className="text-sm text-muted">No ongoing or upcoming tournaments right now.</p>
           ) : (
             <div className="flex flex-col gap-3">
-              {fixtures.map((f) => (
-                <div key={f.id} className="card flex items-center justify-between gap-3 p-3 sm:p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex w-10 shrink-0 flex-col items-center justify-center rounded-lg bg-surface-2 py-1 sm:w-12">
-                      <span className="font-display text-base font-bold leading-none sm:text-lg">
-                        {f.day}
-                      </span>
-                      <span className="text-[9px] uppercase text-muted sm:text-[10px]">{f.month}</span>
+              {tournaments.map((t) => (
+                <Link
+                  key={t.id}
+                  href={`/tournaments/${t.id}`}
+                  className="card group flex items-center justify-between gap-3 p-3 transition hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-lg hover:shadow-gold/10 sm:p-4"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gold/15 text-gold sm:h-12 sm:w-12">
+                      <Trophy size={18} />
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold">{f.opponent}</p>
-                      <p className="truncate text-xs text-muted">{f.competition}</p>
+                      <p className="truncate text-sm font-semibold text-white transition group-hover:text-gold">
+                        {t.name}
+                      </p>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted">
+                        <span className="uppercase">{t.type === "official" ? "Official" : "Internal"}</span>
+                        {t.format && (
+                          <>
+                            <span>·</span>
+                            <span className="flex items-center gap-1">
+                              <Layers size={10} />
+                              {formatLabels[t.format] ?? t.format}
+                            </span>
+                          </>
+                        )}
+                        {formatDate(t.startDate) && (
+                          <>
+                            <span>·</span>
+                            <span>{formatDate(t.startDate)}</span>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
 
                   <span
-                    className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold sm:px-3 ${
-                      f.live ? "bg-gold/15 text-gold" : "bg-white/10 text-muted"
+                    className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase sm:px-3 ${
+                      t.status === "ongoing" ? "bg-red-500/15 text-red-400" : "bg-white/10 text-muted"
                     }`}
                   >
-                    {f.status}
+                    {t.status === "ongoing" ? "🔴 Live" : "Upcoming"}
                   </span>
-                </div>
+                </Link>
               ))}
             </div>
           )}

@@ -10,7 +10,7 @@ import Navbar from "./components/Navbar";
 import RecentResults from "./components/RecentResults";
 import StatsBar from "./components/StatsBar";
 import { getAssociatedCommunities } from "./lib/queries/communities";
-import { getAchievements, getFixtures, getGallery, getLatestNews, getRecentResults, getStats, getTopPerformers } from "./lib/queries/home";
+import { getAchievements, getGallery, getLatestNews, getRecentResults, getRunningTournaments, getStats, getTopPerformers } from "./lib/queries/home";
 
 export const metadata: Metadata = {
   title: "Falcon Warriors | Home - Elite eFootball Club",
@@ -22,11 +22,11 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const [stats, results, fixtures, performers, achievements, news, gallery, communities] =
+  const [stats, results, runningTournaments, performers, achievements, news, gallery, communities] =
     await Promise.all([
       getStats(),
       getRecentResults(),
-      getFixtures(),
+      getRunningTournaments(),
       getTopPerformers(),
       getAchievements(),
       getLatestNews(),
@@ -41,7 +41,7 @@ export default async function Home() {
       <StatsBar stats={stats} />
       <AssociatedCommunities communities={communities} />
       <RecentResults results={results} />
-      <FixturesAndPerformers fixtures={fixtures} performers={performers} />
+      <FixturesAndPerformers tournaments={runningTournaments} performers={performers} />
       <AchievementsTicker achievements={achievements} />
       <LatestNews news={news} />
       <Gallery items={gallery} />

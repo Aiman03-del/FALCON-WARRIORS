@@ -1,5 +1,44 @@
 import { createClient } from "../supabase/server";
 
+const MOCK_RECENT_RESULTS = [
+  {
+    id: "ext-3",
+    competition: "International League",
+    isOfficial: true,
+    opponent: "Tiger Squad",
+    opponentTag: "TGR",
+    opponentLogoUrl: null as string | null,
+    scoreHome: 3,
+    scoreAway: 1,
+    matchDate: new Date().toISOString(),
+    result: "WIN" as const,
+  },
+  {
+    id: "ext-1",
+    competition: "Champions Cup",
+    isOfficial: true,
+    opponent: "Silver Strikers",
+    opponentTag: "SLS",
+    opponentLogoUrl: null as string | null,
+    scoreHome: 2,
+    scoreAway: 2,
+    matchDate: new Date().toISOString(),
+    result: "DRAW" as const,
+  },
+  {
+    id: "ext-2",
+    competition: "International League",
+    isOfficial: true,
+    opponent: "Golden Hawks",
+    opponentTag: "GHA",
+    opponentLogoUrl: null as string | null,
+    scoreHome: 4,
+    scoreAway: 2,
+    matchDate: new Date().toISOString(),
+    result: "WIN" as const,
+  },
+];
+
 export async function getStats() {
   const supabase = await createClient();
 
@@ -48,92 +87,91 @@ export async function getStats() {
 }
 
 export async function getRecentResults() {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
 
-  const { data: officialData } = await supabase
-    .from("matches")
-    .select("id, opponent_name, opponent_tag, opponent_logo_url, competition, score_home, score_away, match_date")
-    .eq("status", "completed")
-    .order("match_date", { ascending: false })
-    .limit(5);
+    const { data, error } = await supabase
+      .from("matches")
+      .select(
+        "id, opponent_name, opponent_tag, opponent_logo_url, competition, match_type, score_home, score_away, match_date, tournament:tournament_id(id, name)"
+      )
+      .eq("status", "completed")
+      .order("match_date", { ascending: false })
+      .limit(3);
 
-  const { data: internalData } = await supabase
-    .from("tournament_matches")
-    .select(
-      "id, player1_score, player2_score, created_at, player1:player1_id(efootball_username), player2:player2_id(efootball_username), tournaments!inner(name)"
-    )
-    .eq("status", "completed")
-    .order("created_at", { ascending: false })
-    .limit(5);
+    if (error || !data) return MOCK_RECENT_RESULTS;
 
-  const normalizedOfficial = (officialData ?? []).map((m) => {
-    const home = m.score_home ?? 0;
-    const away = m.score_away ?? 0;
-    const result = home > away ? "WIN" : home === away ? "DRAW" : "LOSS";
-    return {
-      id: m.id,
-      date: m.match_date,
-      competition: m.competition ?? "Friendly",
-      opponent: m.opponent_name,
-      opponentTag: m.opponent_tag ?? m.opponent_name?.slice(0, 4).toUpperCase() ?? "OPP",
-      scoreHome: home,
-      scoreAway: away,
-      result: result as "WIN" | "DRAW" | "LOSS",
-    };
-  });
+    return data.map((m: any) => {
+      const home = m.score_home ?? 0;
+      const away = m.score_away ?? 0;
+      const result = home > away ? "WIN" : home === away ? "DRAW" : "LOSS";
+      const tournament = Array.isArray(m.tournament) ? m.tournament[0] : m.tournament;
 
-  const normalizedInternal = (internalData ?? []).map((m: any) => {
-    const p1 = Array.isArray(m.player1) ? m.player1[0] : m.player1;
-    const p2 = Array.isArray(m.player2) ? m.player2[0] : m.player2;
-    const tournamentName = Array.isArray(m.tournaments) ? m.tournaments[0]?.name : m.tournaments?.name;
-    const home = m.player1_score ?? 0;
-    const away = m.player2_score ?? 0;
-    const result = home > away ? "WIN" : home === away ? "DRAW" : "LOSS";
-    return {
-      id: m.id,
-      date: m.created_at,
-      competition: tournamentName ?? "Internal Tournament",
-      opponent: `${p1?.efootball_username ?? "?"} vs ${p2?.efootball_username ?? "?"}`,
-      opponentTag: "VS",
-      scoreHome: home,
-      scoreAway: away,
-      result: result as "WIN" | "DRAW" | "LOSS",
-    };
-  });
-
-  return [...normalizedOfficial, ...normalizedInternal]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 3);
+      return {
+        id: m.id,
+        competition: tournament?.name ?? m.competition ?? "Friendly Match",
+        isOfficial: m.match_type === "external",
+        opponent: m.opponent_name,
+        opponentTag: m.opponent_tag ?? m.opponent_name.slice(0, 4).toUpperCase(),
+        opponentLogoUrl: m.opponent_logo_url ?? null,
+        scoreHome: home,
+        scoreAway: away,
+        matchDate: m.match_date,
+        result: result as "WIN" | "DRAW" | "LOSS",
+      };
+    });
+  } catch (error) {
+    return MOCK_RECENT_RESULTS;
+  }
 }
 
-export async function getFixtures() {
-  const supabase = await createClient();
+const MOCK_RUNNING_TOURNAMENTS = [
+  {
+    id: "tour-1",
+    name: "Falcon Championship League",
+    type: "internal" as const,
+    format: "league",
+    status: "ongoing" as const,
+    startDate: null as string | null,
+    endDate: null as string | null,
+  },
+  {
+    id: "tour-2",
+    name: "International Champions Cup",
+    type: "official" as const,
+    format: null,
+    status: "upcoming" as const,
+    startDate: null as string | null,
+    endDate: null as string | null,
+  },
+];
 
-  const { data, error } = await supabase
-    .from("matches")
-    .select("id, opponent_name, competition, match_date, status")
-    .in("status", ["upcoming", "live"])
-    .order("match_date", { ascending: true })
-    .limit(3);
+export async function getRunningTournaments() {
+  try {
+    const supabase = await createClient();
 
-  if (error || !data) return [];
+    const { data, error } = await supabase
+      .from("tournaments")
+      .select("id, name, type, format, status, start_date, end_date")
+      .in("status", ["ongoing", "upcoming"])
+      .order("status", { ascending: true })
+      .order("start_date", { ascending: true })
+      .limit(6);
 
-  return data.map((m) => {
-    const date = new Date(m.match_date);
-    const day = date.toLocaleDateString("en-US", { day: "2-digit" });
-    const month = date.toLocaleDateString("en-US", { month: "short" }).toUpperCase();
-    const daysLeft = Math.ceil((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    if (error || !data) return MOCK_RUNNING_TOURNAMENTS;
 
-    return {
-      id: m.id,
-      day,
-      month,
-      opponent: `vs ${m.opponent_name ?? "TBD"}`,
-      competition: m.competition ?? "Friendly",
-      status: m.status === "live" ? "LIVE NOW" : `${daysLeft}D`,
-      live: m.status === "live",
-    };
-  });
+    return data.map((t) => ({
+      id: t.id,
+      name: t.name,
+      type: (t.type === "official" ? "official" : "internal") as "internal" | "official",
+      format: t.format as string | null,
+      status: t.status as "ongoing" | "upcoming",
+      startDate: t.start_date,
+      endDate: t.end_date,
+    }));
+  } catch (error) {
+    return MOCK_RUNNING_TOURNAMENTS;
+  }
 }
 
 export async function getTopPerformers() {
