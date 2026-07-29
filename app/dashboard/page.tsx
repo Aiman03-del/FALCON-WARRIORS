@@ -1,4 +1,6 @@
 import { Users, Swords, Trophy, Newspaper } from "lucide-react";
+import AssociatedCommunities from "../components/AssociatedCommunities";
+import { getAssociatedCommunities } from "../lib/queries/communities";
 import { requireStaff } from "../lib/queries/dashboard";
 import { createClient } from "../lib/supabase/server";
 
@@ -6,13 +8,14 @@ export default async function DashboardOverview() {
   await requireStaff();
   const supabase = await createClient();
 
-  const [playersRes, officialMatchesRes, internalMatchesRes, tournamentsRes, newsRes] =
+  const [playersRes, officialMatchesRes, internalMatchesRes, tournamentsRes, newsRes, communities] =
     await Promise.all([
       supabase.from("player_details").select("*", { count: "exact", head: true }),
       supabase.from("matches").select("*", { count: "exact", head: true }),
       supabase.from("tournament_matches").select("*", { count: "exact", head: true }),
       supabase.from("tournaments").select("*", { count: "exact", head: true }),
       supabase.from("news").select("*", { count: "exact", head: true }),
+      getAssociatedCommunities(),
     ]);
 
   const fetchError =
@@ -56,6 +59,8 @@ export default async function DashboardOverview() {
           </div>
         ))}
       </div>
+
+      <AssociatedCommunities communities={communities} />
     </div>
   );
 }

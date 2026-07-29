@@ -3,11 +3,29 @@ import Image from "next/image";
 import { Trophy } from "lucide-react";
 import { LeaderboardEntry } from "../lib/queries/leaderboards";
 
+type StatType = "goals" | "winrate" | "motm" | "rating" | "assists";
+
+const PRIMARY_LABEL: Record<StatType, string> = {
+  goals: "GF",
+  winrate: "Win%",
+  motm: "MOTM",
+  rating: "Rating",
+  assists: "AST",
+};
+
+function formatPrimaryValue(statType: StatType, value: number): string {
+  if (statType === "winrate") return `${value}%`;
+  if (statType === "rating") return value.toFixed(1);
+  return String(value);
+}
+
 export default function LeaderboardList({
   entries,
+  statType = "goals",
   emptyMessage = "No data available yet.",
 }: {
   entries: LeaderboardEntry[];
+  statType?: StatType;
   emptyMessage?: string;
 }) {
   if (entries.length === 0) {
@@ -24,9 +42,9 @@ export default function LeaderboardList({
             <th className="px-2 py-3 text-center">P</th>
             <th className="px-2 py-3 text-center">W</th>
             <th className="px-2 py-3 text-center">D</th>
-            <th className="px-2 py-3 text-center">GF</th>
-            <th className="px-2 py-3 text-center">Win%</th>
-            <th className="px-2 py-3 text-center">MOTM</th>
+            <th className="px-2 py-3 text-center">{PRIMARY_LABEL[statType]}</th>
+            {statType !== "winrate" && <th className="px-2 py-3 text-center">Win%</th>}
+            {statType !== "motm" && <th className="px-2 py-3 text-center">MOTM</th>}
             <th className="px-3 py-3 text-right">Pts</th>
           </tr>
         </thead>
@@ -63,9 +81,17 @@ export default function LeaderboardList({
               <td className="px-2 py-3 text-center text-muted">{entry.matches}</td>
               <td className="px-2 py-3 text-center text-muted">{entry.wins}</td>
               <td className="px-2 py-3 text-center text-muted">{entry.draws}</td>
-              <td className="px-2 py-3 text-center text-muted">{entry.value}</td>
-              <td className="px-2 py-3 text-center text-muted">{entry.winRate ?? 0}%</td>
-              <td className="px-2 py-3 text-center text-muted">{entry.motm ?? 0}</td>
+              <td className="px-2 py-3 text-center text-muted">{formatPrimaryValue(statType, entry.value)}</td>
+              {statType !== "winrate" && (
+                <td className="px-2 py-3 text-center text-muted">
+                  {entry.winRate !== undefined ? `${entry.winRate}%` : "—"}
+                </td>
+              )}
+              {statType !== "motm" && (
+                <td className="px-2 py-3 text-center text-muted">
+                  {entry.motm !== undefined ? entry.motm : "—"}
+                </td>
+              )}
               <td className="px-3 py-3 text-right">
                 <span className="font-display text-lg font-bold text-gold">{entry.points ?? 0}</span>
               </td>
@@ -74,7 +100,12 @@ export default function LeaderboardList({
         </tbody>
       </table>
       <p className="border-t border-border px-4 py-2 text-[10px] text-muted">
-        P = Played, W = Won, D = Drawn, GF = Goals For, Pts = Points (Win 3 · Draw 1 · Loss 0)
+        P = Played, W = Won, D = Drawn, {PRIMARY_LABEL[statType]} = {
+          statType === "goals" ? "Goals For" :
+          statType === "winrate" ? "Win Rate" :
+          statType === "motm" ? "Man of the Match" :
+          statType === "rating" ? "Average Rating" : "Assists"
+        }, Pts = Points (Win 3 · Draw 1 · Loss 0)
       </p>
     </div>
   );

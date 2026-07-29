@@ -109,7 +109,7 @@ async function getBaseStats(scope: LeaderboardScope) {
     const { data: tournamentMatches } = await supabase
       .from("tournament_matches")
       .select(
-        "player1_id, player2_id, player1_score, player2_score, tournaments!inner(type)"
+        "id, player1_id, player2_id, player1_score, player2_score, tournaments!inner(type)"
       )
       .eq("status", "completed")
       .eq("tournaments.type", "internal");
@@ -130,6 +130,11 @@ async function getBaseStats(scope: LeaderboardScope) {
       if (e.scorer_id && statsMap[e.scorer_id]) statsMap[e.scorer_id].motm++;
     }
 
+    // Only count ratings that belong to *this* scope's tournament matches —
+    // otherwise a rating from an official tournament match would also leak
+    // into the unofficial numbers (and vice versa).
+    const internalTournamentMatchIds = new Set((tournamentMatches ?? []).map((m: any) => m.id));
+
     const { data: ratings } = await supabase
       .from("match_ratings")
       .select("player_id, rating, tournament_match_id")
@@ -137,6 +142,7 @@ async function getBaseStats(scope: LeaderboardScope) {
 
     for (const r of ratings ?? []) {
       if (!r.player_id || !statsMap[r.player_id]) continue;
+      if (!internalTournamentMatchIds.has(r.tournament_match_id)) continue;
       statsMap[r.player_id].ratingTotal += Number(r.rating);
       statsMap[r.player_id].ratingCount++;
     }
@@ -207,6 +213,23 @@ async function getBaseStats(scope: LeaderboardScope) {
       else s.draws++;
     }
 
+    // Official tournament matches (player vs player) — this block was missing
+    // entirely before, which is why the Official leaderboard undercounted
+    // matches/wins/goals for anyone whose games came from an official-type
+    // tournament instead of an external friendly match.
+    const { data: officialTournamentMatches } = await supabase
+      .from("tournament_matches")
+      .select(
+        "id, player1_id, player2_id, player1_score, player2_score, tournaments!inner(type)"
+      )
+      .eq("status", "completed")
+      .eq("tournaments.type", "official");
+
+    for (const m of officialTournamentMatches ?? []) {
+      if (m.player1_score === null || m.player2_score === null) continue;
+      applyPvPResult(statsMap, m.player1_id, m.player2_id, m.player1_score, m.player2_score);
+    }
+
     const { data: motmEvents } = await supabase
       .from("match_events")
       .select("scorer_id, matches!inner(match_type, status)")
@@ -225,6 +248,22 @@ async function getBaseStats(scope: LeaderboardScope) {
 
     for (const r of ratings ?? []) {
       if (!r.player_id || !statsMap[r.player_id]) continue;
+      statsMap[r.player_id].ratingTotal += Number(r.rating);
+      statsMap[r.player_id].ratingCount++;
+    }
+
+    // Ratings from official tournament matches also count toward the
+    // Official rating leaderboard.
+    const officialTournamentMatchIds = new Set((officialTournamentMatches ?? []).map((m: any) => m.id));
+
+    const { data: tournamentRatings } = await supabase
+      .from("match_ratings")
+      .select("player_id, rating, tournament_match_id")
+      .not("tournament_match_id", "is", null);
+
+    for (const r of tournamentRatings ?? []) {
+      if (!r.player_id || !statsMap[r.player_id]) continue;
+      if (!officialTournamentMatchIds.has(r.tournament_match_id)) continue;
       statsMap[r.player_id].ratingTotal += Number(r.rating);
       statsMap[r.player_id].ratingCount++;
     }
@@ -300,6 +339,8 @@ export async function getTopAssists(
         wins: row.wins ?? 0,
         draws: row.draws ?? 0,
         losses: row.losses ?? 0,
+        points: (row.wins ?? 0) * 3 + (row.draws ?? 0),
+        winRate: row.matches ? Math.round(((row.wins ?? 0) / row.matches) * 100) : 0,
         secondary: `${row.matches ?? 0} matches`,
       };
     })
@@ -328,6 +369,7 @@ export async function getTopWinRate(
       wins: s.wins,
       draws: s.draws,
       losses: s.losses,
+      points: s.wins * 3 + s.draws,
       winRate: s.winRate,
       secondary: `${s.wins}/${s.matches} wins`,
     }));
@@ -351,6 +393,7 @@ export async function getTopMotm(
       wins: s.wins,
       draws: s.draws,
       losses: s.losses,
+      points: s.wins * 3 + s.draws,
       motm: s.motm,
       secondary: `${s.matches} matches`,
     }));
@@ -375,6 +418,9 @@ export async function getTopRating(
       wins: s.wins,
       draws: s.draws,
       losses: s.losses,
+      points: s.wins * 3 + s.draws,
+      winRate: s.matches > 0 ? Math.round((s.wins / s.matches) * 100) : 0,
+      motm: s.motm,
       secondary: `${s.matches} matches`,
     }));
 }

@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import ClubRecordCard from "../components/ClubRecordCard";
 import Footer from "../components/Footer";
 import LeaderboardTabs from "../components/LeaderboardTabs";
 import Navbar from "../components/Navbar";
 import PeriodPerformerCard from "../components/PeriodPerformerCard";
-import { getClubRecord } from "../lib/queries/clubRecord";
 import { getLeaderboardData } from "../lib/queries/leaderboards";
 
 export const metadata: Metadata = {
@@ -13,8 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function LeaderboardsPage() {
-  const [clubRecord, official, unofficial] = await Promise.all([
-    getClubRecord(),
+  const [official, unofficial] = await Promise.all([
     getLeaderboardData("official"),
     getLeaderboardData("unofficial"),
   ]);
@@ -33,13 +30,6 @@ export default async function LeaderboardsPage() {
 
         <div className="mt-8">
           <PeriodPerformerCard />
-        </div>
-
-        <div className="mt-8">
-          <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-gold">
-            Club Record (Official Matches)
-          </h2>
-          <ClubRecordCard record={clubRecord} />
         </div>
 
         <div className="mt-8">

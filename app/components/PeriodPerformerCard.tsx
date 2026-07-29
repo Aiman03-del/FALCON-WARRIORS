@@ -14,7 +14,14 @@ const periodLabels: Record<Period, string> = {
   yearly: "This Year",
 };
 
-type Performer = { playerId: string; username: string; avatarUrl: string | null; count: number } | null;
+type Performer = {
+  playerId: string;
+  username: string;
+  avatarUrl: string | null;
+  wins: number;
+  motm: number;
+  goals: number;
+} | null;
 
 function getPeriodStart(period: Period): Date {
   const now = new Date();
@@ -44,6 +51,8 @@ export default function PeriodPerformerCard() {
       const start = getPeriodStart(period).toISOString();
 
       const goalMap: Record<string, number> = {};
+      const winMap: Record<string, number> = {};
+      const motmMap: Record<string, number> = {};
       const playerInfo: Record<string, { username: string; avatarUrl: string | null }> = {};
 
       // 1. Internal matches (player vs player)
@@ -68,12 +77,14 @@ export default function PeriodPerformerCard() {
           goalMap[p2.id] = (goalMap[p2.id] ?? 0) + m.score_away;
           playerInfo[p2.id] = { username: p2.efootball_username, avatarUrl: p2.avatar_url };
         }
+        if (m.score_home > m.score_away && p1) winMap[p1.id] = (winMap[p1.id] ?? 0) + 1;
+        else if (m.score_away > m.score_home && p2) winMap[p2.id] = (winMap[p2.id] ?? 0) + 1;
       }
 
       // 2. External matches (single "played by" player)
       const { data: externalMatches } = await supabase
         .from("matches")
-        .select("id, score_home, match_date")
+        .select("id, score_home, score_away, match_date")
         .eq("match_type", "external")
         .eq("status", "completed")
         .gte("match_date", start);
@@ -97,6 +108,9 @@ export default function PeriodPerformerCard() {
           if (!p || m.score_home === null) continue;
           goalMap[p.id] = (goalMap[p.id] ?? 0) + m.score_home;
           playerInfo[p.id] = { username: p.efootball_username, avatarUrl: p.avatar_url };
+          if (m.score_away !== null && m.score_home > m.score_away) {
+            winMap[p.id] = (winMap[p.id] ?? 0) + 1;
+          }
         }
       }
 
@@ -137,17 +151,54 @@ export default function PeriodPerformerCard() {
             goalMap[p2.id] = (goalMap[p2.id] ?? 0) + m.player2_score;
             playerInfo[p2.id] = { username: p2.efootball_username, avatarUrl: p2.avatar_url };
           }
+          if (m.player1_score > m.player2_score && p1) winMap[p1.id] = (winMap[p1.id] ?? 0) + 1;
+          else if (m.player2_score > m.player1_score && p2) winMap[p2.id] = (winMap[p2.id] ?? 0) + 1;
         }
+      }
+
+      // 4. MOTM awards (internal + external matches only — tournament fixtures
+      // don't have a MOTM picker yet)
+      const { data: motmEvents } = await supabase
+        .from("match_events")
+        .select("scorer_id, matches!inner(status, match_date)")
+        .eq("event_type", "motm")
+        .eq("matches.status", "completed")
+        .gte("matches.match_date", start);
+
+      for (const e of (motmEvents ?? []) as any[]) {
+        if (!e.scorer_id) continue;
+        motmMap[e.scorer_id] = (motmMap[e.scorer_id] ?? 0) + 1;
       }
 
       if (!active) return;
 
-      const sorted = Object.entries(goalMap).sort((a, b) => b[1] - a[1]);
-      if (sorted.length === 0 || sorted[0][1] === 0) {
+      // Rank by (wins + motm) first, tiebreak by goals
+      const allIds = new Set([
+        ...Object.keys(winMap),
+        ...Object.keys(motmMap),
+        ...Object.keys(goalMap),
+      ]);
+
+      const ranked = Array.from(allIds)
+        .map((id) => ({
+          playerId: id,
+          wins: winMap[id] ?? 0,
+          motm: motmMap[id] ?? 0,
+          goals: goalMap[id] ?? 0,
+        }))
+        .filter((p) => p.wins + p.motm + p.goals > 0)
+        .sort((a, b) => {
+          const scoreA = a.wins + a.motm;
+          const scoreB = b.wins + b.motm;
+          if (scoreB !== scoreA) return scoreB - scoreA;
+          return b.goals - a.goals;
+        });
+
+      if (ranked.length === 0) {
         setPerformer(null);
       } else {
-        const [playerId, count] = sorted[0];
-        setPerformer({ playerId, count, ...playerInfo[playerId] });
+        const top = ranked[0];
+        setPerformer({ ...top, ...playerInfo[top.playerId] } as Performer);
       }
 
       setLoading(false);
@@ -198,12 +249,14 @@ export default function PeriodPerformerCard() {
                 Top Performer — {periodLabels[period]}
               </p>
               <p className="mt-1 text-lg font-semibold">{performer.username}</p>
-              <p className="text-xs text-muted">{performer.count} goals</p>
+              <p className="text-xs text-muted">
+                {performer.wins} wins · {performer.motm} MOTM · {performer.goals} goals
+              </p>
             </div>
           </Link>
         ) : (
           <div className="card p-6 text-center text-sm text-muted">
-            No goals recorded {periodLabels[period].toLowerCase()} yet.
+            No results recorded {periodLabels[period].toLowerCase()} yet.
           </div>
         )}
       </div>

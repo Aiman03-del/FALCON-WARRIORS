@@ -98,6 +98,7 @@ export default function LeaderboardTabs({
 
       <LeaderboardList
         entries={pageEntries}
+        statType={activeTab}
         emptyMessage={`No ${activeScopeTab?.label.toLowerCase()} ${activeStatTab?.label.toLowerCase()} data yet.`}
       />
 

@@ -27,6 +27,7 @@ export const navItems = [
   { label: "Ballon d'Or", href: "/dashboard/ballon-dor", icon: Star },
   { label: "News", href: "/dashboard/news", icon: Newspaper },
   { label: "Gallery", href: "/dashboard/gallery", icon: ImageIcon },
+  { label: "Communities", href: "/dashboard/communities", icon: Users },
 ];
 
 type DashboardSidebarProps = {
@@ -60,7 +61,7 @@ export default function DashboardSidebar({
 
   return (
     <aside className={defaultClasses}>
-      <div className="flex items-center justify-between border-b border-border px-3 py-4 flex-shrink-0">
+      <div className="flex items-center justify-between border-b border-border px-3 py-4 shrink-0">
         <div className="flex min-w-0 items-center gap-2 overflow-hidden">
           <Image
             src="/logo.jpg"
@@ -138,7 +139,7 @@ export default function DashboardSidebar({
         </Link>
       </nav>
 
-      <div className="border-t border-border px-4 py-3 flex-shrink-0">
+      <div className="border-t border-border px-4 py-3 shrink-0">
         <span className={`rounded-full bg-gold/15 px-2.5 py-1 text-[10px] font-bold uppercase text-gold ${collapsed ? "block text-center" : "inline-block"}`}>
           {collapsed ? role.slice(0, 1).toUpperCase() : role}
         </span>
