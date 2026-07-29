@@ -4,6 +4,9 @@ import Footer from "@/app/components/Footer";
 import JoinTournamentButton from "@/app/components/JoinTournamentButton";
 import Navbar from "@/app/components/Navbar";
 import PointsTable from "@/app/components/PointsTable";
+import PublicTournamentTabs, {
+  type PublicTournamentTab,
+} from "@/app/components/PublicTournamentTabs";
 import TournamentStatusBadge from "@/app/components/TournamentStatusBadge";
 import TournamentSquadList from "@/app/components/TournamentSquadList";
 import ExternalTournamentInfo from "@/app/components/ExternalTournamentInfo";
@@ -16,8 +19,6 @@ function getJoinedPlayer(pd: any) {
   return Array.isArray(pd) ? pd[0] ?? null : pd;
 }
 
-// Determine the champion when the tournament is complete — if knockout exists, use the final match winner,
-// otherwise (pure league) use the top team from the points table.
 function computeChampion({
   tournament,
   matches,
@@ -81,12 +82,23 @@ function computeChampion({
   return null;
 }
 
+function parseTab(tabParam: string | undefined): PublicTournamentTab {
+  if (tabParam === "standings") return "standings";
+  if (tabParam === "fixtures") return "fixtures";
+  if (tabParam === "bracket") return "bracket";
+  if (tabParam === "squad") return "squad";
+  return "overview";
+}
+
 export default async function TournamentDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const { id } = await params;
+  const { tab: tabParam } = await searchParams;
   const data = await getTournamentDetail(id);
 
   if (!data) notFound();
@@ -104,6 +116,95 @@ export default async function TournamentDetailPage({
       : [];
 
   const champion = computeChampion({ tournament, matches: matches as any[], participants, bracketMatches });
+
+  const showStandings =
+    tournament.format === "group_knockout" ||
+    tournament.format === "league" ||
+    tournament.format === "league_playoff";
+  const showFixtures = !hasBracket;
+  const showBracket = tournament.format === "knockout" || hasBracket;
+  const showSquad = tournament.type === "official";
+
+  const activeTab = parseTab(tabParam);
+
+  const overviewContent = (
+    <>
+      {tournament.type === "external" && (
+        <ExternalTournamentInfo
+          tournamentName={tournament.name}
+          status={tournament.status}
+          isPublicView={true}
+        />
+      )}
+
+      {champion && (
+        <ChampionBanner name={champion.name} avatarUrl={champion.avatarUrl} subtitle={champion.subtitle} />
+      )}
+
+      {!champion && tournament.type !== "external" && (
+        <p className="text-sm text-muted">
+          Follow the tabs above for standings, fixtures, and the bracket.
+        </p>
+      )}
+    </>
+  );
+
+  const standingsContent = (
+    <>
+      {tournament.format === "group_knockout" &&
+        groupNames.map((groupName) => (
+          <div key={groupName} className="mb-8">
+            <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-gold">
+              Group {groupName}
+            </h2>
+            <PointsTable
+              participants={participants.filter((p: any) => p.group_name === groupName)}
+              formMap={formMap}
+              matches={(matches as any[]).filter((m) => m.stage === "group" && m.group_name === groupName)}
+            />
+          </div>
+        ))}
+
+      {(tournament.format === "league" || tournament.format === "league_playoff") && (
+        <PointsTable
+          participants={participants}
+          formMap={formMap}
+          matches={(matches as any[]).filter((m) => m.stage !== "knockout")}
+        />
+      )}
+    </>
+  );
+
+  const fixturesContent = <TournamentMatchesDisplay matches={matches as any} />;
+
+  const bracketContent = (
+    <>
+      <BracketView matches={bracketMatches as any} mode="knockout" />
+
+      {thirdPlaceMatch && (
+        <div className="mt-8">
+          <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-gold">
+            3rd Place Match
+          </h2>
+          <div className="card flex items-center justify-between p-4 text-sm">
+            <span className="font-medium">
+              {(thirdPlaceMatch as any).player1?.efootball_username ?? "TBD"}
+            </span>
+            <span className="text-muted">
+              {(thirdPlaceMatch as any).status === "completed"
+                ? `${(thirdPlaceMatch as any).player1_score} - ${(thirdPlaceMatch as any).player2_score}`
+                : "vs"}
+            </span>
+            <span className="font-medium">
+              {(thirdPlaceMatch as any).player2?.efootball_username ?? "TBD"}
+            </span>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  const squadContent = <TournamentSquadList squad={squad} />;
 
   return (
     <main>
@@ -154,94 +255,19 @@ export default async function TournamentDetailPage({
           />
         </div>
 
-        {tournament.type === "external" && (
-          <div className="mt-8">
-            <ExternalTournamentInfo 
-              tournamentName={tournament.name}
-              status={tournament.status}
-              isPublicView={true}
-            />
-          </div>
-        )}
-
-        {tournament.type === "official" && (
-          <div className="mt-8">
-            <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-gold">
-              Falcon Warriors Squad
-            </h2>
-            <TournamentSquadList squad={squad} />
-          </div>
-        )}
-
-        {champion && (
-          <ChampionBanner name={champion.name} avatarUrl={champion.avatarUrl} subtitle={champion.subtitle} />
-        )}
-
-        {!hasBracket && (
-          <div className="mt-8">
-            <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-gold">
-              Fixtures & Results
-            </h2>
-            <TournamentMatchesDisplay matches={matches as any} />
-          </div>
-        )}
-
-        {tournament.format === "group_knockout" &&
-          groupNames.map((groupName) => (
-            <div key={groupName} className="mt-8">
-              <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-gold">
-                Group {groupName}
-              </h2>
-              <PointsTable
-                participants={participants.filter((p: any) => p.group_name === groupName)}
-                formMap={formMap}
-                matches={(matches as any[]).filter((m) => m.stage === "group" && m.group_name === groupName)}
-              />
-            </div>
-          ))}
-
-        {(tournament.format === "league" || tournament.format === "league_playoff") && (
-          <div className="mt-8">
-            <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-gold">
-              Points Table
-            </h2>
-            <PointsTable
-              participants={participants}
-              formMap={formMap}
-              matches={(matches as any[]).filter((m) => m.stage !== "knockout")}
-            />
-          </div>
-        )}
-
-        {(tournament.format === "knockout" || hasBracket) && (
-          <div className="mt-8">
-            <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-gold">
-              Knockout Bracket
-            </h2>
-            <BracketView matches={bracketMatches as any} mode="knockout" />
-          </div>
-        )}
-
-        {thirdPlaceMatch && (
-          <div className="mt-8">
-            <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-gold">
-              3rd Place Match
-            </h2>
-            <div className="card flex items-center justify-between p-4 text-sm">
-              <span className="font-medium">
-                {(thirdPlaceMatch as any).player1?.efootball_username ?? "TBD"}
-              </span>
-              <span className="text-muted">
-                {(thirdPlaceMatch as any).status === "completed"
-                  ? `${(thirdPlaceMatch as any).player1_score} - ${(thirdPlaceMatch as any).player2_score}`
-                  : "vs"}
-              </span>
-              <span className="font-medium">
-                {(thirdPlaceMatch as any).player2?.efootball_username ?? "TBD"}
-              </span>
-            </div>
-          </div>
-        )}
+        <PublicTournamentTabs
+          tournamentId={tournament.id}
+          activeTab={activeTab}
+          showStandings={showStandings}
+          showFixtures={showFixtures}
+          showBracket={showBracket}
+          showSquad={showSquad}
+          overviewContent={overviewContent}
+          standingsContent={standingsContent}
+          fixturesContent={fixturesContent}
+          bracketContent={bracketContent}
+          squadContent={squadContent}
+        />
       </section>
       <Footer />
     </main>
