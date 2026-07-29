@@ -2,7 +2,7 @@
 
 import { createAdminClient } from "@/app/lib/supabase/admin";
 import { requireAdmin } from "@/app/lib/queries/dashboard";
-import { deleteImageKitFiles } from "../supabase/server";
+import { deleteImageKitFiles } from "../imagekit/server";
 export async function wipeAllData(confirmationPhrase: string) {
   if (confirmationPhrase !== "DELETE ALL DATA") {
     return { ok: false as const, error: "Confirmation phrase did not match." };
