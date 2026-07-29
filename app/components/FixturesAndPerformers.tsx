@@ -110,7 +110,7 @@ export default function FixturesAndPerformers({ tournaments, performers }: Props
           </h2>
 
           {performers.length === 0 ? (
-            <p className="text-sm text-muted">No stats recorded yet.</p>
+            <p className="text-sm text-muted">No matches played yet — check back once results are in.</p>
           ) : (
             <div className="grid grid-cols-1 gap-3 xs:grid-cols-2 sm:grid-cols-2">
               {performers.map((p) => (

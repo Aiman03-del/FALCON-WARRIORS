@@ -1,4 +1,5 @@
 import { createClient } from "../supabase/server";
+import { getTopScorers } from "./leaderboards";
 
 const MOCK_RECENT_RESULTS = [
   {
@@ -175,21 +176,16 @@ export async function getRunningTournaments() {
 }
 
 export async function getTopPerformers() {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("player_stats")
-    .select("goals, player_details(efootball_username, preferred_position)")
-    .order("goals", { ascending: false })
-    .limit(4);
-
-  if (error || !data) return [];
-
-  return data.map((row: any) => ({
-    name: row.player_details?.efootball_username ?? "Unknown",
-    statLabel: "GOALS",
-    statValue: String(row.goals ?? 0),
-  }));
+  try {
+    const topScorers = await getTopScorers("official", 6);
+    return topScorers.map((s) => ({
+      name: s.username,
+      statLabel: "GOALS",
+      statValue: String(s.value),
+    }));
+  } catch (error) {
+    return [];
+  }
 }
 
 export async function getAchievements() {
