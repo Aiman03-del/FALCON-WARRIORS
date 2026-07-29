@@ -5,23 +5,11 @@ import { requireStaff } from "@/app/lib/queries/dashboard";
 import { createClient } from "@/app/lib/supabase/server";
 import DeleteAchievementButton from "@/app/components/dashboard/DeleteAchievementButton";
 
-const MOCK_ACHIEVEMENTS = [
-  { id: "ach-1", title: "Champions League", season: "2024", description: "Won the prestigious championship" },
-  { id: "ach-2", title: "Best Attack", season: "2023", description: "Best attacking record in season" },
-  { id: "ach-3", title: "Tournament Winners", season: "2022", description: "Tournament champions" },
-];
-
-const MOCK_AWARDS = [
-  { id: "awd-1", title: "Player of the Month", season: "July 2026", player_details: { efootball_username: "Ahmed_Pro" } },
-  { id: "awd-2", title: "Rising Star", season: "2026", player_details: { efootball_username: "Hassan_Elite" } },
-  { id: "awd-3", title: "Best Midfielder", season: "2026", player_details: { efootball_username: "Karim_Sharp" } },
-];
-
 export default async function AchievementsPage() {
   await requireStaff();
 
-  let achievements = MOCK_ACHIEVEMENTS;
-  let awards: any[] = MOCK_AWARDS;
+  let achievements: { id: string; title: string; season: string | null; description: string | null }[] = [];
+  let awards: any[] = [];
 
   try {
     const supabase = await createClient();

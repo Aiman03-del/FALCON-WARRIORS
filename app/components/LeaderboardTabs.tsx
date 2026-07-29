@@ -32,8 +32,10 @@ const PAGE_SIZE = 10;
 
 export default function LeaderboardTabs({
   data,
+  isAdmin = false,
 }: {
   data: ScopedLeaderboardData;
+  isAdmin?: boolean;
 }) {
   const [page, setPage] = useState(1);
   const [activeScope, setActiveScope] = useState<LeaderboardScope>("official");
@@ -100,6 +102,7 @@ export default function LeaderboardTabs({
         entries={pageEntries}
         statType={activeTab}
         emptyMessage={`No ${activeScopeTab?.label.toLowerCase()} ${activeStatTab?.label.toLowerCase()} data yet.`}
+        isAdmin={isAdmin}
       />
 
       <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 text-sm text-muted md:flex-row md:items-center md:justify-between">

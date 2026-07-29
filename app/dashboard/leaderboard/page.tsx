@@ -18,7 +18,7 @@ export default async function DashboardLeaderboardPage() {
         </div>
       </div>
 
-      <LeaderboardTabs data={{ official, unofficial }} />
+      <LeaderboardTabs data={{ official, unofficial }} isAdmin={role === "admin"} />
     </div>
   );
 }

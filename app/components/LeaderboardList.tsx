@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Trophy } from "lucide-react";
 import { LeaderboardEntry } from "../lib/queries/leaderboards";
+import ClearPlayerStatsButton from "./dashboard/ClearPlayerStatsButton";
 
 type StatType = "goals" | "winrate" | "motm" | "rating" | "assists";
 
@@ -23,10 +24,12 @@ export default function LeaderboardList({
   entries,
   statType = "goals",
   emptyMessage = "No data available yet.",
+  isAdmin = false,
 }: {
   entries: LeaderboardEntry[];
   statType?: StatType;
   emptyMessage?: string;
+  isAdmin?: boolean;
 }) {
   if (entries.length === 0) {
     return <div className="card p-6 text-center text-sm text-muted">{emptyMessage}</div>;
@@ -46,6 +49,7 @@ export default function LeaderboardList({
             {statType !== "winrate" && <th className="px-2 py-3 text-center">Win%</th>}
             {statType !== "motm" && <th className="px-2 py-3 text-center">MOTM</th>}
             <th className="px-3 py-3 text-right">Pts</th>
+            {isAdmin && <th className="px-3 py-3 text-right">Manage</th>}
           </tr>
         </thead>
         <tbody>
@@ -95,6 +99,11 @@ export default function LeaderboardList({
               <td className="px-3 py-3 text-right">
                 <span className="font-display text-lg font-bold text-gold">{entry.points ?? 0}</span>
               </td>
+              {isAdmin && (
+                <td className="px-3 py-3 text-right">
+                  <ClearPlayerStatsButton playerId={entry.playerId} username={entry.username} />
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

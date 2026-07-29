@@ -5,16 +5,9 @@ import { requireStaff } from "@/app/lib/queries/dashboard";
 import { createClient } from "@/app/lib/supabase/server";
 import DeleteNewsButton from "@/app/components/dashboard/DeleteNewsButton";
 
-
-const MOCK_DASHBOARD_NEWS = [
-  { id: "news-1", title: "Falcon Warriors Secure Victory in International Championship", category: "club_news", published_at: "2026-07-24T10:00:00" },
-  { id: "news-2", title: "Ahmed_Pro Named Player of the Month", category: "player_news", published_at: "2026-07-20T14:30:00" },
-  { id: "news-3", title: "New Season Tournament Schedule Announced", category: "tournament", published_at: "2026-07-18T09:15:00" },
-];
-
 export default async function NewsListPage() {
   await requireStaff();
-  let news = MOCK_DASHBOARD_NEWS;
+  let news: { id: string; title: string; category: string | null; published_at: string }[] = [];
 
   try {
     const supabase = await createClient();

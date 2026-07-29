@@ -1,56 +1,5 @@
 import { createClient } from "../supabase/server";
 
-// Mock match details
-const MOCK_MATCH_DETAILS: Record<string, any> = {
-  "ext-3": {
-    match: {
-      id: "ext-3",
-      match_type: "external",
-      opponent_name: "Tiger Squad",
-      opponent_tag: "TGR",
-      opponent_logo_url: "https://via.placeholder.com/40?text=TGR",
-      competition: "International League",
-      round_stage: "Group Stage",
-      match_date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      status: "completed",
-      score_home: 3,
-      score_away: 1,
-      tournament_id: null,
-      player1: null,
-      player2: null,
-      tournament: null,
-    },
-    playedBy: { id: "player-1", efootball_username: "Ahmed_Pro", avatar_url: "https://via.placeholder.com/40?text=AP" },
-    goalEntries: [
-      { player_id: "p1", goals: 2, efootball_username: "Ahmed_Pro" },
-      { player_id: "p2", goals: 1, efootball_username: "Hassan_Elite" },
-    ],
-    motmName: "Ahmed_Pro",
-  },
-  "int-2": {
-    match: {
-      id: "int-2",
-      match_type: "internal",
-      opponent_name: "Karim vs Bilal",
-      opponent_tag: "INT",
-      opponent_logo_url: null,
-      competition: "Internal Championship",
-      round_stage: "Round 5",
-      match_date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      status: "completed",
-      score_home: 2,
-      score_away: 1,
-      tournament_id: "tournament-1",
-      player1: { id: "player-3", efootball_username: "Karim_Sharp", avatar_url: "https://via.placeholder.com/40?text=KS" },
-      player2: { id: "player-4", efootball_username: "Bilal_Speed", avatar_url: "https://via.placeholder.com/40?text=BS" },
-      tournament: { id: "tournament-1", name: "Falcon Warriors Championship 2026" },
-    },
-    playedBy: null,
-    goalEntries: [],
-    motmName: "Karim_Sharp",
-  },
-};
-
 export async function getMatchDetail(id: string) {
   try {
     const supabase = await createClient();
@@ -68,7 +17,7 @@ export async function getMatchDetail(id: string) {
       .eq("id", id)
       .single();
 
-    if (error || !match) return MOCK_MATCH_DETAILS[id] || null;
+    if (error || !match) return null;
 
     let playedBy: { id: string; efootball_username: string; avatar_url: string | null } | null = null;
     let goalEntries: { player_id: string; goals: number; efootball_username: string }[] = [];
@@ -115,7 +64,6 @@ export async function getMatchDetail(id: string) {
 
     return { match, playedBy, goalEntries, motmName };
   } catch (error) {
-    // If Supabase is not available, return mock data
-    return MOCK_MATCH_DETAILS[id] || null;
+    return null;
   }
 }
