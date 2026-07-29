@@ -1,5 +1,6 @@
 import { Users, Swords, Trophy, Newspaper } from "lucide-react";
 import AssociatedCommunities from "../components/AssociatedCommunities";
+import WipeAllDataButton from "../components/dashboard/WipeAllDataButton";
 import { getAssociatedCommunities } from "../lib/queries/communities";
 import { requireStaff } from "../lib/queries/dashboard";
 import { createClient } from "../lib/supabase/server";
@@ -61,6 +62,18 @@ export default async function DashboardOverview() {
       </div>
 
       <AssociatedCommunities communities={communities} />
+
+      <div className="mt-10 border-t border-border pt-6">
+        <h2 className="font-display text-sm font-bold uppercase tracking-wide text-red-400">
+          Danger Zone
+        </h2>
+        <p className="mt-1 text-xs text-muted">
+          Irreversible actions. Only proceed if you know exactly what you're doing.
+        </p>
+        <div className="mt-3">
+          <WipeAllDataButton />
+        </div>
+      </div>
     </div>
   );
 }

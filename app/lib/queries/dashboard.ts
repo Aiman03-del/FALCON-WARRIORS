@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "../supabase/server";
 
 // Demo mode - set to true to allow dashboard access without authentication
-const DEMO_MODE = true;
+const DEMO_MODE = false;
 
 export async function requireStaff() {
   // Allow demo access if DEMO_MODE is enabled
