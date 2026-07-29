@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient } from "./lib/supabase/client";
 
 const BASE_URL = "https://falcon-warriors.com";
 
