@@ -9,9 +9,11 @@ import TournamentForm from "@/app/components/dashboard/TournamentForm";
 
 export default async function OfficialTournamentDashboard({
   tournamentId,
+  tournamentSlug,
   activeTab,
 }: {
   tournamentId: string;
+  tournamentSlug: string;
   activeTab: OfficialTournamentTab;
 }) {
   const supabase = await createClient();
@@ -19,7 +21,7 @@ export default async function OfficialTournamentDashboard({
   const { data: tournament } = await supabase
     .from("tournaments")
     .select(
-      "id, name, type, format, double_round, status, start_date, end_date, max_participants, registration_deadline, group_count, qualifiers_per_group, playoff_size, bye_method, third_place_match"
+      "id, slug, name, type, format, double_round, status, start_date, end_date, max_participants, registration_deadline, group_count, qualifiers_per_group, playoff_size, bye_method, third_place_match"
     )
     .eq("id", tournamentId)
     .single();
@@ -117,6 +119,7 @@ export default async function OfficialTournamentDashboard({
   return (
     <OfficialTournamentTabs
       tournamentId={tournamentId}
+      tournamentSlug={tournamentSlug}
       activeTab={activeTab}
       roundsContent={roundsContent}
       participantsContent={participantsContent}

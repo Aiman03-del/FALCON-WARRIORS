@@ -11,6 +11,7 @@ export type InternalTournamentTab =
 
 export default function InternalTournamentTabs({
   tournamentId,
+  tournamentSlug,
   activeTab,
   showStandings,
   standingsContent,
@@ -21,6 +22,7 @@ export default function InternalTournamentTabs({
   editContent,
 }: {
   tournamentId: string;
+  tournamentSlug: string;
   activeTab: InternalTournamentTab;
   showStandings: boolean;
   standingsContent: React.ReactNode;
@@ -41,7 +43,7 @@ export default function InternalTournamentTabs({
       params.set("tab", tab);
     }
     const qs = params.toString();
-    router.replace(`/dashboard/tournaments/${tournamentId}${qs ? `?${qs}` : ""}`, {
+    router.replace(`/dashboard/tournaments/${tournamentSlug}${qs ? `?${qs}` : ""}`, {
       scroll: false,
     });
   }

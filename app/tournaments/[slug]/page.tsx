@@ -11,12 +11,23 @@ import TournamentStatusBadge from "@/app/components/TournamentStatusBadge";
 import TournamentSquadList from "@/app/components/TournamentSquadList";
 import ExternalTournamentInfo from "@/app/components/ExternalTournamentInfo";
 import TournamentMatchesDisplay from "@/app/components/TournamentMatchesDisplay";
-import { getMyJoinStatus, getTournamentDetail } from "@/app/lib/queries/tournaments";
+import {
+  getMyJoinStatus,
+  getTournamentDetail,
+  type TournamentDetailData,
+  type TournamentMatch,
+  type TournamentParticipant,
+} from "@/app/lib/queries/tournaments";
 import { rankStandings } from "@/app/lib/fixtures/tiebreakers";
 import { notFound } from "next/navigation";
 
-function getJoinedPlayer(pd: any) {
-  return Array.isArray(pd) ? pd[0] ?? null : pd;
+type JoinedPlayer = {
+  efootball_username: string;
+  avatar_url?: string | null;
+};
+
+function getJoinedPlayer(pd: JoinedPlayer | JoinedPlayer[] | null | undefined) {
+  return Array.isArray(pd) ? pd[0] ?? null : pd ?? null;
 }
 
 function computeChampion({
@@ -25,10 +36,10 @@ function computeChampion({
   participants,
   bracketMatches,
 }: {
-  tournament: any;
-  matches: any[];
-  participants: any[];
-  bracketMatches: any[];
+  tournament: TournamentDetailData["tournament"];
+  matches: TournamentMatch[];
+  participants: TournamentParticipant[];
+  bracketMatches: TournamentMatch[];
 }): { name: string; avatarUrl: string | null; subtitle: string } | null {
   if (bracketMatches.length > 0) {
     const finalRound = Math.max(...bracketMatches.map((m) => m.round));
@@ -61,7 +72,7 @@ function computeChampion({
     const allDone = leagueMatches.length > 0 && leagueMatches.every((m) => m.status === "completed" || m.status === "bye");
     if (!allDone) return null;
 
-    const withPlayerId = participants.map((p: any) => ({
+    const withPlayerId = participants.map((p) => ({
       ...p,
       player_id: getJoinedPlayer(p.player_details)?.id ?? p.id,
     }));
@@ -69,13 +80,13 @@ function computeChampion({
     const top = ranked[0];
     if (!top) return null;
 
-    const player = getJoinedPlayer((top as any).player_details);
+    const player = getJoinedPlayer((top as TournamentParticipant | undefined)?.player_details);
     if (!player) return null;
 
     return {
       name: player.efootball_username,
       avatarUrl: player.avatar_url ?? null,
-      subtitle: `League Champion · ${(top as any).points} pts`,
+      subtitle: `League Champion · ${top.points} pts`,
     };
   }
 
@@ -94,28 +105,28 @@ export default async function TournamentDetailPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
   searchParams: Promise<{ tab?: string }>;
 }) {
-  const { id } = await params;
+  const { slug } = await params;
   const { tab: tabParam } = await searchParams;
-  const data = await getTournamentDetail(id);
+  const data = await getTournamentDetail(slug);
 
   if (!data) notFound();
   const { tournament, participants, matches, formMap, squad } = data;
-  const joinStatus = await getMyJoinStatus(id);
+  const joinStatus = await getMyJoinStatus(tournament.id);
 
-  const knockoutMatches = (matches as any[]).filter((m) => m.stage === "knockout" || m.stage == null);
+  const knockoutMatches = matches.filter((m) => m.stage === "knockout" || m.stage == null);
   const bracketMatches = knockoutMatches.filter((m) => !m.is_third_place);
   const thirdPlaceMatch = knockoutMatches.find((m) => m.is_third_place) ?? null;
   const hasBracket = bracketMatches.length > 0;
 
   const groupNames =
     tournament.format === "group_knockout"
-      ? Array.from(new Set(participants.map((p: any) => p.group_name).filter(Boolean))).sort()
+      ? Array.from(new Set(participants.map((p) => p.group_name).filter(Boolean))).sort()
       : [];
 
-  const champion = computeChampion({ tournament, matches: matches as any[], participants, bracketMatches });
+  const champion = computeChampion({ tournament, matches, participants, bracketMatches });
 
   const showStandings =
     tournament.format === "group_knockout" ||
@@ -158,9 +169,9 @@ export default async function TournamentDetailPage({
               Group {groupName}
             </h2>
             <PointsTable
-              participants={participants.filter((p: any) => p.group_name === groupName)}
+              participants={participants.filter((p) => p.group_name === groupName)}
               formMap={formMap}
-              matches={(matches as any[]).filter((m) => m.stage === "group" && m.group_name === groupName)}
+              matches={matches.filter((m) => m.stage === "group" && m.group_name === groupName)}
             />
           </div>
         ))}
@@ -169,17 +180,17 @@ export default async function TournamentDetailPage({
         <PointsTable
           participants={participants}
           formMap={formMap}
-          matches={(matches as any[]).filter((m) => m.stage !== "knockout")}
+          matches={matches.filter((m) => m.stage !== "knockout")}
         />
       )}
     </>
   );
 
-  const fixturesContent = <TournamentMatchesDisplay matches={matches as any} />;
+  const fixturesContent = <TournamentMatchesDisplay matches={matches} />;
 
   const bracketContent = (
     <>
-      <BracketView matches={bracketMatches as any} mode="knockout" />
+      <BracketView matches={bracketMatches} mode="knockout" />
 
       {thirdPlaceMatch && (
         <div className="mt-8">
@@ -188,15 +199,15 @@ export default async function TournamentDetailPage({
           </h2>
           <div className="card flex items-center justify-between p-4 text-sm">
             <span className="font-medium">
-              {(thirdPlaceMatch as any).player1?.efootball_username ?? "TBD"}
+              {thirdPlaceMatch?.player1?.efootball_username ?? "TBD"}
             </span>
             <span className="text-muted">
-              {(thirdPlaceMatch as any).status === "completed"
-                ? `${(thirdPlaceMatch as any).player1_score} - ${(thirdPlaceMatch as any).player2_score}`
+              {thirdPlaceMatch?.status === "completed"
+                ? `${thirdPlaceMatch.player1_score} - ${thirdPlaceMatch.player2_score}`
                 : "vs"}
             </span>
             <span className="font-medium">
-              {(thirdPlaceMatch as any).player2?.efootball_username ?? "TBD"}
+              {thirdPlaceMatch?.player2?.efootball_username ?? "TBD"}
             </span>
           </div>
         </div>
@@ -256,7 +267,7 @@ export default async function TournamentDetailPage({
         </div>
 
         <PublicTournamentTabs
-          tournamentId={tournament.id}
+          tournamentSlug={tournament.slug ?? tournament.id}
           activeTab={activeTab}
           showStandings={showStandings}
           showFixtures={showFixtures}

@@ -6,12 +6,14 @@ export type OfficialTournamentTab = "rounds" | "participants" | "edit";
 
 export default function OfficialTournamentTabs({
   tournamentId,
+  tournamentSlug,
   activeTab,
   roundsContent,
   participantsContent,
   editContent,
 }: {
   tournamentId: string;
+  tournamentSlug: string;
   activeTab: OfficialTournamentTab;
   roundsContent: React.ReactNode;
   participantsContent: React.ReactNode;
@@ -28,7 +30,7 @@ export default function OfficialTournamentTabs({
       params.set("tab", tab);
     }
     const qs = params.toString();
-    router.replace(`/dashboard/tournaments/${tournamentId}${qs ? `?${qs}` : ""}`, {
+    router.replace(`/dashboard/tournaments/${tournamentSlug}${qs ? `?${qs}` : ""}`, {
       scroll: false,
     });
   }

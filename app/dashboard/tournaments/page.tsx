@@ -28,7 +28,7 @@ export default function TournamentsPage() {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("tournaments")
-      .select("id, name, type, format, status, start_date, end_date")
+      .select("id, slug, name, type, format, status, start_date, end_date")
       .order("start_date", { ascending: false });
 
     if (error) {
@@ -110,7 +110,7 @@ export default function TournamentsPage() {
               <tr key={t.id} className="border-b border-border last:border-0">
                 <td className="px-4 py-3 font-medium">
                   <Link
-                    href={`/dashboard/tournaments/${t.id}`}
+                    href={`/dashboard/tournaments/${t.slug ?? t.id}`}
                     className="text-gold transition hover:text-gold-light"
                   >
                     {t.name}
@@ -131,7 +131,7 @@ export default function TournamentsPage() {
                 <td className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-3">
                     <Link
-                      href={`/dashboard/tournaments/${t.id}?tab=edit`}
+                      href={`/dashboard/tournaments/${t.slug ?? t.id}?tab=edit`}
                       className="inline-flex items-center justify-center rounded-lg p-2 text-gold transition hover:bg-gold/10 hover:text-gold-light"
                       aria-label="Edit tournament"
                     >

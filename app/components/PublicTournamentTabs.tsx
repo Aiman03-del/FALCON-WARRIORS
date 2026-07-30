@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 export type PublicTournamentTab = "overview" | "standings" | "fixtures" | "bracket" | "squad";
 
 export default function PublicTournamentTabs({
-  tournamentId,
+  tournamentSlug,
   activeTab,
   showStandings,
   showFixtures,
@@ -17,7 +17,7 @@ export default function PublicTournamentTabs({
   bracketContent,
   squadContent,
 }: {
-  tournamentId: string;
+  tournamentSlug: string;
   activeTab: PublicTournamentTab;
   showStandings: boolean;
   showFixtures: boolean;
@@ -40,7 +40,7 @@ export default function PublicTournamentTabs({
       params.set("tab", tab);
     }
     const qs = params.toString();
-    router.replace(`/tournaments/${tournamentId}${qs ? `?${qs}` : ""}`, {
+    router.replace(`/tournaments/${tournamentSlug}${qs ? `?${qs}` : ""}`, {
       scroll: false,
     });
   }

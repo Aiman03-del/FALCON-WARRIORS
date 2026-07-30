@@ -7,18 +7,18 @@ import { createClient } from "@/app/lib/supabase/client";
 export default async function ManageMatchPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
   await requireStaff();
-  const { id } = await params;
+  const { slug } = await params;
   const supabase = await createClient();
 
   const { data: match } = await supabase
     .from("matches")
     .select(
-      "id, opponent_name, opponent_logo_url, competition, match_date, status, score_home, score_away, match_type, tournament_id, round_stage, player1_id, player2_id, player1:player1_id(efootball_username), player2:player2_id(efootball_username)"
+      "id, slug, opponent_name, opponent_logo_url, competition, match_date, status, score_home, score_away, match_type, tournament_id, round_stage, player1_id, player2_id, player1:player1_id(efootball_username), player2:player2_id(efootball_username)"
     )
-    .eq("id", id)
+    .eq("slug", slug)
     .single();
 
   if (!match) notFound();

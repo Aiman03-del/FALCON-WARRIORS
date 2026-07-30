@@ -2,78 +2,206 @@ import { createClient } from "../supabase/client";
 import { computeStandingsFromMatches } from "../fixtures/computeStandings";
 import { rankStandings } from "../fixtures/tiebreakers";
 
-export async function getTournamentDetail(id: string) {
+type TournamentPlayerDetail = {
+  id: string;
+  slug?: string | null;
+  efootball_username: string;
+  avatar_url: string | null;
+};
+
+type TournamentParticipantRow = {
+  id: string;
+  player_id: string;
+  group_name?: string | null;
+  points?: number | null;
+  status?: string | null;
+  matches_played?: number | null;
+  wins?: number | null;
+  draws?: number | null;
+  losses?: number | null;
+  goals_for?: number | null;
+  goals_against?: number | null;
+  player_details?: TournamentPlayerDetail | TournamentPlayerDetail[] | null;
+};
+
+type TournamentMatchRow = {
+  id: string;
+  round: number;
+  match_order?: number | null;
+  player1_id?: string | null;
+  player2_id?: string | null;
+  player1_score?: number | null;
+  player2_score?: number | null;
+  winner_id?: string | null;
+  status: string;
+  stage?: string | null;
+  group_name?: string | null;
+  is_third_place?: boolean | null;
+  player1?: TournamentPlayerDetail | TournamentPlayerDetail[] | null;
+  player2?: TournamentPlayerDetail | TournamentPlayerDetail[] | null;
+};
+
+type TournamentSquadRow = {
+  player_id: string;
+  player_details?: TournamentPlayerDetail | TournamentPlayerDetail[] | null;
+};
+
+export type TournamentParticipant = TournamentParticipantRow & {
+  player_details: TournamentPlayerDetail | null;
+};
+
+export type TournamentMatch = TournamentMatchRow & {
+  player1: TournamentPlayerDetail | null;
+  player2: TournamentPlayerDetail | null;
+};
+
+export type TournamentSquadMember = {
+  id: string;
+  slug: string | null;
+  efootball_username: string;
+  avatar_url: string | null;
+};
+
+export type TournamentDetailData = {
+  tournament: {
+    id: string;
+    slug: string | null;
+    name: string;
+    type: string;
+    format: string | null;
+    status: string;
+    start_date?: string | null;
+    end_date?: string | null;
+    max_participants?: number | null;
+    registration_deadline?: string | null;
+    group_count?: number | null;
+    qualifiers_per_group?: number | null;
+    playoff_size?: number | null;
+    third_place_match?: boolean | null;
+  };
+  participants: TournamentParticipant[];
+  matches: TournamentMatch[];
+  formMap: Record<string, Array<"W" | "D" | "L">>;
+  squad: TournamentSquadMember[];
+};
+
+export async function getTournamentDetail(slug: string): Promise<TournamentDetailData | null> {
   const supabase = await createClient();
 
   const { data: tournament, error } = await supabase
     .from("tournaments")
     .select(
-      "id, name, type, format, status, start_date, end_date, max_participants, registration_deadline, group_count, qualifiers_per_group, playoff_size, third_place_match"
+      "id, slug, name, type, format, status, start_date, end_date, max_participants, registration_deadline, group_count, qualifiers_per_group, playoff_size, third_place_match"
     )
-    .eq("id", id)
+    .eq("slug", slug)
     .single();
 
   if (error) throw error;
   if (!tournament) return null;
 
-  const { data: participants } = await supabase
-    .from("tournament_participants")
-    .select(
-      "id, group_name, points, rank, status, matches_played, wins, draws, losses, goals_for, goals_against, manual_rank, player_details(id, efootball_username, avatar_url)"
-    )
-    .eq("tournament_id", id)
-    .eq("status", "approved");
+  const id = tournament.id;
 
-  const { data: matches } = await supabase
-    .from("tournament_matches")
-    .select(
-      "id, round, match_order, player1_id, player2_id, player1_score, player2_score, status, stage, group_name, is_third_place, player1:player1_id(efootball_username, avatar_url), player2:player2_id(efootball_username, avatar_url)"
-    )
+  const [{ data: participantsRaw }, { data: matchesRaw }, { data: squadRaw }] = await Promise.all([
+    supabase
+      .from("tournament_participants")
+      .select(
+        "id, player_id, group_name, points, status, matches_played, wins, draws, losses, goals_for, goals_against, player_details(id, efootball_username, avatar_url)"
+      )
+      .eq("tournament_id", id),
+    supabase
+      .from("tournament_matches")
+      .select(
+        "id, round, match_order, player1_id, player2_id, player1_score, player2_score, winner_id, status, stage, group_name, is_third_place, player1:player1_id(efootball_username, avatar_url), player2:player2_id(efootball_username, avatar_url)"
+      )
       .eq("tournament_id", id)
       .order("round")
-      .order("match_order");
+      .order("match_order"),
+    supabase
+      .from("tournament_squad")
+      .select("player_id, player_details(id, slug, efootball_username, avatar_url)")
+      .eq("tournament_id", id),
+  ]);
 
-  const { data: squadRows } = await supabase
-    .from("tournament_squad")
-    .select("player_details(id, efootball_username, avatar_url)")
-    .eq("tournament_id", id);
+  const participants = (participantsRaw ?? []).map((row: TournamentParticipantRow): TournamentParticipant => {
+    const playerDetails = Array.isArray(row.player_details)
+      ? row.player_details[0] ?? null
+      : row.player_details ?? null;
 
-  const squad = (squadRows ?? [])
-    .map((s: any) => (Array.isArray(s.player_details) ? s.player_details[0] : s.player_details))
-    .filter(Boolean);
+    return {
+      ...row,
+      player_details: playerDetails,
+    };
+  });
 
-  const formMap: Record<string, ("W" | "D" | "L")[]> = {};
+  const matches = (matchesRaw ?? []).map((row: TournamentMatchRow): TournamentMatch => {
+    const player1 = Array.isArray(row.player1) ? row.player1[0] ?? null : row.player1 ?? null;
+    const player2 = Array.isArray(row.player2) ? row.player2[0] ?? null : row.player2 ?? null;
 
-  const sortedMatches = [...(matches ?? [])]
-    .filter((m: any) => m.status === "completed" && m.player1_score !== null && m.player2_score !== null)
-    .sort((a: any, b: any) => b.round - a.round || b.match_order - a.match_order);
+    return {
+      ...row,
+      player1,
+      player2,
+    };
+  });
 
-  for (const m of sortedMatches as any[]) {
-    if (!m.player1_id || !m.player2_id) continue;
+  const squad = (squadRaw ?? []).map((row: TournamentSquadRow): TournamentSquadMember => {
+    const playerDetails = Array.isArray(row.player_details)
+      ? row.player_details[0] ?? null
+      : row.player_details ?? null;
 
-    const s1 = m.player1_score;
-    const s2 = m.player2_score;
-    let r1: "W" | "D" | "L";
-    let r2: "W" | "D" | "L";
+    return {
+      id: playerDetails?.id ?? row.player_id,
+      slug: playerDetails?.slug ?? null,
+      efootball_username: playerDetails?.efootball_username ?? "Unknown",
+      avatar_url: playerDetails?.avatar_url ?? null,
+    };
+  });
 
-    if (s1 > s2) {
-      r1 = "W";
-      r2 = "L";
-    } else if (s2 > s1) {
-      r1 = "L";
-      r2 = "W";
-    } else {
-      r1 = "D";
-      r2 = "D";
+  const formMap: Record<string, Array<"W" | "D" | "L">> = {};
+  for (const match of matches) {
+    if (match.status !== "completed") continue;
+
+    const outcomes: Array<"W" | "D" | "L"> = [];
+    const player1Id = match.player1_id;
+    const player2Id = match.player2_id;
+    const p1Score = match.player1_score;
+    const p2Score = match.player2_score;
+
+    if (player1Id && p1Score !== null && p2Score !== null) {
+      if (p1Score > p2Score) {
+        outcomes.push("W");
+      } else if (p1Score < p2Score) {
+        outcomes.push("L");
+      } else {
+        outcomes.push("D");
+      }
     }
 
-    if (!formMap[m.player1_id]) formMap[m.player1_id] = [];
-    if (!formMap[m.player2_id]) formMap[m.player2_id] = [];
-    if (formMap[m.player1_id].length < 5) formMap[m.player1_id].push(r1);
-    if (formMap[m.player2_id].length < 5) formMap[m.player2_id].push(r2);
+    if (player2Id && p1Score !== null && p2Score !== null) {
+      if (p2Score > p1Score) {
+        outcomes.push("W");
+      } else if (p2Score < p1Score) {
+        outcomes.push("L");
+      } else {
+        outcomes.push("D");
+      }
+    }
+
+    if (player1Id) {
+      formMap[player1Id] = [...(formMap[player1Id] ?? []), outcomes[0] ?? "D"].slice(-5);
+    }
+    if (player2Id) {
+      formMap[player2Id] = [...(formMap[player2Id] ?? []), outcomes[1] ?? "D"].slice(-5);
+    }
   }
 
-  return { tournament, participants: participants ?? [], matches: matches ?? [], formMap, squad };
+  return {
+    tournament,
+    participants,
+    matches,
+    formMap,
+    squad,
+  };
 }
 
 export async function getMyJoinStatus(tournamentId: string) {
@@ -145,7 +273,7 @@ export async function getTournamentStandings(tournamentId: string) {
     matches
   );
 
-  const withComputed = participants.map((p: any) => {
+  const withComputed = participants.map((p) => {
     const stats = statsMap[p.player_id];
     return {
       ...p,
@@ -185,7 +313,7 @@ export async function getGroupStandings(tournamentId: string) {
     .eq("tournament_id", tournamentId)
     .eq("status", "completed");
 
-  const groups: Record<string, any[]> = {};
+  const groups: Record<string, Array<{ [key: string]: unknown }>> = {};
   for (const p of participants ?? []) {
     const key = p.group_name ?? "Ungrouped";
     (groups[key] ??= []).push(p);

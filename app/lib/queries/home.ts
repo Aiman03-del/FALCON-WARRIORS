@@ -164,7 +164,7 @@ export async function getRunningTournaments() {
 
     const { data, error } = await supabase
       .from("tournaments")
-      .select("id, name, type, format, status, start_date, end_date")
+      .select("id, slug, name, type, format, status, start_date, end_date")
       .in("status", ["ongoing", "upcoming"])
       .order("status", { ascending: true })
       .order("start_date", { ascending: true })
@@ -174,6 +174,7 @@ export async function getRunningTournaments() {
 
     return data.map((t) => ({
       id: t.id,
+      slug: t.slug,
       name: t.name,
       type: (t.type === "official" ? "official" : "internal") as "internal" | "official",
       format: t.format as string | null,

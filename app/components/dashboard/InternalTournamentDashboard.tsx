@@ -17,9 +17,11 @@ import { createClient } from "@/app/lib/supabase/client";
 
 export default async function InternalTournamentDashboard({
   tournamentId,
+  tournamentSlug,
   activeTab,
 }: {
   tournamentId: string;
+  tournamentSlug: string;
   activeTab: InternalTournamentTab;
 }) {
   const supabase = await createClient();
@@ -27,7 +29,7 @@ export default async function InternalTournamentDashboard({
   const { data: tournament } = await supabase
     .from("tournaments")
     .select(
-      "id, name, type, format, double_round, status, start_date, end_date, max_participants, registration_deadline, bye_method, group_count, qualifiers_per_group, playoff_size, third_place_match"
+      "id, slug, name, type, format, double_round, status, start_date, end_date, max_participants, registration_deadline, bye_method, group_count, qualifiers_per_group, playoff_size, third_place_match"
     )
     .eq("id", tournamentId)
     .single();
@@ -281,6 +283,7 @@ export default async function InternalTournamentDashboard({
   return (
     <InternalTournamentTabs
       tournamentId={tournamentId}
+      tournamentSlug={tournamentSlug}
       activeTab={resolvedTab}
       showStandings={showStandings}
       standingsContent={standingsContent}

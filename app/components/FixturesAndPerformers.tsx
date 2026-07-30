@@ -3,6 +3,7 @@ import { Layers, Trophy } from "lucide-react";
 
 type Tournament = {
   id: string;
+  slug?: string | null;
   name: string;
   type: "internal" | "official";
   format: string | null;
@@ -57,7 +58,7 @@ export default function FixturesAndPerformers({ tournaments, performers }: Props
               {tournaments.map((t) => (
                 <Link
                   key={t.id}
-                  href={`/tournaments/${t.id}`}
+                  href={`/tournaments/${t.slug ?? t.id}`}
                   className="card group flex items-center justify-between gap-3 p-3 transition hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-lg hover:shadow-gold/10 sm:p-4"
                 >
                   <div className="flex min-w-0 items-center gap-3">

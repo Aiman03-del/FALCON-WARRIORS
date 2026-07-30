@@ -4,6 +4,7 @@ import { ChevronRight } from "lucide-react";
 
 type HistoryItem = {
   id: string;
+  slug?: string | null;
   opponent_name: string;
   opponent_logo_url: string | null;
   round_stage: string | null;
@@ -63,7 +64,7 @@ export function RoundHistoryList({ items }: { items: HistoryItem[] }) {
         return (
           <Link
             key={m.id}
-            href={`/dashboard/matches/${m.id}`}
+            href={`/dashboard/matches/${m.slug ?? m.id}`}
             className="flex items-center gap-3 p-4 sm:gap-4"
           >
             <div className="flex flex-1 items-center justify-center gap-3 sm:gap-6">

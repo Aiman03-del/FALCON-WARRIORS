@@ -22,7 +22,7 @@ async function fetchMatches() {
   const { data: officialMatches, error: err1 } = await supabase
     .from("matches")
     .select(
-      "id, opponent_name, opponent_logo_url, competition, round_stage, match_date, status, score_home, score_away, tournament_id, tournaments!inner(type)"
+      "id, slug, opponent_name, opponent_logo_url, competition, round_stage, match_date, status, score_home, score_away, tournament_id, tournaments!inner(type)"
     )
     .not("tournament_id", "is", null)
     .eq("tournaments.type", "official")
@@ -45,6 +45,7 @@ async function fetchMatches() {
 
   const normalizedOfficial = (officialMatches ?? []).map((m: any) => ({
     id: m.id,
+    slug: m.slug,
     kind: "official" as const,
     opponent_name: m.opponent_name?.trim() ? m.opponent_name : "TBD Opponent",
     opponent_logo_url: m.opponent_logo_url,
@@ -61,6 +62,7 @@ async function fetchMatches() {
     const tournamentName = Array.isArray(m.tournaments) ? m.tournaments[0]?.name : m.tournaments?.name;
     return {
       id: m.id,
+      slug: null,
       kind: "internal" as const,
       opponent_name: `${p1?.efootball_username ?? "?"} vs ${p2?.efootball_username ?? "?"}`,
       opponent_logo_url: null,
@@ -126,6 +128,7 @@ const filteredMatches = (matches ?? []).filter((m) =>
           <MatchCard
             key={m.id}
             id={m.id}
+            slug={m.slug}
             opponentName={m.opponent_name}
             opponentLogoUrl={m.opponent_logo_url}
             competition={m.competition}

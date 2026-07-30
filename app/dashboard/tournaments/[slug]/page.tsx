@@ -56,7 +56,7 @@ export default async function TournamentDetailDashboardPage({
 
 }: {
 
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 
   searchParams: Promise<{ tab?: string }>;
 
@@ -64,7 +64,7 @@ export default async function TournamentDetailDashboardPage({
 
   await requireStaff();
 
-  const { id } = await params;
+  const { slug } = await params;
 
   const { tab: tabParam } = await searchParams;
 
@@ -72,13 +72,23 @@ export default async function TournamentDetailDashboardPage({
 
 
 
+  const { data: tournamentBySlug } = await supabase
+    .from("tournaments")
+    .select("id, slug")
+    .eq("slug", slug)
+    .single();
+
+  if (!tournamentBySlug) notFound();
+
+  const id = tournamentBySlug.id;
+
   const { data: tournament } = await supabase
 
     .from("tournaments")
 
     .select(
 
-      "id, name, type, format, status, start_date, end_date, max_participants, registration_deadline"
+      "id, slug, name, type, format, status, start_date, end_date, max_participants, registration_deadline"
 
     )
 
@@ -140,6 +150,8 @@ export default async function TournamentDetailDashboardPage({
 
               tournamentId={id}
 
+              tournamentSlug={tournament.slug}
+
               activeTab={parseOfficialTab(tabParam)}
 
             />
@@ -149,6 +161,8 @@ export default async function TournamentDetailDashboardPage({
             <InternalTournamentDashboard
 
               tournamentId={id}
+
+              tournamentSlug={tournament.slug}
 
               activeTab={parseInternalTab(tabParam)}
 

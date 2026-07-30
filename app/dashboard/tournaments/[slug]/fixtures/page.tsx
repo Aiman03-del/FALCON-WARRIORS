@@ -4,18 +4,18 @@ export default async function FixturesPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
   searchParams: Promise<{ tab?: string }>;
 }) {
-  const { id } = await params;
+  const { slug } = await params;
   const { tab } = await searchParams;
 
   if (tab === "standings") {
-    redirect(`/dashboard/tournaments/${id}`);
+    redirect(`/dashboard/tournaments/${slug}`);
   }
   if (tab === "bracket") {
-    redirect(`/dashboard/tournaments/${id}?tab=bracket`);
+    redirect(`/dashboard/tournaments/${slug}?tab=bracket`);
   }
 
-  redirect(`/dashboard/tournaments/${id}?tab=fixtures`);
+  redirect(`/dashboard/tournaments/${slug}?tab=fixtures`);
 }

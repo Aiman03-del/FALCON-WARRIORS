@@ -75,7 +75,7 @@ export default async function MatchDetailPage({
 
         {tournament && (
           <Link
-            href={`/tournaments/${tournament.id}`}
+            href={`/tournaments/${tournament.slug ?? tournament.id}`}
             className="mt-4 block text-center text-sm text-gold hover:text-gold-light"
           >
             Part of {tournament.name} →

@@ -39,7 +39,7 @@ export default async function TournamentsPage({
 
   const { data: tournaments } = await supabase
     .from("tournaments")
-    .select("id, name, type, format, status, start_date, end_date")
+    .select("id, slug, name, type, format, status, start_date, end_date")
     .order("start_date", { ascending: false });
 
   const all = tournaments ?? [];
@@ -95,7 +95,7 @@ export default async function TournamentsPage({
               const startDate = formatDate(t.start_date);
               const endDate = formatDate(t.end_date);
               return (
-                <Link key={t.id} href={`/tournaments/${t.id}`} className="block">
+                <Link key={t.id} href={`/tournaments/${t.slug ?? t.id}`} className="block">
                   <div className="card p-4 sm:p-5">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0">

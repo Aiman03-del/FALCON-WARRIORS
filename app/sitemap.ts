@@ -41,7 +41,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.5,
       })),
       ...(tournaments.data ?? []).map((row) => ({
-        url: `${BASE_URL}/tournaments/${row.id}`,
+        url: `${BASE_URL}/tournaments/${row.slug ?? row.id}`,
         lastModified: row.created_at,
         changeFrequency: "weekly" as const,
         priority: 0.6,

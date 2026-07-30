@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import RoundStageSelect from "@/app/components/dashboard/RoundStageSelect";
 import DatePicker from "@/app/components/DatePicker";
@@ -11,8 +11,9 @@ import { createClient } from "@/app/lib/supabase/client";
 export default function NewOfficialMatchPage() {
   const supabase = createClient();
   const router = useRouter();
-  const params = useParams<{ id: string }>();
-  const tournamentId = params.id;
+  const params = useParams<{ slug: string }>();
+  const tournamentSlug = params.slug;
+  const [tournamentId, setTournamentId] = useState<string | null>(null);
 
   const [opponentName, setOpponentName] = useState("");
   const [opponentLogoUrl, setOpponentLogoUrl] = useState("");
@@ -21,10 +22,27 @@ export default function NewOfficialMatchPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (!tournamentSlug) return;
+
+    supabase
+      .from("tournaments")
+      .select("id")
+      .eq("slug", tournamentSlug)
+      .single()
+      .then(({ data }) => setTournamentId(data?.id ?? null));
+  }, [supabase, tournamentSlug]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
+
+    if (!tournamentId) {
+      setLoading(false);
+      setError("Tournament is still loading. Please try again in a moment.");
+      return;
+    }
 
     const { data: userData } = await supabase.auth.getUser();
 
@@ -46,13 +64,13 @@ export default function NewOfficialMatchPage() {
       return;
     }
 
-    router.push(`/dashboard/tournaments/${tournamentId}/matches`);
+    router.push(`/dashboard/tournaments/${tournamentSlug}/matches`);
     router.refresh();
   }
 
   return (
     <div>
-      <BackLink href={`/dashboard/tournaments/${tournamentId}/matches`} label="Back to Matches" />
+      <BackLink href={`/dashboard/tournaments/${tournamentSlug}/matches`} label="Back to Matches" />
       <h1 className="font-display text-2xl font-bold uppercase tracking-wide">Add Match</h1>
 
       <form onSubmit={handleSubmit} className="card mt-6 flex flex-col gap-4 p-6">

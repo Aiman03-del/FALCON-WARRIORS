@@ -42,6 +42,8 @@ type TournamentFormProps = {
 
     double_round: boolean;
 
+    slug?: string | null;
+
     start_date: string | null;
 
     end_date: string | null;
@@ -273,6 +275,7 @@ export default function TournamentForm({
 
 
     let savedId = tournamentId;
+    let savedSlug = initial?.slug ?? tournamentId;
 
 
 
@@ -284,7 +287,7 @@ export default function TournamentForm({
 
         .insert({ ...payload, status: "upcoming" })
 
-        .select("id")
+        .select("id, slug")
 
         .single();
 
@@ -303,6 +306,7 @@ export default function TournamentForm({
       }
 
       savedId = data.id;
+      savedSlug = data.slug;
 
     } else {
 
@@ -372,7 +376,7 @@ export default function TournamentForm({
 
 
 
-    router.push(mode === "create" ? `/dashboard/tournaments/${savedId}` : `/dashboard/tournaments/${tournamentId}`);
+    router.push(`/dashboard/tournaments/${savedSlug ?? savedId ?? tournamentId}`);
 
     router.refresh();
 

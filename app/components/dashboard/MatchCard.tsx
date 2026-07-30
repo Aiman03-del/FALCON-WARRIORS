@@ -11,6 +11,7 @@ const statusStyles: Record<string, string> = {
 
 type MatchCardProps = {
   id: string;
+  slug?: string | null;
   opponentName: string | null;   // null অনুমতি দিন
   opponentLogoUrl?: string | null;
   competition?: string | null;
@@ -38,7 +39,7 @@ export default function MatchCard({
   });
 
   return (
-    <Link href={`/dashboard/matches/${id}`}>
+    <Link href={`/dashboard/matches/${slug ?? id}`}>
       <div className="card group p-6 transition hover:bg-surface-2">
         {/* Date and Status */}
         <div className="mb-4 flex items-center justify-between">
