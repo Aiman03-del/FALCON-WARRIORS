@@ -303,7 +303,7 @@ export default function CurrentRoundBoard({
           {/* Falcon Warriors — fixed logo */}
           <div className="flex flex-1 flex-col items-center gap-2">
             <div className="relative h-13 w-13 shrink-0 overflow-hidden rounded-full ring-2 ring-gold/40">
-              <Image src="/logo.jpg" alt="Falcon Warriors" fill className="object-cover" />
+              <Image src="/logo.jpg" alt="Falcon Warriors" fill sizes="52px" className="object-cover" />
             </div>
             <span className="text-sm font-semibold text-white">Falcon Warriors</span>
           </div>

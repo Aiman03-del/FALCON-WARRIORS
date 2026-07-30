@@ -22,6 +22,7 @@ import { rankStandings } from "@/app/lib/fixtures/tiebreakers";
 import { notFound } from "next/navigation";
 
 type JoinedPlayer = {
+  id: string;
   efootball_username: string;
   avatar_url?: string | null;
 };
@@ -56,7 +57,7 @@ function computeChampion({
     if (finalMatch.status !== "completed") return null;
     const s1 = finalMatch.player1_score;
     const s2 = finalMatch.player2_score;
-    if (s1 === null || s2 === null || s1 === s2) return null;
+    if (s1 == null || s2 == null || s1 === s2) return null;
 
     const winner = getJoinedPlayer(s1 > s2 ? finalMatch.player1 : finalMatch.player2);
     if (!winner) return null;
@@ -259,8 +260,8 @@ export default async function TournamentDetailPage({
             playerId={"playerId" in joinStatus ? joinStatus.playerId : undefined}
             myRequestStatus={"myRequestStatus" in joinStatus ? joinStatus.myRequestStatus : null}
             approvedCount={"approvedCount" in joinStatus ? joinStatus.approvedCount : 0}
-            maxParticipants={tournament.max_participants}
-            registrationDeadline={tournament.registration_deadline}
+            maxParticipants={tournament.max_participants ?? null}
+            registrationDeadline={tournament.registration_deadline ?? null}
             tournamentStatus={tournament.status}
             tournamentType={tournament.type === "official" ? "external" : "internal"}
           />

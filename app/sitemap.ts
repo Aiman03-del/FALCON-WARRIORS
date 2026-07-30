@@ -22,9 +22,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const [players, matches, tournaments, news] = await Promise.all([
       supabase.from("player_details").select("id, slug, created_at"),
-      supabase.from("matches").select("id, created_at"),
-      supabase.from("tournaments").select("id, created_at"),
-      supabase.from("news").select("id, created_at"),
+      supabase.from("matches").select("id, slug, created_at"),
+      supabase.from("tournaments").select("id, slug, created_at"),
+      supabase.from("news").select("id, slug, created_at"),
     ]);
 
     dynamicRoutes = [

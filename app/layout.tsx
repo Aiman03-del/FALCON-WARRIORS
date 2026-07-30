@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Rajdhani, Inter } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "./providers/ToastProvider";
@@ -16,6 +16,7 @@ const body = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://falcon-warriors.vercel.app"),
   title: "Falcon Warriors | Elite eFootball Club",
   description:
     "Falcon Warriors — Rise. Compete. Conquer. Official eFootball club community website with tournaments, matches, and player profiles.",
@@ -36,7 +37,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://falcon-warriors.com",
+    url: "https://falcon-warriors.vercel.app",
     siteName: "Falcon Warriors",
     title: "Falcon Warriors | Elite eFootball Club",
     description: "Join Falcon Warriors - The ultimate eFootball club with professional tournaments and elite players",
@@ -56,11 +57,12 @@ export const metadata: Metadata = {
     creator: "@falconwarriors",
     images: ["/favicon.png"],
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
 };
 
 export default function RootLayout({

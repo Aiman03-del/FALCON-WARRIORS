@@ -46,11 +46,34 @@ type TournamentSquadRow = {
   player_details?: TournamentPlayerDetail | TournamentPlayerDetail[] | null;
 };
 
-export type TournamentParticipant = TournamentParticipantRow & {
+export type TournamentParticipant = {
+  id: string;
+  player_id: string;
+  group_name?: string | null;
+  status?: string | null;
+  points: number;
+  matches_played: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  goals_for: number;
+  goals_against: number;
   player_details: TournamentPlayerDetail | null;
 };
 
-export type TournamentMatch = TournamentMatchRow & {
+export type TournamentMatch = {
+  id: string;
+  round: number;
+  match_order: number;
+  player1_id: string | null;
+  player2_id: string | null;
+  player1_score: number | null;
+  player2_score: number | null;
+  winner_id: string | null;
+  status: string;
+  stage?: string | null;
+  group_name?: string | null;
+  is_third_place: boolean;
   player1: TournamentPlayerDetail | null;
   player2: TournamentPlayerDetail | null;
 };
@@ -111,7 +134,7 @@ export async function getTournamentDetail(slug: string): Promise<TournamentDetai
     supabase
       .from("tournament_matches")
       .select(
-        "id, round, match_order, player1_id, player2_id, player1_score, player2_score, winner_id, status, stage, group_name, is_third_place, player1:player1_id(efootball_username, avatar_url), player2:player2_id(efootball_username, avatar_url)"
+        "id, round, match_order, player1_id, player2_id, player1_score, player2_score, winner_id, status, stage, group_name, is_third_place, player1:player1_id(id, efootball_username, avatar_url), player2:player2_id(id, efootball_username, avatar_url)"
       )
       .eq("tournament_id", id)
       .order("round")
@@ -129,6 +152,13 @@ export async function getTournamentDetail(slug: string): Promise<TournamentDetai
 
     return {
       ...row,
+      points: row.points ?? 0,
+      matches_played: row.matches_played ?? 0,
+      wins: row.wins ?? 0,
+      draws: row.draws ?? 0,
+      losses: row.losses ?? 0,
+      goals_for: row.goals_for ?? 0,
+      goals_against: row.goals_against ?? 0,
       player_details: playerDetails,
     };
   });
@@ -139,6 +169,13 @@ export async function getTournamentDetail(slug: string): Promise<TournamentDetai
 
     return {
       ...row,
+      match_order: row.match_order ?? 0,
+      player1_id: row.player1_id ?? null,
+      player2_id: row.player2_id ?? null,
+      player1_score: row.player1_score ?? null,
+      player2_score: row.player2_score ?? null,
+      winner_id: row.winner_id ?? null,
+      is_third_place: row.is_third_place ?? false,
       player1,
       player2,
     };
@@ -167,7 +204,7 @@ export async function getTournamentDetail(slug: string): Promise<TournamentDetai
     const p1Score = match.player1_score;
     const p2Score = match.player2_score;
 
-    if (player1Id && p1Score !== null && p2Score !== null) {
+    if (player1Id && p1Score != null && p2Score != null) {
       if (p1Score > p2Score) {
         outcomes.push("W");
       } else if (p1Score < p2Score) {
@@ -177,7 +214,7 @@ export async function getTournamentDetail(slug: string): Promise<TournamentDetai
       }
     }
 
-    if (player2Id && p1Score !== null && p2Score !== null) {
+    if (player2Id && p1Score != null && p2Score != null) {
       if (p2Score > p1Score) {
         outcomes.push("W");
       } else if (p2Score < p1Score) {
@@ -256,10 +293,6 @@ export async function getTournamentStandings(tournamentId: string) {
   if (error) throw error;
   if (!participants) return [];
 
-  // Only league-stage results should decide league standings (knockout-stage
-  // results settle elimination, not the table) — same rule recalcStandings uses.
-  // Filtering in JS (not via .neq("stage", ...)) avoids Postgres's NULL !=
-  // three-valued-logic silently excluding older rows with a null stage.
   const { data: rawMatches } = await supabase
     .from("tournament_matches")
     .select("player1_id, player2_id, player1_score, player2_score, status, stage")
@@ -290,10 +323,6 @@ export async function getTournamentStandings(tournamentId: string) {
   return rankStandings(withComputed, matches ?? []);
 }
 
-// For group_knockout tournaments: returns each group's participants, ranked
-// (1st place first) using the same tiebreak order as the points table
-// (points → goal difference → goals scored). Used both to display group
-// tables and to seed the knockout stage once every group match is done.
 export async function getGroupStandings(tournamentId: string) {
   const supabase = await createClient();
 
@@ -313,7 +342,22 @@ export async function getGroupStandings(tournamentId: string) {
     .eq("tournament_id", tournamentId)
     .eq("status", "completed");
 
-  const groups: Record<string, Array<{ [key: string]: unknown }>> = {};
+  type GroupParticipantRow = {
+    id: string;
+    player_id: string;
+    group_name?: string | null;
+    points?: number | null;
+    matches_played?: number | null;
+    wins?: number | null;
+    draws?: number | null;
+    losses?: number | null;
+    goals_for?: number | null;
+    goals_against?: number | null;
+    manual_rank?: number | null;
+    player_details?: TournamentPlayerDetail | TournamentPlayerDetail[] | null;
+  };
+
+  const groups: Record<string, GroupParticipantRow[]> = {};
   for (const p of participants ?? []) {
     const key = p.group_name ?? "Ungrouped";
     (groups[key] ??= []).push(p);
@@ -329,7 +373,12 @@ export async function getGroupStandings(tournamentId: string) {
         rows.map((p) => p.player_id),
         groupMatches
       );
-      const withStats = rows.map((p) => ({ ...p, ...statsMap[p.player_id] }));
+      const withStats = rows.map((p) => {
+        const playerDetails = Array.isArray(p.player_details)
+          ? p.player_details[0] ?? null
+          : p.player_details ?? null;
+        return { ...p, ...statsMap[p.player_id], player_details: playerDetails };
+      });
       return { groupName, standings: rankStandings(withStats, groupMatches) };
     });
 }

@@ -23,6 +23,7 @@ type MatchCardProps = {
 
 export default function MatchCard({
   id,
+  slug,
   opponentName,
   opponentLogoUrl,
   competition,
@@ -62,6 +63,7 @@ export default function MatchCard({
                 src="/logo.jpg"
                 alt="Falcon Warriors"
                 fill
+                sizes="48px"
                 className="object-cover"
               />
             </div>

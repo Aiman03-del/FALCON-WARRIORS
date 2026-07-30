@@ -73,7 +73,7 @@ export default function RecentResults({ results }: { results: Result[] }) {
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col items-center gap-2">
                     <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gold/30 bg-black sm:h-12 sm:w-12">
-                      <Image src="/logo.jpg" alt="Falcon Warriors" fill className="object-cover" />
+                      <Image src="/logo.jpg" alt="Falcon Warriors" fill sizes="(min-width: 640px) 48px, 40px" className="object-cover" />
                     </div>
                     <span
                       className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${resultStyles[r.result]}`}
@@ -89,12 +89,18 @@ export default function RecentResults({ results }: { results: Result[] }) {
                   <div className="flex flex-col items-center gap-2">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10 text-xs font-bold text-white/70 sm:h-12 sm:w-12">
                       {r.opponentLogoUrl ? (
-                        <img src={r.opponentLogoUrl} alt={r.opponent} className="h-full w-full object-cover" />
+                        <Image
+                          src={r.opponentLogoUrl}
+                          alt={r.opponent}
+                          fill
+                          sizes="48px"
+                          className="object-cover"
+                        />
                       ) : (
                         r.opponentTag.slice(0, 2)
                       )}
                     </div>
-                    <span className="max-w-[72px] truncate text-center text-[10px] text-muted">
+                    <span className="max-w-18 truncate text-center text-[10px] text-muted">
                       {r.opponent}
                     </span>
                   </div>
