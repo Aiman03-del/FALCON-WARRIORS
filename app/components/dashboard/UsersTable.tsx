@@ -11,6 +11,7 @@ type Player = {
   id: string;
   profile_id: string;
   efootball_username: string;
+  real_name?: string | null;
   membership_status: string;
   join_date: string;
   profiles: { role: string } | { role: string }[] | null;
@@ -73,10 +74,11 @@ export default function UsersTable({
           {players.map((p) => {
             const role = getRole(p);
             const busy = updatingId === p.id || updatingId === p.profile_id;
+            const displayName = p.real_name?.trim() || p.efootball_username;
 
             return (
               <tr key={p.id} className="border-b border-border last:border-0">
-                <td className="px-4 py-3 font-medium">{p.efootball_username}</td>
+                <td className="px-4 py-3 font-medium">{displayName}</td>
                 <td className="px-4 py-3">
                   <span className="rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-bold uppercase text-gold">
                     {role}
@@ -126,7 +128,7 @@ export default function UsersTable({
                       <ConfirmActionButton
                         onConfirm={() => handleDelete(p.id)}
                         confirmTitle="Delete user permanently?"
-                        confirmMessage={`This will permanently delete ${p.efootball_username}'s account, profile, stats, and auth login. Match history may be updated to remove their player links. This cannot be undone.`}
+                        confirmMessage={`This will permanently delete ${displayName}'s account, profile, stats, and auth login. Match history may be updated to remove their player links. This cannot be undone.`}
                         confirmText="Yes, delete user"
                         cancelText="Cancel"
                         successMessage="User deleted permanently."

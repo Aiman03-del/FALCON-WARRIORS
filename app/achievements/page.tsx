@@ -19,12 +19,20 @@ export default async function AchievementsPage() {
       .order("created_at", { ascending: false }),
     supabase
       .from("awards")
-      .select("id, title, season, player_details(efootball_username)")
+      .select("id, title, season, player_details(efootball_username, real_name)")
       .order("created_at", { ascending: false }),
   ]);
 
   const clubTrophies = achievements ?? [];
   const playerAwards = awards ?? [];
+
+  function getAwardPlayerName(playerDetails: any) {
+    if (Array.isArray(playerDetails)) {
+      const first = playerDetails[0];
+      return first?.real_name?.trim() || first?.efootball_username || "—";
+    }
+    return playerDetails?.real_name?.trim() || playerDetails?.efootball_username || "—";
+  }
 
   return (
     <main>
@@ -117,9 +125,9 @@ export default async function AchievementsPage() {
                     <h3 className="font-display text-base font-bold uppercase tracking-wide">
                       {a.title}
                     </h3>
-                    {a.player_details?.efootball_username && (
+                    {getAwardPlayerName(a.player_details) !== "—" && (
                       <p className="mt-1 text-xs font-medium text-indigo-light">
-                        {a.player_details.efootball_username}
+                        {getAwardPlayerName(a.player_details)}
                       </p>
                     )}
                     {a.season && (

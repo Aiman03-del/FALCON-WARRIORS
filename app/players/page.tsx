@@ -40,7 +40,7 @@ export default async function PlayersPage() {
             <p className="text-sm text-muted">No active players found.</p>
           </div>
         ) : (
-          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 md:gap-4">
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {players.map((p) => (
               <PlayerCard key={p.id} player={p} canViewDetails={canViewDetails} />
             ))}

@@ -9,7 +9,7 @@ import { ConfirmDialog } from "@/app/components/ConfirmDialog";
 import { MultiSelectField } from "@/app/components/SelectField.multi";
 import FillButton from "@/app/components/FillButton";
 
-type PlayerOption = { id: string; efootball_username: string };
+type PlayerOption = { id: string; efootball_username: string; real_name?: string | null };
 
 type Participant = {
   id: string;
@@ -27,6 +27,10 @@ type Participant = {
 function getUsername(p: Participant) {
   if (Array.isArray(p.player_details)) return p.player_details[0]?.efootball_username ?? "—";
   return p.player_details?.efootball_username ?? "—";
+}
+
+function getDisplayName(player: { efootball_username: string; real_name?: string | null }) {
+  return player.real_name?.trim() || player.efootball_username;
 }
 
 const statusStyles: Record<string, string> = {
@@ -119,7 +123,7 @@ export default function ParticipantsManager({
 
   const registeredUsernames = participants.map((p) => getUsername(p));
   const availablePlayers = allPlayers.filter(
-    (p) => !registeredUsernames.includes(p.efootball_username)
+    (p) => !registeredUsernames.includes(getDisplayName(p))
   );
 
   return (
@@ -182,7 +186,7 @@ export default function ParticipantsManager({
             onChange={setSelectedPlayers}
             options={availablePlayers.map((p) => ({
               value: p.id,
-              label: p.efootball_username,
+              label: getDisplayName(p),
             }))}
             placeholder="Select players"
             searchable

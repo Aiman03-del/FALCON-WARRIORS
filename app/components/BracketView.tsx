@@ -4,9 +4,11 @@ import { knockoutRoundName, countTeamsInRound } from "@/app/lib/utils/roundNames
 
 type PlayerRef = {
   efootball_username: string;
+  real_name?: string | null;
   avatar_url?: string | null;
 } | {
   efootball_username: string;
+  real_name?: string | null;
   avatar_url?: string | null;
 }[] | null;
 
@@ -29,7 +31,7 @@ function infoOf(p: PlayerRef | undefined): PlayerInfo {
   if (!p) return null;
   const player = Array.isArray(p) ? p[0] : p;
   if (!player) return null;
-  return { name: player.efootball_username, avatarUrl: player.avatar_url ?? null };
+  return { name: player.real_name?.trim() || player.efootball_username, avatarUrl: player.avatar_url ?? null };
 }
 
 // Layout constants

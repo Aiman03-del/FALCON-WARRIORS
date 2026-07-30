@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Lock, Trophy } from "lucide-react";
 import { knockoutRoundName, countTeamsInRound } from "@/app/lib/utils/roundNames";
 
-type RawPlayer = { efootball_username: string; avatar_url?: string | null };
+type RawPlayer = { efootball_username: string; real_name?: string | null; avatar_url?: string | null };
 
 type Match = {
   id: string;
@@ -54,7 +54,8 @@ function getPlayer2Score(m: Match) {
 }
 function getPlayerName(m: Match, which: 1 | 2) {
   const p = normalizePlayer(which === 1 ? m.player1 : m.player2);
-  if (p?.efootball_username) return p.efootball_username;
+  const displayName = p?.real_name?.trim() || p?.efootball_username;
+  if (displayName) return displayName;
   const id = which === 1 ? getPlayer1Id(m) : getPlayer2Id(m);
   if (id) return `Player ${id.slice(0, 4)}`;
   return "TBD";

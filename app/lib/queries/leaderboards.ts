@@ -5,6 +5,7 @@ export type LeaderboardEntry = {
   playerId: string;
   slug?: string | null;
   username: string;
+  realName: string | null;
   avatarUrl: string | null;
   value: number;
   matches: number;
@@ -26,7 +27,12 @@ export type LeaderboardData = {
   rating: LeaderboardEntry[];
 };
 
-type PlayerInfo = { username: string; avatarUrl: string | null; slug: string | null };
+type PlayerInfo = {
+  username: string;
+  realName: string | null;
+  avatarUrl: string | null;
+  slug: string | null;
+};
 
 type StatAccumulator = {
   goals: number;
@@ -77,7 +83,7 @@ async function getActivePlayers(): Promise<Record<string, PlayerInfo>> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("player_details")
-    .select("id, slug, efootball_username, avatar_url, membership_status")
+    .select("id, slug, efootball_username, real_name, avatar_url, membership_status")
     .eq("membership_status", "active");
 
   if (error || !data) return {};
@@ -85,7 +91,12 @@ async function getActivePlayers(): Promise<Record<string, PlayerInfo>> {
   return Object.fromEntries(
     data.map((p) => [
       p.id,
-      { username: p.efootball_username, avatarUrl: p.avatar_url, slug: p.slug ?? null },
+      {
+        username: p.efootball_username,
+        realName: p.real_name ?? null,
+        avatarUrl: p.avatar_url,
+        slug: p.slug ?? null,
+      },
     ])
   );
 }
@@ -280,6 +291,7 @@ async function getBaseStats(scope: LeaderboardScope) {
       playerId,
       slug: players[playerId].slug,
       username: players[playerId].username,
+      realName: players[playerId].realName,
       avatarUrl: players[playerId].avatarUrl,
       goals: stat.goals,
       matches: stat.matches,
@@ -306,6 +318,7 @@ export async function getTopScorers(
     .map((s) => ({
       playerId: s.playerId,
       username: s.username,
+      realName: s.realName,
       avatarUrl: s.avatarUrl,
       value: s.goals,
       matches: s.matches,
@@ -327,7 +340,7 @@ export async function getTopAssists(
   const { data, error } = await supabase
     .from("player_stats")
     .select(
-      "player_id, assists, matches, wins, draws, losses, player_details(id, efootball_username, avatar_url, membership_status)"
+      "player_id, assists, matches, wins, draws, losses, player_details(id, efootball_username, real_name, avatar_url, membership_status)"
     );
 
   if (error || !data) return [];
@@ -339,6 +352,7 @@ export async function getTopAssists(
       return {
         playerId: pd.id,
         username: pd.efootball_username,
+        realName: pd.real_name ?? null,
         avatarUrl: pd.avatar_url,
         value: row.assists,
         matches: row.matches ?? 0,
@@ -369,6 +383,7 @@ export async function getTopWinRate(
     .map((s) => ({
       playerId: s.playerId,
       username: s.username,
+      realName: s.realName,
       avatarUrl: s.avatarUrl,
       value: s.winRate,
       matches: s.matches,
@@ -393,6 +408,7 @@ export async function getTopMotm(
     .map((s) => ({
       playerId: s.playerId,
       username: s.username,
+      realName: s.realName,
       avatarUrl: s.avatarUrl,
       value: s.motm,
       matches: s.matches,
@@ -418,6 +434,7 @@ export async function getTopRating(
     .map((s) => ({
       playerId: s.playerId,
       username: s.username,
+      realName: s.realName,
       avatarUrl: s.avatarUrl,
       value: s.avgRating ?? 0,
       matches: s.matches,
@@ -469,19 +486,24 @@ export async function getTopPerformerByPeriod(period: Period) {
 
   const { data: events } = await supabase
     .from("match_events")
-    .select("scorer_id, event_type, created_at, player_details(id, efootball_username, avatar_url)")
+    .select("scorer_id, event_type, created_at, player_details(id, efootball_username, real_name, avatar_url)")
     .eq("event_type", "goal")
     .gte("created_at", start.toISOString());
 
   if (!events || events.length === 0) return null;
 
-  const countMap: Record<string, { username: string; avatarUrl: string | null; count: number }> = {};
+  const countMap: Record<string, { username: string; realName: string | null; avatarUrl: string | null; count: number }> = {};
 
   for (const e of events as any[]) {
     const pd = Array.isArray(e.player_details) ? e.player_details[0] : e.player_details;
     if (!pd) continue;
     if (!countMap[pd.id]) {
-      countMap[pd.id] = { username: pd.efootball_username, avatarUrl: pd.avatar_url, count: 0 };
+      countMap[pd.id] = {
+        username: pd.efootball_username,
+        realName: pd.real_name ?? null,
+        avatarUrl: pd.avatar_url,
+        count: 0,
+      };
     }
     countMap[pd.id].count++;
   }

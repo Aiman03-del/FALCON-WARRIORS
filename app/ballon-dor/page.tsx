@@ -44,13 +44,13 @@ export default async function BallonDorPage() {
                       {winner.player_details.avatar_url ? (
                         <Image
                           src={winner.player_details.avatar_url}
-                          alt={winner.player_details.efootball_username}
+                          alt={winner.player_details.real_name?.trim() || winner.player_details.efootball_username}
                           fill
                           className="object-cover"
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center font-display text-xl font-bold text-gold">
-                          {winner.player_details.efootball_username.slice(0, 2).toUpperCase()}
+                          {(winner.player_details.real_name?.trim() || winner.player_details.efootball_username).slice(0, 2).toUpperCase()}
                         </div>
                       )}
                     </div>
@@ -60,7 +60,7 @@ export default async function BallonDorPage() {
                         Winner
                       </p>
                       <p className="mt-1 text-xl font-semibold">
-                        {winner.player_details.efootball_username}
+                        {winner.player_details.real_name?.trim() || winner.player_details.efootball_username}
                       </p>
                     </div>
                   </Link>
@@ -82,18 +82,18 @@ export default async function BallonDorPage() {
                             {n.player_details.avatar_url ? (
                               <Image
                                 src={n.player_details.avatar_url}
-                                alt={n.player_details.efootball_username}
+                                alt={n.player_details.real_name?.trim() || n.player_details.efootball_username}
                                 fill
                                 className="object-cover"
                               />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-gold">
-                                {n.player_details.efootball_username.slice(0, 2).toUpperCase()}
+                                {(n.player_details.real_name?.trim() || n.player_details.efootball_username).slice(0, 2).toUpperCase()}
                               </div>
                             )}
                           </div>
                           <span className="text-sm font-medium">
-                            {n.player_details.efootball_username}
+                            {n.player_details.real_name?.trim() || n.player_details.efootball_username}
                           </span>
                         </Link>
                       ))}

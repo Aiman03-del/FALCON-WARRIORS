@@ -15,14 +15,18 @@ type Participant = {
   goals_against: number;
   manual_rank?: number | null;
   player_details:
-    | { id: string; efootball_username: string; avatar_url: string | null }
-    | { id: string; efootball_username: string; avatar_url: string | null }[]
+    | { id: string; efootball_username: string; real_name?: string | null; avatar_url: string | null }
+    | { id: string; efootball_username: string; real_name?: string | null; avatar_url: string | null }[]
     | null;
 };
 
 function getPlayer(p: Participant) {
   if (Array.isArray(p.player_details)) return p.player_details[0] ?? null;
   return p.player_details;
+}
+
+function displayNameOf(player: ReturnType<typeof getPlayer>) {
+  return player?.real_name?.trim() || player?.efootball_username || "Unknown";
 }
 
 export default function PointsTable({
@@ -101,18 +105,18 @@ export default function PointsTable({
                       {player?.avatar_url ? (
                         <Image
                           src={player.avatar_url}
-                          alt={player.efootball_username}
+                          alt={displayNameOf(player)}
                           fill
                           className="object-cover"
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-gold">
-                          {player?.efootball_username.slice(0, 2).toUpperCase() ?? "?"}
+                          {displayNameOf(player).slice(0, 2).toUpperCase() ?? "?"}
                         </div>
                       )}
                     </div>
                     <span className="whitespace-nowrap font-medium">
-                      {player?.efootball_username ?? "Unknown"}
+                      {displayNameOf(player)}
                     </span>
                   </div>
                 </td>

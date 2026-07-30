@@ -28,7 +28,7 @@ export default async function MatchDetailPage({
   } = data as {
     match: any;
     playedBy: any | null;
-    goalEntries: { player_id: string; goals: number; efootball_username: string }[];
+    goalEntries: { player_id: string; goals: number; efootball_username: string; real_name: string | null }[];
     motmName: string | null;
   };
 
@@ -38,11 +38,11 @@ export default async function MatchDetailPage({
   const tournament = unwrap(match.tournament as any);
 
   const home = isInternal
-    ? { name: p1?.efootball_username ?? "Player 1", avatarUrl: p1?.avatar_url }
+    ? { name: p1?.real_name?.trim() || p1?.efootball_username || "Player 1", avatarUrl: p1?.avatar_url }
     : { name: "Falcon Warriors", isFalcon: true };
 
   const away = isInternal
-    ? { name: p2?.efootball_username ?? "Player 2", avatarUrl: p2?.avatar_url }
+    ? { name: p2?.real_name?.trim() || p2?.efootball_username || "Player 2", avatarUrl: p2?.avatar_url }
     : { name: match.opponent_name ?? "Opponent", avatarUrl: match.opponent_logo_url };
 
   const h2h = isInternal && p1?.id && p2?.id
@@ -91,7 +91,7 @@ export default async function MatchDetailPage({
               {playedBy && (
                 <div className="flex items-center justify-between px-4 py-3 text-sm">
                   <span className="text-muted">Played By</span>
-                  <span className="font-medium">{playedBy.efootball_username}</span>
+                  <span className="font-medium">{playedBy.real_name?.trim() || playedBy.efootball_username}</span>
                 </div>
               )}
               {goalEntries.length > 0 && (
@@ -100,7 +100,7 @@ export default async function MatchDetailPage({
                   <div className="flex flex-col gap-1.5">
                     {goalEntries.map((g) => (
                       <div key={g.player_id} className="flex items-center justify-between text-sm">
-                        <span className="font-medium">{g.efootball_username}</span>
+                        <span className="font-medium">{g.real_name?.trim() || g.efootball_username}</span>
                         <span className="text-gold">
                           {g.goals} {g.goals === 1 ? "goal" : "goals"}
                         </span>

@@ -6,6 +6,7 @@ type PlayerResult = {
   id: string;
   slug?: string | null;
   efootball_username: string;
+  real_name?: string | null;
   avatar_url: string | null;
   preferred_position: string | null;
 };
@@ -29,19 +30,21 @@ type NewsResult = {
 };
 
 export function PlayerResultCard({ player }: { player: PlayerResult }) {
+  const displayName = player.real_name?.trim() || player.efootball_username;
+
   return (
     <Link href={`/players/${player.slug ?? player.id}`} className="card flex items-center gap-3 p-4">
       <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-surface-2">
         {player.avatar_url ? (
-          <Image src={player.avatar_url} alt={player.efootball_username} fill className="object-cover" />
+          <Image src={player.avatar_url} alt={displayName} fill className="object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-xs font-bold text-gold">
-            {player.efootball_username.slice(0, 2).toUpperCase()}
+            {displayName.slice(0, 2).toUpperCase()}
           </div>
         )}
       </div>
       <div>
-        <p className="text-sm font-semibold">{player.efootball_username}</p>
+        <p className="text-sm font-semibold">{displayName}</p>
         <p className="text-xs text-muted">{player.preferred_position ?? "Unassigned"}</p>
       </div>
     </Link>

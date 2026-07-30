@@ -5,8 +5,8 @@ type ParticipantRow = {
   player_id: string;
   manual_rank?: number | null;
   player_details?:
-    | { efootball_username?: string }
-    | { efootball_username?: string }[]
+    | { efootball_username?: string; real_name?: string | null }
+    | { efootball_username?: string; real_name?: string | null }[]
     | null;
 };
 
@@ -21,7 +21,7 @@ type MatchRow = {
 
 function usernameOf(p: ParticipantRow): string {
   const pd = Array.isArray(p.player_details) ? p.player_details[0] : p.player_details;
-  return pd?.efootball_username ?? "Unknown";
+  return pd?.real_name?.trim() || pd?.efootball_username || "Unknown";
 }
 
 export default function StandingsTable({

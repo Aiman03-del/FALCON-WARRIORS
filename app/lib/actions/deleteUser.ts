@@ -1,7 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/app/lib/supabase/admin";
-import { createClient } from "@/app/lib/supabase/client";
+import { createClient } from "@/app/lib/supabase/server";
 
 export async function deleteUserAccount(playerId: string) {
   const supabase = await createClient();

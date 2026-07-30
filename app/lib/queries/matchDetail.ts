@@ -10,8 +10,8 @@ export async function getMatchDetail(id: string) {
         `id, match_type, opponent_name, opponent_tag, opponent_logo_url, competition, round_stage,
          match_date, status, score_home, score_away, tournament_id,
          player1_id, player2_id,
-         player1:player1_id(id, efootball_username, avatar_url),
-         player2:player2_id(id, efootball_username, avatar_url),
+         player1:player1_id(id, efootball_username, real_name, avatar_url),
+         player2:player2_id(id, efootball_username, real_name, avatar_url),
          tournament:tournament_id(id, name)`
       )
       .eq("id", id)
@@ -19,13 +19,13 @@ export async function getMatchDetail(id: string) {
 
     if (error || !match) return null;
 
-    let playedBy: { id: string; efootball_username: string; avatar_url: string | null } | null = null;
-    let goalEntries: { player_id: string; goals: number; efootball_username: string }[] = [];
+    let playedBy: { id: string; efootball_username: string; real_name: string | null; avatar_url: string | null } | null = null;
+    let goalEntries: { player_id: string; goals: number; efootball_username: string; real_name: string | null }[] = [];
 
     if (match.match_type === "external") {
       const { data: squadRow } = await supabase
         .from("match_squad")
-        .select("player_details(id, efootball_username, avatar_url)")
+        .select("player_details(id, efootball_username, real_name, avatar_url)")
         .eq("match_id", id)
         .maybeSingle();
 
@@ -37,7 +37,7 @@ export async function getMatchDetail(id: string) {
 
       const { data: goalRows } = await supabase
         .from("match_goal_entries")
-        .select("player_id, goals, player_details(efootball_username)")
+        .select("player_id, goals, player_details(efootball_username, real_name)")
         .eq("match_id", id);
 
       goalEntries = (goalRows ?? []).map((g: any) => ({
@@ -46,20 +46,23 @@ export async function getMatchDetail(id: string) {
         efootball_username: Array.isArray(g.player_details)
           ? g.player_details[0]?.efootball_username
           : g.player_details?.efootball_username,
+        real_name: Array.isArray(g.player_details)
+          ? g.player_details[0]?.real_name ?? null
+          : g.player_details?.real_name ?? null,
       }));
     }
 
     const { data: motmRow } = await supabase
       .from("match_events")
-      .select("player_details:scorer_id(efootball_username)")
+      .select("player_details:scorer_id(efootball_username, real_name)")
       .eq("match_id", id)
       .eq("event_type", "motm")
       .maybeSingle();
 
     const motmName = motmRow?.player_details
       ? Array.isArray(motmRow.player_details)
-        ? motmRow.player_details[0]?.efootball_username
-        : (motmRow.player_details as any)?.efootball_username
+        ? motmRow.player_details[0]?.real_name?.trim() || motmRow.player_details[0]?.efootball_username
+        : (motmRow.player_details as any)?.real_name?.trim() || (motmRow.player_details as any)?.efootball_username
       : null;
 
     return { match, playedBy, goalEntries, motmName };

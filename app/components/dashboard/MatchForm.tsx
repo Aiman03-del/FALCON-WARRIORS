@@ -17,7 +17,7 @@ export default function MatchForm() {
   const [matchType, setMatchType] = useState<"internal" | "external">("internal");
   const [player1Id, setPlayer1Id] = useState("");
   const [player2Id, setPlayer2Id] = useState("");
-  const [players, setPlayers] = useState<Array<{ id: string; efootball_username: string }>>([]);
+  const [players, setPlayers] = useState<Array<{ id: string; efootball_username: string; real_name?: string | null }>>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -25,7 +25,7 @@ export default function MatchForm() {
     async function loadPlayers() {
       const { data, error } = await supabase
         .from("player_details")
-        .select("id, efootball_username")
+        .select("id, efootball_username, real_name")
         .order("efootball_username");
 
       if (!error) {

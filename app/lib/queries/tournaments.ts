@@ -6,6 +6,7 @@ type TournamentPlayerDetail = {
   id: string;
   slug?: string | null;
   efootball_username: string;
+  real_name: string | null;
   avatar_url: string | null;
 };
 
@@ -82,6 +83,7 @@ export type TournamentSquadMember = {
   id: string;
   slug: string | null;
   efootball_username: string;
+  real_name: string | null;
   avatar_url: string | null;
 };
 
@@ -128,20 +130,20 @@ export async function getTournamentDetail(slug: string): Promise<TournamentDetai
     supabase
       .from("tournament_participants")
       .select(
-        "id, player_id, group_name, points, status, matches_played, wins, draws, losses, goals_for, goals_against, player_details(id, efootball_username, avatar_url)"
+        "id, player_id, group_name, points, status, matches_played, wins, draws, losses, goals_for, goals_against, player_details(id, efootball_username, real_name, avatar_url)"
       )
       .eq("tournament_id", id),
     supabase
       .from("tournament_matches")
       .select(
-        "id, round, match_order, player1_id, player2_id, player1_score, player2_score, winner_id, status, stage, group_name, is_third_place, player1:player1_id(id, efootball_username, avatar_url), player2:player2_id(id, efootball_username, avatar_url)"
+        "id, round, match_order, player1_id, player2_id, player1_score, player2_score, winner_id, status, stage, group_name, is_third_place, player1:player1_id(id, efootball_username, real_name, avatar_url), player2:player2_id(id, efootball_username, real_name, avatar_url)"
       )
       .eq("tournament_id", id)
       .order("round")
       .order("match_order"),
     supabase
       .from("tournament_squad")
-      .select("player_id, player_details(id, slug, efootball_username, avatar_url)")
+      .select("player_id, player_details(id, slug, efootball_username, real_name, avatar_url)")
       .eq("tournament_id", id),
   ]);
 
@@ -190,6 +192,7 @@ export async function getTournamentDetail(slug: string): Promise<TournamentDetai
       id: playerDetails?.id ?? row.player_id,
       slug: playerDetails?.slug ?? null,
       efootball_username: playerDetails?.efootball_username ?? "Unknown",
+      real_name: playerDetails?.real_name ?? null,
       avatar_url: playerDetails?.avatar_url ?? null,
     };
   });
@@ -329,7 +332,7 @@ export async function getGroupStandings(tournamentId: string) {
   const { data: participants, error } = await supabase
     .from("tournament_participants")
     .select(
-      "id, player_id, group_name, points, matches_played, wins, draws, losses, goals_for, goals_against, manual_rank, player_details(id, efootball_username, avatar_url)"
+      "id, player_id, group_name, points, matches_played, wins, draws, losses, goals_for, goals_against, manual_rank, player_details(id, efootball_username, real_name, avatar_url)"
     )
     .eq("tournament_id", tournamentId)
     .eq("status", "approved");

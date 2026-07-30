@@ -29,6 +29,9 @@ export default async function PlayerProfilePage({
 
   const stats = normalizeStats(player.player_stats);
 
+  const displayName = player.real_name?.trim() || player.efootball_username;
+  const secondaryName = player.real_name?.trim() ? player.efootball_username : null;
+
   const infoRows = [
     { icon: MapPin, label: "Location", value: [player.city, player.country].filter(Boolean).join(", ") || "—" },
     { icon: Shirt, label: "Supported Club", value: player.supported_club || "—" },
@@ -51,24 +54,24 @@ export default async function PlayerProfilePage({
             {player.avatar_url ? (
               <Image
                 src={player.avatar_url}
-                alt={player.efootball_username}
+                alt={displayName}
                 fill
                 sizes="(max-width: 640px) 96px, 128px"
                 className="object-cover"
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center font-display text-2xl font-bold text-gold sm:text-3xl">
-                {player.efootball_username.slice(0, 2).toUpperCase()}
+                {displayName.slice(0, 2).toUpperCase()}
               </div>
             )}
           </div>
 
           <div className="text-center sm:text-left">
             <h1 className="font-display text-2xl font-bold uppercase tracking-wide sm:text-3xl">
-              {player.efootball_username}
+              {displayName}
             </h1>
-            {player.real_name && (
-              <p className="mt-1 text-sm text-muted">{player.real_name}</p>
+            {secondaryName && (
+              <p className="mt-1 text-sm text-muted">{secondaryName}</p>
             )}
 
             <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">

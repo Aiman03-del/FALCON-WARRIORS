@@ -70,15 +70,15 @@ export default function LeaderboardList({
                 <div className="flex items-center gap-3">
                   <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-surface-2">
                     {entry.avatarUrl ? (
-                      <Image src={entry.avatarUrl} alt={entry.username} fill className="object-cover" />
+                      <Image src={entry.avatarUrl} alt={entry.realName || entry.username} fill className="object-cover" />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-gold">
-                        {entry.username.slice(0, 2).toUpperCase()}
+                        {(entry.realName || entry.username).slice(0, 2).toUpperCase()}
                       </div>
                     )}
                   </div>
                   <Link href={`/players/${entry.slug ?? entry.playerId}`} className="block truncate font-medium text-white">
-                    {entry.username}
+                    {entry.realName || entry.username}
                   </Link>
                 </div>
               </td>
@@ -101,7 +101,7 @@ export default function LeaderboardList({
               </td>
               {isAdmin && (
                 <td className="px-3 py-3 text-right">
-                  <ClearPlayerStatsButton playerId={entry.playerId} username={entry.username} />
+                  <ClearPlayerStatsButton playerId={entry.playerId} username={entry.realName || entry.username} />
                 </td>
               )}
             </tr>

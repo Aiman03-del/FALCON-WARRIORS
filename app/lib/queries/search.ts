@@ -11,7 +11,7 @@ export async function globalSearch(query: string) {
   const [playersRes, matchesRes, newsRes] = await Promise.all([
     supabase
       .from("player_details")
-      .select("id, slug, efootball_username, avatar_url, preferred_position")
+      .select("id, slug, efootball_username, real_name, avatar_url, preferred_position")
       .ilike("efootball_username", `%${q}%`)
       .eq("membership_status", "active")
       .limit(8),
