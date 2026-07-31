@@ -12,23 +12,6 @@ import { FOOTBALL_CLUBS, NATIONAL_TEAMS } from "@/app/lib/data/clubs";
 import { useAccountStatus } from "@/app/providers/AccountStatusProvider";
 import { useToast } from "@/app/providers/ToastProvider";
 
-const POSITIONS = [
-  { value: "GK", label: "GK — Goalkeeper" },
-  { value: "CB", label: "CB — Centre Back" },
-  { value: "LB", label: "LB — Left Back" },
-  { value: "RB", label: "RB — Right Back" },
-  { value: "DMF", label: "DMF — Defensive Midfielder" },
-  { value: "CMF", label: "CMF — Centre Midfielder" },
-  { value: "LMF", label: "LMF — Left Midfielder" },
-  { value: "RMF", label: "RMF — Right Midfielder" },
-  { value: "AMF", label: "AMF — Attacking Midfielder" },
-  { value: "LW", label: "LW — Left Winger" },
-  { value: "RW", label: "RW — Right Winger" },
-  { value: "SS", label: "SS — Second Striker" },
-  { value: "CF", label: "CF — Centre Forward" },
-  { value: "ST", label: "ST — Striker" },
-];
-
 const PLATFORMS = [
   { value: "mobile", label: "Mobile" },
   { value: "pc", label: "PC" },
@@ -49,7 +32,6 @@ type PlayerDetails = {
   education: string | null;
   profession: string | null;
   platform: string | null;
-  preferred_position: string | null;
   avatar_url: string | null;
 };
 
@@ -60,6 +42,7 @@ export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
   const { addToast } = useToast();
 
   const [form, setForm] = useState({
+    username: player.efootball_username ?? "",
     real_name: player.real_name ?? "",
     age: player.age?.toString() ?? "",
     country: player.country ?? "",
@@ -70,7 +53,6 @@ export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
     education: player.education ?? "",
     profession: player.profession ?? "",
     platform: player.platform ?? "",
-    preferred_position: player.preferred_position ?? "",
   });
   const [avatarUrl, setAvatarUrl] = useState(player.avatar_url ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -94,6 +76,12 @@ export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
       return;
     }
     setError(null);
+
+    if (!form.username.trim() || !form.age.trim() || !form.country.trim() || !form.city.trim()) {
+      setError("Username, Age, Country, and City are required.");
+      return;
+    }
+
     setLoading(true);
 
     const {
@@ -108,7 +96,7 @@ export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
     }
 
     const payload = {
-      efootball_username: player.efootball_username || user.email?.split("@")[0] || "Player",
+      efootball_username: form.username.trim(),
       real_name: form.real_name || null,
       age: form.age ? Number(form.age) : null,
       country: form.country || null,
@@ -119,7 +107,6 @@ export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
       education: form.education || null,
       profession: form.profession || null,
       platform: form.platform || null,
-      preferred_position: form.preferred_position || null,
       avatar_url: avatarUrl || null,
     };
 
@@ -177,6 +164,14 @@ export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field
+            label="Username"
+            value={form.username}
+            onChange={(v) => update("username", v)}
+            placeholder="StrikerPro99"
+            hint="Your eFootball username."
+            required
+          />
+          <Field
             label="Real Name"
             value={form.real_name}
             onChange={(v) => update("real_name", v)}
@@ -189,6 +184,7 @@ export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
             onChange={(v) => update("age", v)}
             type="number"
             placeholder="22"
+            required
           />
           <Field
             label="Favorite Player"
@@ -218,7 +214,7 @@ export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <SelectField
-            label="Country"
+            label="Country *"
             value={form.country}
             onChange={handleCountryChange}
             options={COUNTRIES}
@@ -227,7 +223,7 @@ export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
             className="w-full"
           />
           <SelectField
-            label="City"
+            label="City *"
             value={form.city}
             onChange={(v) => update("city", v)}
             options={
@@ -282,15 +278,7 @@ export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
             onChange={(v) => update("platform", v)}
             options={PLATFORMS}
             placeholder="Select platform"
-            className="w-full"
-          />
-          <SelectField
-            label="Preferred Position"
-            value={form.preferred_position}
-            onChange={(v) => update("preferred_position", v)}
-            options={POSITIONS}
-            placeholder="Select position"
-            className="w-full"
+            className="w-full sm:col-span-2"
           />
         </div>
       </div>
@@ -319,6 +307,7 @@ function Field({
   type = "text",
   placeholder,
   hint,
+  required,
 }: {
   label: string;
   value: string;
@@ -326,12 +315,16 @@ function Field({
   type?: string;
   placeholder?: string;
   hint?: string;
+  required?: boolean;
 }) {
   return (
     <div>
-      <label className="mb-1 block text-xs font-medium text-muted">{label}</label>
+      <label className="mb-1 block text-xs font-medium text-muted">
+        {label} {required && <span className="text-red-400">*</span>}
+      </label>
       <input
         type={type}
+        required={required}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}

@@ -75,11 +75,6 @@ export default async function PlayerProfilePage({
             )}
 
             <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
-              {player.preferred_position && (
-                <span className="rounded-full bg-gold/15 px-3 py-1 text-xs font-bold uppercase text-gold">
-                  {player.preferred_position}
-                </span>
-              )}
               {player.platform && (
                 <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase text-muted">
                   {player.platform}

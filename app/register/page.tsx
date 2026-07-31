@@ -11,23 +11,6 @@ import SelectField from "@/app/components/SelectField";
 import { COUNTRIES, getCitiesForCountry } from "../lib/data/countries";
 import { FOOTBALL_CLUBS, NATIONAL_TEAMS } from "../lib/data/clubs";
 
-const POSITIONS = [
-  { value: "GK", label: "GK — Goalkeeper" },
-  { value: "CB", label: "CB — Centre Back" },
-  { value: "LB", label: "LB — Left Back" },
-  { value: "RB", label: "RB — Right Back" },
-  { value: "DMF", label: "DMF — Defensive Midfielder" },
-  { value: "CMF", label: "CMF — Centre Midfielder" },
-  { value: "LMF", label: "LMF — Left Midfielder" },
-  { value: "RMF", label: "RMF — Right Midfielder" },
-  { value: "AMF", label: "AMF — Attacking Midfielder" },
-  { value: "LW", label: "LW — Left Winger" },
-  { value: "RW", label: "RW — Right Winger" },
-  { value: "SS", label: "SS — Second Striker" },
-  { value: "CF", label: "CF — Centre Forward" },
-  { value: "ST", label: "ST — Striker" },
-];
-
 const PLATFORMS = [
   { value: "mobile", label: "Mobile" },
   { value: "pc", label: "PC" },
@@ -99,7 +82,6 @@ export default function RegisterPage() {
   const [club, setClub] = useState("");
   const [team, setTeam] = useState("");
   const [platform, setPlatform] = useState("");
-  const [position, setPosition] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -146,7 +128,6 @@ export default function RegisterPage() {
           supported_club: club,
           national_team: team,
           platform,
-          preferred_position: position,
           avatar_url: avatarUrl,
         },
       });
@@ -166,7 +147,6 @@ export default function RegisterPage() {
         supported_club: club || null,
         national_team: team || null,
         platform: platform || null,
-        preferred_position: position || null,
         avatar_url: avatarUrl || null,
       });
 
@@ -196,7 +176,6 @@ export default function RegisterPage() {
           supported_club: club,
           national_team: team,
           platform,
-          preferred_position: position,
           avatar_url: avatarUrl,
         },
       },
@@ -309,9 +288,10 @@ export default function RegisterPage() {
                 Account
               </p>
               <div className="grid gap-4 md:grid-cols-2">
-                <div>
+               <div>
                   <label className="mb-1 block text-xs font-medium text-muted">
-                    eFootball Username <span className="text-red-400">*</span>
+                    Username <span className="normal-case text-gold/70">(eFootball username)</span>{" "}
+                    <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="text"
@@ -325,7 +305,7 @@ export default function RegisterPage() {
 
                 <div>
                   <label className="mb-1 block text-xs font-medium text-muted">
-                    Real Name
+                    Real Name <span className="normal-case text-gold/70">(Facebook profile name)</span>
                   </label>
                   <input
                     type="text"
@@ -334,9 +314,6 @@ export default function RegisterPage() {
                     className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm outline-none transition-colors focus:border-white/30 hover:border-border/80"
                     placeholder="John Doe"
                   />
-                  <p className="mt-1 text-[11px] text-amber-300/80">
-                    Please enter the name as shown on your Facebook profile.
-                  </p>
                 </div>
 
                 <div>
@@ -459,16 +436,7 @@ export default function RegisterPage() {
                   onChange={setPlatform}
                   options={PLATFORMS}
                   placeholder="Select platform"
-                  className="w-full"
-                />
-
-                <SelectField
-                  label="Preferred Position"
-                  value={position}
-                  onChange={setPosition}
-                  options={POSITIONS}
-                  placeholder="Select position"
-                  className="w-full"
+                  className="w-full sm:col-span-2"
                 />
               </div>
             </div>

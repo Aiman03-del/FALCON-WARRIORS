@@ -8,7 +8,6 @@ type PlayerResult = {
   efootball_username: string;
   real_name?: string | null;
   avatar_url: string | null;
-  preferred_position: string | null;
 };
 
 type MatchResult = {
@@ -45,7 +44,7 @@ export function PlayerResultCard({ player }: { player: PlayerResult }) {
       </div>
       <div>
         <p className="text-sm font-semibold">{displayName}</p>
-        <p className="text-xs text-muted">{player.preferred_position ?? "Unassigned"}</p>
+        <p className="text-xs text-muted">@{player.efootball_username}</p>
       </div>
     </Link>
   );

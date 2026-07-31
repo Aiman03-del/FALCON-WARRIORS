@@ -31,12 +31,12 @@ export default function LoginPage() {
 
   const { addToast } = useToast();
 
-  async function handleGoogleSignIn() {
+async function handleGoogleSignIn() {
     setError(null);
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/`,
+        redirectTo: `${window.location.origin}/auth/callback?next=/register`,
       },
     });
     if (oauthError) {

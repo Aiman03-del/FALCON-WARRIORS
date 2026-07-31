@@ -8,33 +8,9 @@ type Player = {
   efootball_username: string;
   real_name?: string | null;
   avatar_url?: string | null;
-  preferred_position?: string | null;
   platform?: string | null;
   rank_division?: string | null;
 };
-
-const POSITION_COLORS: Record<string, string> = {
-  ST: "bg-gold/20 text-gold",
-  CF: "bg-gold/20 text-gold",
-  SS: "bg-gold-light/20 text-gold-light",
-  LW: "bg-gold-light/20 text-gold-light",
-  RW: "bg-gold-light/20 text-gold-light",
-  AMF: "bg-indigo/20 text-indigo-light",
-  CMF: "bg-indigo/20 text-indigo-light",
-  DMF: "bg-indigo-light/20 text-indigo",
-  LMF: "bg-indigo-light/20 text-indigo",
-  RMF: "bg-indigo-light/20 text-indigo",
-  CB: "bg-indigo/25 text-indigo-light",
-  LB: "bg-indigo/25 text-indigo-light",
-  RB: "bg-indigo/25 text-indigo-light",
-  GK: "bg-gold/20 text-gold",
-};
-
-function getPositionColor(pos?: string | null) {
-  if (!pos) return "bg-white/10 text-muted";
-  const key = pos.toUpperCase().replace(/\s/g, "");
-  return POSITION_COLORS[key] ?? "bg-gold/15 text-gold";
-}
 
 // ইউজারনেম শুধু URL স্লাগের জন্য ব্যবহৃত হয় — কার্ডে সবসময় Real Name দেখানো হয়
 // (Real Name না থাকলে তবেই ফলব্যাক হিসেবে ইউজারনেম দেখাবে)
@@ -45,7 +21,6 @@ function displayNameOf(player: Player) {
 function CardContent({ player }: { player: Player }) {
   const displayName = displayNameOf(player);
   const initials = displayName.slice(0, 2).toUpperCase();
-  const posColor = getPositionColor(player.preferred_position);
 
   return (
     <div className="flex w-full flex-col items-center text-center">
@@ -76,20 +51,11 @@ function CardContent({ player }: { player: Player }) {
         </p>
       )}
 
-      {(player.preferred_position || player.platform) && (
+      {player.platform && (
         <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
-          {player.preferred_position && (
-            <span
-              className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${posColor}`}
-            >
-              {player.preferred_position}
-            </span>
-          )}
-          {player.platform && (
-            <span className="rounded-full bg-white/8 px-2.5 py-1 text-[10px] font-medium uppercase text-muted">
-              {player.platform}
-            </span>
-          )}
+          <span className="rounded-full bg-white/8 px-2.5 py-1 text-[10px] font-medium uppercase text-muted">
+            {player.platform}
+          </span>
         </div>
       )}
     </div>

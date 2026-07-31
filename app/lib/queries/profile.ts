@@ -17,7 +17,7 @@ export async function getMyProfile() {
     .select(
       `id, profile_id, efootball_username, real_name, age, country, city,
        supported_club, national_team, favorite_player, education, profession,
-       platform, preferred_position, rank_division, avatar_url, join_date,
+       platform, rank_division, avatar_url, join_date,
        membership_status, player_stats(goals, assists, matches, wins, draws, losses, motm_count)`
     )
     .eq("profile_id", user.id)
@@ -40,7 +40,6 @@ export async function getMyProfile() {
       supported_club: metadata.supported_club || null,
       national_team: metadata.national_team || null,
       platform: metadata.platform || null,
-      preferred_position: metadata.preferred_position || null,
       avatar_url: metadata.avatar_url || null,
     };
     const { error: seedError } = await supabase
@@ -65,7 +64,6 @@ export async function getMyProfile() {
     education: playerDetails?.education || metadata.education || null,
     profession: playerDetails?.profession || metadata.profession || null,
     platform: playerDetails?.platform || metadata.platform || null,
-    preferred_position: playerDetails?.preferred_position || metadata.preferred_position || null,
     rank_division: playerDetails?.rank_division || metadata.rank_division || null,
     avatar_url: playerDetails?.avatar_url || metadata.avatar_url || null,
     join_date: playerDetails?.join_date || metadata.join_date || null,
