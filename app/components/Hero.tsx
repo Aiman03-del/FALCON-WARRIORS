@@ -1,7 +1,8 @@
-import { Calendar, Crown, MapPin, UserCog } from 'lucide-react';
+import { ArrowRight, Calendar, Crown, ExternalLink, MapPin, UserCog, Users } from 'lucide-react';
 import FillButton from "./FillButton";
 import OutlineButton from "./OutlineButton";
 import { getSiteSettings } from "@/app/lib/queries/siteSettings";
+import { FaFacebook } from 'react-icons/fa';
 
 export default async function Hero() {
   const { foundedYear, location, presidentName, managerName } = await getSiteSettings();
@@ -14,14 +15,14 @@ export default async function Hero() {
   ];
 
   return (
-    <section className="relative flex min-h-[100svh] flex-col justify-center overflow-hidden border-b border-border bg-background">
+    <section className="relative flex min-h-svh flex-col justify-center overflow-hidden border-b border-border bg-background">
       {/* Pitch markings — center circle + halfway line */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/2 top-1/2 h-[1px] w-full -translate-x-1/2 -translate-y-1/2 bg-gold/10" />
-        <div className="absolute left-1/2 top-1/2 h-[220px] w-[220px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-gold/10 sm:h-[360px] sm:w-[360px]" />
+        <div className="absolute left-1/2 top-1/2 h-px w-full -translate-x-1/2 -translate-y-1/2 bg-gold/10" />
+        <div className="absolute left-1/2 top-1/2 h-55 w-55 -translate-x-1/2 -translate-y-1/2 rounded-full border border-gold/10 sm:h-90 sm:w-90" />
         <div className="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gold/20" />
       </div>
-      <div className="absolute left-1/2 top-0 h-[300px] w-[500px] -translate-x-1/2 rounded-full bg-gold/10 blur-[120px]" />
+      <div className="absolute left-1/2 top-0 h-75 w-125 -translate-x-1/2 rounded-full bg-gold/10 blur-[120px]" />
 
       <div className="relative mx-auto flex w-full max-w-5xl flex-col items-center px-4 py-10 text-center sm:px-6">
         {/* Match-day ticker */}
@@ -53,31 +54,41 @@ export default async function Hero() {
             here.
           </p>
 
-          <div className="relative mt-5 flex flex-wrap items-center justify-center gap-3 sm:mt-6">
-            <FillButton href="/register">Join the Club</FillButton>
-            <OutlineButton href="https://www.facebook.com/groups/1312106901028571/user/61579023831850">
-              Facebook Page
+          <div className="relative mt-5 flex w-full max-w-105 flex-col gap-2.5 sm:mt-6 sm:flex-row sm:justify-center">
+            <FillButton href="/register" className="w-full sm:w-auto">
+              <Users size={16} />
+              <span>Join the Club</span>
+              <ArrowRight size={16} className="sm:hidden" />
+            </FillButton>
+            <OutlineButton
+              href="https://www.facebook.com/groups/1312106901028571/user/61579023831850"
+              className="w-full sm:w-auto"
+            >
+              <FaFacebook size={16} />
+              <span>Facebook Page</span>
+              <ExternalLink size={14} className="sm:hidden" />
             </OutlineButton>
           </div>
         </div>
 
-        {/* Separate stat cards */}
-        <div className="relative mt-8 grid w-full max-w-2xl grid-cols-2 gap-2.5 sm:mt-10 sm:grid-cols-4 sm:gap-3">
-          {infoItems.map(({ icon: Icon, label, value }) => (
-            <div
-              key={label}
-              className="group relative flex flex-col items-center gap-1.5 rounded-xl border border-gold/20 bg-surface/60 px-2 py-3.5 backdrop-blur-sm transition-colors hover:border-gold/50 sm:gap-2 sm:py-4"
-            >
-              <span className="absolute left-1/2 top-0 h-[3px] w-5 -translate-x-1/2 -translate-y-px rounded-b bg-gold/40 transition-colors group-hover:bg-gold" />
-              <Icon size={15} className="text-gold" />
-              <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-muted sm:text-[10px]">
-                {label}
-              </p>
-              <p className="max-w-[110px] truncate font-mono text-sm font-bold text-white sm:text-base">
-                {value}
-              </p>
-            </div>
-          ))}
+        {/* Match info strip — scoreboard style, spans full width */}
+        <div className="relative mt-10 w-full sm:mt-14">
+          <div className="grid grid-cols-2 divide-y divide-gold/15 overflow-hidden rounded-xl border border-gold/20 bg-surface/40 backdrop-blur-sm sm:grid-cols-4 sm:divide-y-0 sm:divide-x sm:divide-gold/15">
+            {infoItems.map(({ icon: Icon, label, value }) => (
+              <div
+                key={label}
+                className="flex flex-col items-center gap-1.5 px-3 py-4 transition-colors hover:bg-gold/5 sm:py-5"
+              >
+                <Icon size={16} className="text-gold" />
+                <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-muted sm:text-[10px]">
+                  {label}
+                </p>
+                <p className="max-w-36 truncate font-mono text-sm font-bold text-white sm:text-base">
+                  {value}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
