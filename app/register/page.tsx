@@ -5,6 +5,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import FillButton from "@/app/components/FillButton";
 import Link from "next/link";
+import { getSiteSettings } from "@/app/lib/queries/siteSettings";
 import { createClient } from "../lib/supabase/client";
 import ImageUploadInput from "../components/ImageUploadInput";
 import SelectField from "@/app/components/SelectField";
@@ -31,10 +32,15 @@ function GoogleIcon() {
 export default function RegisterPage() {
   const router = useRouter();
   const supabase = createClient();
+  const [logoUrl, setLogoUrl] = useState("/logo.jpg");
 
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [mode, setMode] = useState<"form" | "completeProfile">("form");
   const [googleUserId, setGoogleUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    getSiteSettings().then((s) => setLogoUrl(s.logoUrl));
+  }, []);
 
   useEffect(() => {
     async function init() {
@@ -220,7 +226,7 @@ export default function RegisterPage() {
       <section className="mx-auto flex min-h-[70vh] max-w-2xl flex-col justify-center px-4 py-12 sm:px-6 sm:py-16">
         <div className="mb-6">
           <Link href="/" className="inline-flex items-center gap-3 text-sm font-semibold text-white transition hover:text-gold">
-            <img src="/logo.jpg" alt="Falcon Warriors" className="h-8 w-8 rounded-full object-cover" />
+            <img src={logoUrl} alt="Falcon Warriors" className="h-8 w-8 rounded-full object-cover" />
             Falcon Warriors
           </Link>
         </div>

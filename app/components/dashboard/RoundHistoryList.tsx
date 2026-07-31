@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight } from "lucide-react";
+import { getSiteSettings } from "@/app/lib/queries/siteSettings";
 
 type HistoryItem = {
   id: string;
@@ -46,7 +47,9 @@ function TeamBlock({
   );
 }
 
-export function RoundHistoryList({ items }: { items: HistoryItem[] }) {
+export async function RoundHistoryList({ items }: { items: HistoryItem[] }) {
+  const { logoUrl } = await getSiteSettings();
+
   if (items.length === 0) {
     return (
       <div className="card p-8 text-center text-sm text-muted">
@@ -68,7 +71,7 @@ export function RoundHistoryList({ items }: { items: HistoryItem[] }) {
             className="flex items-center gap-3 p-4 sm:gap-4"
           >
             <div className="flex flex-1 items-center justify-center gap-3 sm:gap-6">
-              <TeamBlock name="Falcon Warriors" logoUrl="/logo.jpg" isFalcon />
+              <TeamBlock name="Falcon Warriors" logoUrl={logoUrl} isFalcon />
 
               <div className="flex w-16 shrink-0 flex-col items-center gap-1">
                 <span className="text-[10px] text-muted">

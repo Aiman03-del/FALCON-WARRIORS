@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Edit3 } from "lucide-react";
+import { getSiteSettings } from "@/app/lib/queries/siteSettings";
 import DeleteMatchButton from "./DeleteMatchButton";
 
 const statusStyles: Record<string, string> = {
@@ -21,7 +22,7 @@ type MatchCardProps = {
   scoreAway: number | null;
 };
 
-export default function MatchCard({
+export default async function MatchCard({
   id,
   slug,
   opponentName,
@@ -32,6 +33,7 @@ export default function MatchCard({
   scoreHome,
   scoreAway,
 }: MatchCardProps) {
+  const { logoUrl } = await getSiteSettings();
   const date = new Date(matchDate);
   const formattedDate = date.toLocaleDateString("en-US", {
     month: "short",
@@ -60,7 +62,7 @@ export default function MatchCard({
               className="relative h-12 w-12 overflow-hidden rounded-full border-2 border-gold/60 bg-gold/10"
             >
               <Image
-                src="/logo.jpg"
+                src={logoUrl}
                 alt="Falcon Warriors"
                 fill
                 sizes="48px"

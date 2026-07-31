@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { getSiteSettings } from "@/app/lib/queries/siteSettings";
 import type { OfficialTournamentMatch } from "@/app/lib/queries/tournaments";
 
 function TeamBlock({
@@ -33,13 +34,15 @@ function TeamBlock({
   );
 }
 
-export default function OfficialMatchList({
+export default async function OfficialMatchList({
   matches,
   tournamentSlug,
 }: {
   matches: OfficialTournamentMatch[];
   tournamentSlug: string;
 }) {
+  const { logoUrl } = await getSiteSettings();
+
   if (matches.length === 0) {
     return (
       <div className="card p-8 text-center text-sm text-muted">
@@ -65,7 +68,7 @@ export default function OfficialMatchList({
             className="card group flex items-center gap-3 p-4 transition-colors hover:border-gold/30 sm:gap-4"
           >
             <div className="flex flex-1 items-center justify-center gap-3 sm:gap-6">
-              <TeamBlock name="Falcon Warriors" logoUrl="/logo.jpg" isFalcon />
+              <TeamBlock name="Falcon Warriors" logoUrl={logoUrl} isFalcon />
 
               <div className="flex w-20 shrink-0 flex-col items-center gap-1">
                 {m.match_date && (

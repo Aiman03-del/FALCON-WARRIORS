@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { getSiteSettings } from "@/app/lib/queries/siteSettings";
 
 type Props = {
   id: string;
@@ -33,7 +34,7 @@ function TeamBlock({
   align?: "left" | "right";
 }) {
   return (
-    <div className={`flex min-w-[130px] items-center gap-3 ${align === "right" ? "justify-end text-right" : "justify-start text-left"}`}>
+    <div className={`flex min-w-32.5 items-center gap-3 ${align === "right" ? "justify-end text-right" : "justify-start text-left"}`}>
       {align === "left" ? (
         <>
           <span className="text-sm font-medium text-white/90">{name}</span>
@@ -61,7 +62,7 @@ function TeamBlock({
   );
 }
 
-export default function MatchResultRow({
+export default async function MatchResultRow({
   id,
   date,
   competition,
@@ -74,6 +75,8 @@ export default function MatchResultRow({
   tournamentId,
   result,
 }: Props) {
+  const { logoUrl } = await getSiteSettings();
+
   const typeBadge =
     matchType === "internal"
       ? { label: "Internal", className: "bg-indigo/15 text-indigo-light" }
@@ -86,7 +89,7 @@ export default function MatchResultRow({
       className="card grid items-center gap-4 p-4 text-center hover:border-gold/30 sm:grid-cols-[minmax(140px,1fr)_auto_minmax(140px,1fr)]"
     >
       {/* Teams + Score */}
-      <TeamBlock tag="FW" name="Falcon Warriors" logoUrl="/logo.jpg" align="left" />
+      <TeamBlock tag="FW" name="Falcon Warriors" logoUrl={logoUrl} align="left" />
 
       <div className="grid items-center justify-items-center gap-2">
         <span className="text-xs uppercase tracking-[0.15em] text-muted">

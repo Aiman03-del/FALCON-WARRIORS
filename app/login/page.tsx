@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { getSiteSettings } from "@/app/lib/queries/siteSettings";
 import { createClient } from "../lib/supabase/client";
 import { useToast } from "@/app/providers/ToastProvider";
 import FillButton from "@/app/components/FillButton";
@@ -11,6 +12,7 @@ import FillButton from "@/app/components/FillButton";
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
+  const [logoUrl, setLogoUrl] = useState("/logo.jpg");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,6 +20,10 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    getSiteSettings().then((s) => setLogoUrl(s.logoUrl));
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -100,7 +106,7 @@ async function handleGoogleSignIn() {
       <section className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12 sm:px-6 sm:py-16">
         <div className="mb-6">
           <Link href="/" className="inline-flex items-center gap-3 text-sm font-semibold text-white transition hover:text-gold">
-            <img src="/logo.jpg" alt="Falcon Warriors" className="h-8 w-8 rounded-full object-cover" />
+            <img src={logoUrl} alt="Falcon Warriors" className="h-8 w-8 rounded-full object-cover" />
             Falcon Warriors
           </Link>
         </div>

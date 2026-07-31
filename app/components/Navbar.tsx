@@ -8,6 +8,7 @@ import { LogOut, LayoutDashboard, Menu, X, UserCircle2, Search } from "lucide-re
 import FillButton from "./FillButton";
 import SearchBar from "@/app/components/SearchBar";
 import Skeleton from "./Skeleton";
+import { getSiteSettings } from "@/app/lib/queries/siteSettings";
 import { createClient } from "../lib/supabase/client";
 
 const navLinks = [
@@ -69,7 +70,7 @@ function NavLinks({
                 }`}
               />
             )}
-          </Link>
+        </Link>
         );
       })}
     </>
@@ -86,11 +87,16 @@ export default function Navbar() {
   const supabase = createClient();
   const router = useRouter();
   const pathname = usePathname();
+  const [logoUrl, setLogoUrl] = useState("/logo.jpg");
   const [profile, setProfile] = useState<ProfileInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    getSiteSettings().then((s) => setLogoUrl(s.logoUrl));
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -164,7 +170,7 @@ export default function Navbar() {
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
         <Link href="/" className="flex shrink-0 items-center gap-2.5">
           <Image
-            src="/logo.jpg"
+            src={logoUrl}
             alt="Falcon Warriors logo"
             width={34}
             height={34}
@@ -251,7 +257,7 @@ export default function Navbar() {
               >
                 Login
               </Link>
-              <FillButton href="/register" className="whitespace-nowrap !rounded-full px-4 py-1.5 text-sm">
+              <FillButton href="/register" className="whitespace-nowrap rounded-full! px-4 py-1.5 text-sm">
                 Register
               </FillButton>
             </div>

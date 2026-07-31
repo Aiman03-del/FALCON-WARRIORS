@@ -1,6 +1,8 @@
 import { MessageCircle, Share2, PlayCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { getSiteSettings } from "@/app/lib/queries/siteSettings";
+
 const footerLinks = [
   { label: "Privacy Policy", href: "/privacy" },
   { label: "Terms of Service", href: "/terms" },
@@ -8,14 +10,16 @@ const footerLinks = [
   { label: "Sponsors", href: "/sponsors" },
 ];
 
-export default function Footer() {
+export default async function Footer() {
+  const { logoUrl } = await getSiteSettings();
+
   return (
     <footer className="bg-bg">
       <div className="mx-auto max-w-7xl px-3 sm:px-4 md:px-6 py-10">
         <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
           <div className="flex items-center gap-2">
             <Image
-              src="/logo.jpg"
+              src={logoUrl}
               alt="Falcon Warriors logo"
               width={32}
               height={32}

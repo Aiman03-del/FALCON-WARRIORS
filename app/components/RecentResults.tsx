@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { getSiteSettings } from "@/app/lib/queries/siteSettings";
 
 type Result = {
   id: string;
@@ -25,7 +26,9 @@ function formatDate(dateStr?: string) {
   return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "2-digit" });
 }
 
-export default function RecentResults({ results }: { results: Result[] }) {
+export default async function RecentResults({ results }: { results: Result[] }) {
+  const { logoUrl } = await getSiteSettings();
+
   return (
     <section className="border-b border-border">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14">
@@ -73,7 +76,7 @@ export default function RecentResults({ results }: { results: Result[] }) {
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col items-center gap-2">
                     <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gold/30 bg-black sm:h-12 sm:w-12">
-                      <Image src="/logo.jpg" alt="Falcon Warriors" fill sizes="(min-width: 640px) 48px, 40px" className="object-cover" />
+                      <Image src={logoUrl} alt="Falcon Warriors" fill sizes="(min-width: 640px) 48px, 40px" className="object-cover" />
                     </div>
                     <span
                       className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${resultStyles[r.result]}`}

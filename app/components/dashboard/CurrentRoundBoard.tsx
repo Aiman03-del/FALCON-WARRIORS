@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { getSiteSettings } from "@/app/lib/queries/siteSettings";
 import { Pencil, Shield, Upload, X } from "lucide-react";
 import { createClient } from "@/app/lib/supabase/client";
 import { recalcAllPlayerStats } from "@/app/lib/matches/recalcPlayerStats";
@@ -286,6 +287,7 @@ export default function CurrentRoundBoard({
 }: Props) {
   const supabase = createClient();
   const router = useRouter();
+  const [logoUrl, setLogoUrl] = useState("/logo.jpg");
 
   const [opponentName, setOpponentName] = useState(initialOpponentName);
   const [opponentLogoUrl, setOpponentLogoUrl] = useState(initialOpponentLogoUrl);
@@ -298,6 +300,10 @@ export default function CurrentRoundBoard({
       os: b.opponent_score?.toString() ?? "",
     }))
   );
+
+  useEffect(() => {
+    getSiteSettings().then((s) => setLogoUrl(s.logoUrl));
+  }, []);
 
   const [motmList, setMotmList] = useState<MotmEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -402,7 +408,7 @@ export default function CurrentRoundBoard({
         <div className="mx-auto flex w-full max-w-md items-center justify-between gap-3">
           <div className="flex flex-1 flex-col items-center gap-2">
             <div className="relative h-13 w-13 shrink-0 overflow-hidden rounded-full ring-2 ring-gold/40">
-              <Image src="/logo.jpg" alt="Falcon Warriors" fill sizes="52px" className="object-cover" />
+              <Image src={logoUrl} alt="Falcon Warriors" fill sizes="52px" className="object-cover" />
             </div>
             <span className="text-sm font-semibold text-white">Falcon Warriors</span>
           </div>

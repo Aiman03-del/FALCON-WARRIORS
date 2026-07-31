@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Shield, Star } from "lucide-react";
+import { getSiteSettings } from "@/app/lib/queries/siteSettings";
 import type { PublicMatchDetail } from "@/app/lib/queries/tournaments";
 
 function Avatar({
@@ -34,7 +35,9 @@ function Avatar({
   );
 }
 
-export default function PublicMatchBoard({ match }: { match: PublicMatchDetail }) {
+export default async function PublicMatchBoard({ match }: { match: PublicMatchDetail }) {
+  const { logoUrl } = await getSiteSettings();
+
   const totalFalcon = match.battles.reduce((s, b) => {
     const fs = b.falcon_score;
     const os = b.opponent_score;
@@ -55,7 +58,7 @@ export default function PublicMatchBoard({ match }: { match: PublicMatchDetail }
           <div className="flex flex-1 flex-col items-center gap-2">
             <div className="relative h-13 w-13 shrink-0 overflow-hidden rounded-full ring-2 ring-gold/40">
               <Image
-                src="/logo.jpg"
+                src={logoUrl}
                 alt="Falcon Warriors"
                 fill
                 sizes="52px"

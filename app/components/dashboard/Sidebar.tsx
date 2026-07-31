@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { getSiteSettings } from "@/app/lib/queries/siteSettings";
 import {
   LayoutDashboard,
   Users,
@@ -15,6 +17,7 @@ import {
   Star,
   ChevronLeft,
   ChevronRight,
+  Settings,
 } from "lucide-react";
 
 export const navItems = [
@@ -28,6 +31,7 @@ export const navItems = [
   { label: "News", href: "/dashboard/news", icon: Newspaper },
   { label: "Gallery", href: "/dashboard/gallery", icon: ImageIcon },
   { label: "Communities", href: "/dashboard/communities", icon: Users },
+  { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
 type DashboardSidebarProps = {
@@ -54,6 +58,11 @@ export default function DashboardSidebar({
   onToggleCollapse,
 }: DashboardSidebarProps) {
   const pathname = usePathname();
+  const [logoUrl, setLogoUrl] = useState("/logo.jpg");
+
+  useEffect(() => {
+    getSiteSettings().then((s) => setLogoUrl(s.logoUrl));
+  }, []);
 
   const defaultClasses = className
     ? `${className} shrink-0 border-r border-border bg-surface flex flex-col`
@@ -64,7 +73,7 @@ export default function DashboardSidebar({
       <div className="flex items-center justify-between border-b border-border px-3 py-4 shrink-0">
         <div className="flex min-w-0 items-center gap-2 overflow-hidden">
           <Image
-            src="/logo.jpg"
+            src={logoUrl}
             alt="Falcon Warriors"
             width={32}
             height={32}
