@@ -2,13 +2,14 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 
-export type OfficialTournamentTab = "rounds" | "participants" | "edit";
+export type OfficialTournamentTab = "rounds" | "history" | "participants" | "edit";
 
 export default function OfficialTournamentTabs({
   tournamentId,
   tournamentSlug,
   activeTab,
   roundsContent,
+  historyContent,
   participantsContent,
   editContent,
 }: {
@@ -16,6 +17,7 @@ export default function OfficialTournamentTabs({
   tournamentSlug: string;
   activeTab: OfficialTournamentTab;
   roundsContent: React.ReactNode;
+  historyContent: React.ReactNode;
   participantsContent: React.ReactNode;
   editContent: React.ReactNode;
 }) {
@@ -36,7 +38,7 @@ export default function OfficialTournamentTabs({
   }
 
   const tabClass = (tab: OfficialTournamentTab) =>
-    `rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wide transition ${
+    `cursor-pointer rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wide transition ${
       activeTab === tab
         ? "bg-gold text-black"
         : "border border-border bg-surface-2 text-muted hover:text-white"
@@ -48,6 +50,9 @@ export default function OfficialTournamentTabs({
         <button type="button" onClick={() => setTab("rounds")} className={tabClass("rounds")}>
           Rounds
         </button>
+        <button type="button" onClick={() => setTab("history")} className={tabClass("history")}>
+          Round History
+        </button>
         <button type="button" onClick={() => setTab("participants")} className={tabClass("participants")}>
           Participants
         </button>
@@ -58,6 +63,7 @@ export default function OfficialTournamentTabs({
 
       <div className="mt-6">
         {activeTab === "rounds" && roundsContent}
+        {activeTab === "history" && historyContent}
         {activeTab === "participants" && participantsContent}
         {activeTab === "edit" && editContent}
       </div>

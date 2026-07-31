@@ -87,13 +87,17 @@ export default async function OfficialTournamentDashboard({
           <StartNewRoundForm tournamentId={tournamentId} falconSquad={falconSquad} />
         )}
       </div>
+    </div>
+  );
 
-      <div>
-        <h2 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-gold">
+  const historyContent = (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-display text-sm font-bold uppercase tracking-wide text-gold">
           Round History ({history.length})
         </h2>
-        <RoundHistoryList items={history} />
       </div>
+      <RoundHistoryList items={history} />
     </div>
   );
 
@@ -122,6 +126,7 @@ export default async function OfficialTournamentDashboard({
       tournamentSlug={tournamentSlug}
       activeTab={activeTab}
       roundsContent={roundsContent}
+      historyContent={historyContent}
       participantsContent={participantsContent}
       editContent={editContent}
     />

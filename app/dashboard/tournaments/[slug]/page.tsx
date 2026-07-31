@@ -38,6 +38,8 @@ function parseInternalTab(tabParam: string | undefined): InternalTournamentTab {
 
 function parseOfficialTab(tabParam: string | undefined): OfficialTournamentTab {
 
+  if (tabParam === "history") return "history";
+
   if (tabParam === "participants") return "participants";
 
   if (tabParam === "edit") return "edit";

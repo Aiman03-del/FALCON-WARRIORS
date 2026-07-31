@@ -19,98 +19,73 @@ function TeamBlock({
   logoUrl,
   isFalcon,
 }: {
-  name: string | null | undefined;
+  name?: string | null;
   logoUrl?: string | null;
   isFalcon?: boolean;
 }) {
-  const safeName = name?.trim() ? name : "Opponent";
+  const safeName = name?.trim() || "Opponent";
 
   return (
-    <div className="flex w-24 flex-col items-center gap-1.5 sm:w-32">
-      <div
-        className={`relative h-9 w-9 shrink-0 overflow-hidden rounded-full sm:h-10 sm:w-10 ${
-          isFalcon ? "ring-2 ring-gold/40" : "bg-surface-2"
-        }`}
-      >
+    <div className="flex w-28 flex-col items-center">
+      <div className={`relative h-14 w-14 overflow-hidden rounded-full border ${isFalcon ? "border-gold" : "border-white/10"}`}>
         {logoUrl ? (
-          <Image src={logoUrl} alt={safeName} fill sizes="(min-width: 640px) 40px, 36px" className="object-cover" />
+          <Image src={logoUrl} alt={safeName} fill className="object-cover" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-surface-2 text-[10px] font-bold text-gold">
-            {safeName.slice(0, 2).toUpperCase()}
+          <div className="flex h-full w-full items-center justify-center bg-surface-2 text-gold font-bold">
+            {safeName.slice(0,2).toUpperCase()}
           </div>
         )}
       </div>
-      <span className="line-clamp-1 text-center text-xs font-medium leading-tight text-white/90 sm:text-sm">
-        {safeName}
-      </span>
+      <span className="mt-2 text-center text-sm font-semibold text-white">{safeName}</span>
     </div>
   );
 }
 
-export async function RoundHistoryList({ items }: { items: HistoryItem[] }) {
+export async function RoundHistoryList({items}:{items:HistoryItem[]}) {
   const { logoUrl } = await getSiteSettings();
 
-  if (items.length === 0) {
-    return (
-      <div className="card p-8 text-center text-sm text-muted">
-        No completed rounds yet.
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col gap-2.5">
-      {items.map((m) => {
-        const won = m.score_home > m.score_away;
-        const lost = m.score_home < m.score_away;
+    <div className="space-y-4">
+      {items.map((m)=>{
+        const won=m.score_home>m.score_away;
+        const lost=m.score_home<m.score_away;
 
-        return (
+        return(
           <Link
             key={m.id}
             href={`/dashboard/matches/${m.slug ?? m.id}`}
-            className="flex items-center gap-3 p-4 sm:gap-4"
+            className="group flex items-center justify-between rounded-3xl border border-white/10 px-3 py-3 transition-all duration-300 hover:border-gold/30 "
           >
-            <div className="flex flex-1 items-center justify-center gap-3 sm:gap-6">
-              <TeamBlock name="Falcon Warriors" logoUrl={logoUrl} isFalcon />
+            <TeamBlock name="Falcon Warriors" logoUrl={logoUrl} isFalcon />
 
-              <div className="flex w-16 shrink-0 flex-col items-center gap-1">
-                <span className="text-[10px] text-muted">
-                  {new Date(m.match_date).toLocaleDateString("en-US", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                  })}
+            <div className="flex flex-col items-center">
+              <div className="rounded-2xl border border-white/10 px-8 py-4">
+                <span className="text-4xl font-black">{m.score_home}</span>
+                <span className="mx-3 text-gold">:</span>
+                <span className="text-4xl font-black">{m.score_away}</span>
+              </div>
+
+              <div className="mt-4 flex gap-2">
+                <span className={`rounded-full border px-4 py-1 text-xs uppercase ${won ? "border-emerald-500/30 text-gold" : lost ? "border-red-500/30 text-red-400" : "border-white/10 text-white/60"}`}>
+                  {won ? "Victory" : lost ? "Defeat" : "Draw"}
                 </span>
-                <span className="font-display text-xl font-bold tabular-nums sm:text-2xl">
-                  {m.score_home}
-                  <span className="mx-1 text-muted">-</span>
-                  {m.score_away}
-                </span>
-                <span
-                  className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase ${
-                    won
-                      ? "bg-indigo/20 text-indigo-light"
-                      : lost
-                      ? "bg-red-500/15 text-red-400"
-                      : "bg-white/10 text-muted"
-                  }`}
-                >
-                  {won ? "Win" : lost ? "Loss" : "Draw"}
-                </span>
+
                 {m.round_stage && (
-                  <span className="rounded-full bg-surface-2 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.02em] text-white/70 whitespace-nowrap sm:text-[10px]">
+                  <span className="rounded-full border border-white/10 px-4 py-1 text-xs uppercase text-white/60">
                     {m.round_stage}
                   </span>
                 )}
               </div>
 
-              <TeamBlock name={m.opponent_name} logoUrl={m.opponent_logo_url} />
+              <div className="mt-3 text-xs uppercase tracking-widest text-white/40">
+                {new Date(m.match_date).toLocaleDateString("en-US",{day:"2-digit",month:"short",year:"numeric"})}
+              </div>
             </div>
 
-            <ChevronRight
-              size={16}
-              className="shrink-0 text-muted opacity-0 transition-opacity group-hover:opacity-100"
-            />
+            <div className="flex items-center gap-4">
+              <TeamBlock name={m.opponent_name} logoUrl={m.opponent_logo_url}/>
+              <ChevronRight className="text-white/30 transition group-hover:translate-x-1 group-hover:text-gold"/>
+            </div>
           </Link>
         );
       })}
