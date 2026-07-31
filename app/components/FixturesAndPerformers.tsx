@@ -7,13 +7,17 @@ type Tournament = {
   name: string;
   type: "internal" | "official";
   format: string | null;
-  status: "ongoing" | "upcoming";
+  status: "ongoing" | "upcoming" | "completed";
   startDate: string | null;
   endDate: string | null;
 };
 
 type Performer = {
+  id: string;
+  slug?: string | null;
   name: string;
+  username: string;
+  avatarUrl?: string | null;
   statLabel: string;
   statValue: string;
 };
@@ -35,6 +39,18 @@ function formatDate(d: string | null) {
   return new Date(d).toLocaleDateString("en-US", { day: "2-digit", month: "short" });
 }
 
+function getTournamentStatusLabel(status: Tournament["status"]) {
+  if (status === "ongoing") return "🔴 Live";
+  if (status === "completed") return "Ended";
+  return "Upcoming";
+}
+
+function getTournamentStatusClass(status: Tournament["status"]) {
+  if (status === "ongoing") return "bg-red-500/15 text-red-400";
+  if (status === "completed") return "bg-emerald-500/15 text-emerald-300";
+  return "bg-white/10 text-muted";
+}
+
 export default function FixturesAndPerformers({ tournaments, performers }: Props) {
   return (
     <section className="border-b border-border">
@@ -52,7 +68,7 @@ export default function FixturesAndPerformers({ tournaments, performers }: Props
           </div>
 
           {tournaments.length === 0 ? (
-            <p className="text-sm text-muted">No ongoing or upcoming tournaments right now.</p>
+            <p className="text-sm text-muted">No tournaments available right now.</p>
           ) : (
             <div className="flex flex-col gap-3">
               {tournaments.map((t) => (
@@ -91,11 +107,9 @@ export default function FixturesAndPerformers({ tournaments, performers }: Props
                   </div>
 
                   <span
-                    className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase sm:px-3 ${
-                      t.status === "ongoing" ? "bg-red-500/15 text-red-400" : "bg-white/10 text-muted"
-                    }`}
+                    className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase sm:px-3 ${getTournamentStatusClass(t.status)}`}
                   >
-                    {t.status === "ongoing" ? "🔴 Live" : "Upcoming"}
+                    {getTournamentStatusLabel(t.status)}
                   </span>
                 </Link>
               ))}
@@ -115,12 +129,25 @@ export default function FixturesAndPerformers({ tournaments, performers }: Props
           ) : (
             <div className="grid grid-cols-1 gap-3 xs:grid-cols-2 sm:grid-cols-2">
               {performers.map((p) => (
-                <div key={p.name} className="card flex items-center gap-3 p-3 sm:p-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold/15 font-display text-sm font-bold text-gold">
-                    {p.name.slice(0, 2).toUpperCase()}
-                  </div>
+                <div key={p.id || p.name} className="card flex items-center gap-3 p-3 sm:p-4">
+                  <Link
+                    href={`/players/${p.slug ?? p.id}`}
+                    className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gold/15"
+                    aria-label={`View ${p.name}'s profile`}
+                  >
+                    {p.avatarUrl ? (
+                      <img src={p.avatarUrl} alt={p.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center font-display text-sm font-bold text-gold">
+                        {p.name.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                  </Link>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{p.name}</p>
+                    <Link href={`/players/${p.slug ?? p.id}`} className="block truncate text-sm font-semibold text-white hover:text-gold">
+                      {p.name}
+                    </Link>
+                    <p className="text-[10px] text-muted">@{p.username}</p>
                     <p className="text-[10px] uppercase tracking-wide text-gold">
                       {p.statLabel}: {p.statValue}
                     </p>

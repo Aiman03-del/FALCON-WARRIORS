@@ -41,7 +41,7 @@ export async function getPlayerBySlug(slug: string) {
   const { data, error } = await supabase
     .from("player_details")
     .select(
-      `id, slug, efootball_username, real_name, age, country, city, supported_club,
+      `id, profile_id, slug, efootball_username, real_name, age, country, city, supported_club,
        national_team, favorite_player, education, profession, platform,
        rank_division, avatar_url, join_date, membership_status,
        player_stats(goals, assists, matches, wins, draws, losses, motm_count)`

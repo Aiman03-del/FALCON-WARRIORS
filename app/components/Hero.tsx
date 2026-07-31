@@ -24,8 +24,9 @@ export default function Hero() {
 
         <div className="mt-7 flex flex-wrap items-center justify-center gap-3 sm:mt-8 sm:gap-4">
           <FillButton href="/register">Join the Club</FillButton>
-          <OutlineButton href="#trailer">Watch Trailer</OutlineButton>
-        </div>
+          <OutlineButton href="https://www.facebook.com/groups/1312106901028571/user/61579023831850">
+            Facebook Page
+          </OutlineButton></div>
       </div>
     </section>
   );

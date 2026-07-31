@@ -79,6 +79,7 @@ function NavLinks({
 type ProfileInfo = {
   username: string;
   role: string;
+  slug?: string | null;
 };
 
 export default function Navbar() {
@@ -120,7 +121,7 @@ export default function Navbar() {
         supabase.from("profiles").select("role").eq("id", user.id).single(),
         supabase
           .from("player_details")
-          .select("efootball_username")
+          .select("slug, efootball_username")
           .eq("profile_id", user.id)
           .single(),
       ]);
@@ -129,6 +130,7 @@ export default function Navbar() {
         setProfile({
           username: playerRow?.efootball_username ?? "Player",
           role: profileRow?.role ?? "player",
+          slug: playerRow?.slug ?? null,
         });
         setLoading(false);
       }
@@ -154,6 +156,8 @@ export default function Navbar() {
     router.push("/");
     router.refresh();
   }
+
+  const profileHref = profile?.slug ? `/players/${profile.slug}` : "/profile";
 
   return (
     <header className="sticky top-0 z-50 w-full overflow-x-clip border-b border-border bg-bg/85 backdrop-blur-md">
@@ -217,7 +221,7 @@ export default function Navbar() {
                   )}
 
                   <Link
-                    href="/profile"
+                    href={profileHref}
                     onClick={() => setUserMenuOpen(false)}
                     className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/80 hover:bg-surface-2 hover:text-gold"
                   >
@@ -298,7 +302,7 @@ export default function Navbar() {
                 )}
 
                 <Link
-                  href="/profile"
+                  href={profileHref}
                   onClick={() => setMenuOpen(false)}
                   className="flex items-center gap-2 rounded-lg border border-border bg-bg px-3 py-2 text-sm font-medium text-white"
                 >

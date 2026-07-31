@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import { MapPin, Briefcase, GraduationCap, Shirt, Flag, Star, ArrowLeft } from "lucide-react";
+import { MapPin, Briefcase, GraduationCap, Shirt, Flag, Star, ArrowLeft, Pencil } from "lucide-react";
 import { getPlayerBySlug } from "@/app/lib/queries/players";
 import { getPlayerForm } from "@/app/lib/queries/playerForm";
 import Navbar from "@/app/components/Navbar";
@@ -8,6 +8,8 @@ import PlayerStatsGrid from "@/app/components/PlayerStatsGrid";
 import RecentFormStrip from "@/app/components/RecentFormStrip";
 import Footer from "@/app/components/Footer";
 import BackLink from "@/app/components/BackLink";
+import Link from "next/link";
+import { createClient } from "@/app/lib/supabase/server";
 
 
 function normalizeStats(stats: any) {
@@ -21,9 +23,15 @@ export default async function PlayerProfilePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const supabase = await createClient();
 
   const player = await getPlayerBySlug(slug);
   if (!player) notFound();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const isOwner = !!user && player.profile_id === user.id;
 
   const form = await getPlayerForm(player.id);
 
@@ -86,6 +94,16 @@ export default async function PlayerProfilePage({
                 </span>
               )}
             </div>
+
+            {isOwner && (
+              <Link
+                href="/profile/edit"
+                className="mt-4 inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/15 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-gold transition hover:border-gold/70 hover:bg-gold/20"
+              >
+                <Pencil size={12} />
+                Edit Profile
+              </Link>
+            )}
           </div>
         </div>
 

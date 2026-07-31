@@ -165,10 +165,8 @@ export async function getRunningTournaments() {
     const { data, error } = await supabase
       .from("tournaments")
       .select("id, slug, name, type, format, status, start_date, end_date")
-      .in("status", ["ongoing", "upcoming"])
-      .order("status", { ascending: true })
-      .order("start_date", { ascending: true })
-      .limit(6);
+      .order("start_date", { ascending: false })
+      .limit(3);
 
     if (error || !data) return MOCK_RUNNING_TOURNAMENTS;
 
@@ -178,7 +176,7 @@ export async function getRunningTournaments() {
       name: t.name,
       type: (t.type === "official" ? "official" : "internal") as "internal" | "official",
       format: t.format as string | null,
-      status: t.status as "ongoing" | "upcoming",
+      status: (t.status === "completed" ? "completed" : t.status === "ongoing" ? "ongoing" : "upcoming") as "ongoing" | "upcoming" | "completed",
       startDate: t.start_date,
       endDate: t.end_date,
     }));
@@ -191,7 +189,11 @@ export async function getTopPerformers() {
   try {
     const topScorers = await getTopScorers("official", 6);
     return topScorers.map((s) => ({
-      name: s.username,
+      id: s.playerId,
+      slug: s.slug ?? null,
+      username: s.username,
+      name: s.realName?.trim() || s.username,
+      avatarUrl: s.avatarUrl,
       statLabel: "GOALS",
       statValue: String(s.value),
     }));
