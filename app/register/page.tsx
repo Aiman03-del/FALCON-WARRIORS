@@ -334,6 +334,9 @@ export default function RegisterPage() {
                     className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm outline-none transition-colors focus:border-white/30 hover:border-border/80"
                     placeholder="John Doe"
                   />
+                  <p className="mt-1 text-[11px] text-amber-300/80">
+                    Please enter the name as shown on your Facebook profile.
+                  </p>
                 </div>
 
                 <div>

@@ -1,6 +1,5 @@
 import { createClient } from "../supabase/server";
 
-
 export type FormEntry = {
   result: "W" | "D" | "L";
   date: string;

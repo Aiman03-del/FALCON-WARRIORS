@@ -415,3 +415,147 @@ export async function getTournamentCompletedMatches(tournamentId: string) {
   if (error) throw error;
   return matches ?? [];
 }
+
+export type OfficialTournamentMatch = {
+  id: string;
+  slug: string | null;
+  opponent_name: string;
+  opponent_logo_url: string | null;
+  match_date: string | null;
+  score_home: number | null;
+  score_away: number | null;
+  status: string;
+  round_stage: string | null;
+  competition: string | null;
+};
+
+export async function getOfficialTournamentMatches(
+  tournamentId: string
+): Promise<OfficialTournamentMatch[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("matches")
+    .select(
+      "id, slug, opponent_name, opponent_logo_url, match_date, score_home, score_away, status, round_stage, competition"
+    )
+    .eq("tournament_id", tournamentId)
+    .order("match_date", { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []).map((m) => ({
+    ...m,
+    match_date: m.match_date ?? null,
+    score_home: m.score_home ?? null,
+    score_away: m.score_away ?? null,
+  }));
+}
+
+export type PublicMatchDetail = {
+  id: string;
+  slug: string | null;
+  opponent_name: string;
+  opponent_logo_url: string | null;
+  match_date: string | null;
+  score_home: number | null;
+  score_away: number | null;
+  status: string;
+  round_stage: string | null;
+  competition: string | null;
+  battles: {
+    id: string;
+    falcon_player_id: string | null;
+    falcon_username: string;
+    opponent_label: string;
+    opponent_logo_url: string | null;
+    falcon_score: number | null;
+    opponent_score: number | null;
+  }[];
+  motmList: {
+    scorer_id: string | null;
+    opponent_label: string | null;
+    display: string;
+    avatar_url: string | null;
+  }[];
+};
+
+export async function getPublicMatchDetail(
+  matchSlug: string
+): Promise<PublicMatchDetail | null> {
+  const supabase = await createClient();
+
+  const { data: match, error } = await supabase
+    .from("matches")
+    .select(
+      "id, slug, opponent_name, opponent_logo_url, match_date, score_home, score_away, status, round_stage, competition"
+    )
+    .eq("slug", matchSlug)
+    .single();
+
+  if (error || !match) return null;
+
+  const [{ data: battlesRaw }, { data: motmRaw }] = await Promise.all([
+    supabase
+      .from("match_squad_battles")
+      .select(
+        "id, falcon_player_id, opponent_label, opponent_logo_url, falcon_score, opponent_score, player_details:falcon_player_id(efootball_username, real_name)"
+      )
+      .eq("match_id", match.id),
+    supabase
+      .from("match_events")
+      .select(
+        "scorer_id, opponent_label, player_details:scorer_id(id, efootball_username, real_name, avatar_url)"
+      )
+      .eq("match_id", match.id)
+      .eq("event_type", "motm"),
+  ]);
+
+  const battles = (battlesRaw ?? []).map((b) => {
+    const pd = Array.isArray(b.player_details) ? b.player_details[0] : b.player_details;
+    const p = pd as { efootball_username?: string; real_name?: string | null } | null;
+    return {
+      id: b.id,
+      falcon_player_id: b.falcon_player_id ?? null,
+      falcon_username: p?.real_name?.trim() || p?.efootball_username || "Unknown",
+      opponent_label: b.opponent_label ?? "Opponent",
+      opponent_logo_url: b.opponent_logo_url ?? null,
+      falcon_score: b.falcon_score ?? null,
+      opponent_score: b.opponent_score ?? null,
+    };
+  });
+
+  const motmList = (motmRaw ?? []).map((m) => {
+    const pd = Array.isArray(m.player_details) ? m.player_details[0] : m.player_details;
+    const p = pd as {
+      id?: string;
+      efootball_username?: string;
+      real_name?: string | null;
+      avatar_url?: string | null;
+    } | null;
+
+    if (m.opponent_label) {
+      return {
+        scorer_id: null,
+        opponent_label: m.opponent_label,
+        display: m.opponent_label,
+        avatar_url: null,
+      };
+    }
+
+    return {
+      scorer_id: m.scorer_id ?? null,
+      opponent_label: null,
+      display: p?.real_name?.trim() || p?.efootball_username || "Unknown",
+      avatar_url: p?.avatar_url ?? null,
+    };
+  });
+
+  return {
+    ...match,
+    match_date: match.match_date ?? null,
+    score_home: match.score_home ?? null,
+    score_away: match.score_away ?? null,
+    battles,
+    motmList,
+  };
+}

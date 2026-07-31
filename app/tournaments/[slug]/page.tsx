@@ -11,9 +11,11 @@ import TournamentStatusBadge from "@/app/components/TournamentStatusBadge";
 import TournamentSquadList from "@/app/components/TournamentSquadList";
 import ExternalTournamentInfo from "@/app/components/ExternalTournamentInfo";
 import TournamentMatchesDisplay from "@/app/components/TournamentMatchesDisplay";
+import OfficialMatchList from "@/app/components/OfficialMatchList";
 import {
   getMyJoinStatus,
   getTournamentDetail,
+  getOfficialTournamentMatches,
   type TournamentDetailData,
   type TournamentMatch,
   type TournamentParticipant,
@@ -46,19 +48,15 @@ function computeChampion({
     const finalRound = Math.max(...bracketMatches.map((m) => m.round));
     const finalMatches = bracketMatches.filter((m) => m.round === finalRound);
     if (finalMatches.length !== 1) return null;
-
     const finalMatch = finalMatches[0];
-
     if (finalMatch.status === "bye") {
       const p = getJoinedPlayer(finalMatch.player1);
       return p ? { name: p.efootball_username, avatarUrl: p.avatar_url ?? null, subtitle: "Tournament Champion" } : null;
     }
-
     if (finalMatch.status !== "completed") return null;
     const s1 = finalMatch.player1_score;
     const s2 = finalMatch.player2_score;
     if (s1 == null || s2 == null || s1 === s2) return null;
-
     const winner = getJoinedPlayer(s1 > s2 ? finalMatch.player1 : finalMatch.player2);
     if (!winner) return null;
     return {
@@ -72,7 +70,6 @@ function computeChampion({
     const leagueMatches = matches.filter((m) => m.stage !== "knockout");
     const allDone = leagueMatches.length > 0 && leagueMatches.every((m) => m.status === "completed" || m.status === "bye");
     if (!allDone) return null;
-
     const withPlayerId = participants.map((p) => ({
       ...p,
       player_id: getJoinedPlayer(p.player_details)?.id ?? p.id,
@@ -80,10 +77,8 @@ function computeChampion({
     const ranked = rankStandings(withPlayerId, leagueMatches);
     const top = ranked[0];
     if (!top) return null;
-
     const player = getJoinedPlayer((top as TournamentParticipant | undefined)?.player_details);
     if (!player) return null;
-
     return {
       name: player.efootball_username,
       avatarUrl: player.avatar_url ?? null,
@@ -115,6 +110,48 @@ export default async function TournamentDetailPage({
 
   if (!data) notFound();
   const { tournament, participants, matches, formMap, squad } = data;
+
+  // ── Official tournament → completely different layout ──
+  if (tournament.type === "official") {
+    const officialMatches = await getOfficialTournamentMatches(tournament.id);
+
+    return (
+      <main>
+        <Navbar />
+        <section className="mx-auto max-w-4xl px-6 py-14">
+          <div className="section-divider" />
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="font-display text-3xl font-bold uppercase tracking-wide">
+              {tournament.name}
+            </h1>
+            <TournamentStatusBadge status={tournament.status} />
+          </div>
+
+          <p className="mt-2 text-sm capitalize text-muted">
+            {tournament.type} · {tournament.format ?? "League"}
+            {tournament.start_date && (
+              <>
+                {" "}
+                · {new Date(tournament.start_date).toLocaleDateString()}
+                {tournament.end_date &&
+                  ` – ${new Date(tournament.end_date).toLocaleDateString()}`}
+              </>
+            )}
+          </p>
+
+          <div className="mt-8">
+            <OfficialMatchList
+              matches={officialMatches}
+              tournamentSlug={tournament.slug ?? tournament.id}
+            />
+          </div>
+        </section>
+        <Footer />
+      </main>
+    );
+  }
+
+  // ── Internal tournament → original layout ──
   const joinStatus = await getMyJoinStatus(tournament.id);
 
   const knockoutMatches = matches.filter((m) => m.stage === "knockout" || m.stage == null);
@@ -136,7 +173,6 @@ export default async function TournamentDetailPage({
   const showFixtures = !hasBracket;
   const showBracket = tournament.format === "knockout" || hasBracket;
   const showSquad = tournament.type === "official";
-
   const activeTab = parseTab(tabParam);
 
   const overviewContent = (
@@ -148,11 +184,9 @@ export default async function TournamentDetailPage({
           isPublicView={true}
         />
       )}
-
       {champion && (
         <ChampionBanner name={champion.name} avatarUrl={champion.avatarUrl} subtitle={champion.subtitle} />
       )}
-
       {!champion && tournament.type !== "external" && (
         <p className="text-sm text-muted">
           Follow the tabs above for standings, fixtures, and the bracket.
@@ -176,7 +210,6 @@ export default async function TournamentDetailPage({
             />
           </div>
         ))}
-
       {(tournament.format === "league" || tournament.format === "league_playoff") && (
         <PointsTable
           participants={participants}
@@ -192,7 +225,6 @@ export default async function TournamentDetailPage({
   const bracketContent = (
     <>
       <BracketView matches={bracketMatches} mode="knockout" />
-
       {thirdPlaceMatch && (
         <div className="mt-8">
           <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-gold">

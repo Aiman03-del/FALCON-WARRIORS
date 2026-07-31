@@ -181,6 +181,7 @@ export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
             value={form.real_name}
             onChange={(v) => update("real_name", v)}
             placeholder="John Doe"
+            hint="Please enter the name shown on your Facebook profile."
           />
           <Field
             label="Age"
@@ -317,12 +318,14 @@ function Field({
   onChange,
   type = "text",
   placeholder,
+  hint,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
   placeholder?: string;
+  hint?: string;
 }) {
   return (
     <div>
@@ -334,6 +337,7 @@ function Field({
         placeholder={placeholder}
         className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm outline-none transition-colors focus:border-white/30 hover:border-border/80"
       />
+      {hint && <p className="mt-1 text-[11px] text-amber-300/80">{hint}</p>}
     </div>
   );
 }

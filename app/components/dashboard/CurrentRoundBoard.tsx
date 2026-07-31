@@ -3,11 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Pencil, Shield, Upload } from "lucide-react";
+import { Pencil, Shield, Upload, X } from "lucide-react";
 import { createClient } from "@/app/lib/supabase/client";
 import { recalcAllPlayerStats } from "@/app/lib/matches/recalcPlayerStats";
 import RoundStageSelect from "./RoundStageSelect";
-import SelectField from "../SelectField";
 import NumberStepper from "../NumberStepper";
 
 type Battle = {
@@ -28,6 +27,14 @@ type Props = {
   battles: Battle[];
 };
 
+// একটা MOTM entry — হয় Falcon player (scorer_id আছে) অথবা Opponent (opponent_label আছে)
+type MotmEntry = {
+  key: string; // unique key for React
+  scorer_id: string | null;
+  opponent_label: string | null;
+  display: string;
+};
+
 function Avatar({
   url,
   fallback,
@@ -40,7 +47,6 @@ function Avatar({
   ring?: boolean;
 }) {
   const safeFallback = fallback && fallback.trim() ? fallback : "??";
-
   return (
     <div
       style={{ width: size, height: size }}
@@ -118,7 +124,6 @@ function UploadableAvatar({
   );
 }
 
-// Inline-editable text — click to edit
 function InlineEditableText({
   value,
   placeholder,
@@ -151,10 +156,7 @@ function InlineEditableText({
         onBlur={commit}
         onKeyDown={(e) => {
           if (e.key === "Enter") commit();
-          if (e.key === "Escape") {
-            setDraft(value);
-            setEditing(false);
-          }
+          if (e.key === "Escape") { setDraft(value); setEditing(false); }
         }}
         className={`rounded-lg border border-gold bg-surface px-2 py-1 text-sm outline-none ${
           align === "center" ? "text-center" : "text-right"
@@ -166,10 +168,7 @@ function InlineEditableText({
   return (
     <button
       type="button"
-      onClick={() => {
-        setDraft(value);
-        setEditing(true);
-      }}
+      onClick={() => { setDraft(value); setEditing(true); }}
       className="group flex items-center gap-1"
     >
       <span className={`line-clamp-1 text-sm font-semibold text-white ${className}`}>
@@ -180,6 +179,104 @@ function InlineEditableText({
   );
 }
 
+// ── MOTM Picker ──────────────────────────────────────────────────────────────
+function MotmPicker({
+  rows,
+  motmList,
+  onChange,
+}: {
+  rows: Battle[];
+  motmList: MotmEntry[];
+  onChange: (list: MotmEntry[]) => void;
+}) {
+  // সব candidate: Falcon players + unique opponent labels
+  const falconOptions: MotmEntry[] = rows
+    .filter((r) => r.falcon_player_id)
+    .map((r) => ({
+      key: `falcon-${r.falcon_player_id}`,
+      scorer_id: r.falcon_player_id,
+      opponent_label: null,
+      display: r.falcon_username,
+    }));
+
+  const opponentOptions: MotmEntry[] = Array.from(
+    new Map(rows.map((r) => [r.opponent_label, r])).values()
+  ).map((r) => ({
+    key: `opp-${r.opponent_label}`,
+    scorer_id: null,
+    opponent_label: r.opponent_label,
+    display: r.opponent_label,
+  }));
+
+  const allOptions = [...falconOptions, ...opponentOptions];
+  const selectedKeys = new Set(motmList.map((m) => m.key));
+
+  function toggle(entry: MotmEntry) {
+    if (selectedKeys.has(entry.key)) {
+      onChange(motmList.filter((m) => m.key !== entry.key));
+    } else {
+      if (motmList.length >= 2) return; // max 2
+      onChange([...motmList, entry]);
+    }
+  }
+
+  return (
+    <div className="px-4 pb-2 sm:px-6">
+      <p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted">
+        Man of the Match{" "}
+        <span className="normal-case font-normal text-muted/60">(max 2, optional)</span>
+      </p>
+
+      {/* Selected badges */}
+      {motmList.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-2">
+          {motmList.map((m) => (
+            <div
+              key={m.key}
+              className="flex items-center gap-1.5 rounded-full bg-gold/15 px-3 py-1 text-xs font-semibold text-gold"
+            >
+              <span>{m.display}</span>
+              <button
+                type="button"
+                onClick={() => onChange(motmList.filter((x) => x.key !== m.key))}
+                className="text-gold/60 hover:text-gold"
+              >
+                <X size={11} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Option grid */}
+      <div className="flex flex-wrap gap-2">
+        {allOptions.map((opt) => {
+          const selected = selectedKeys.has(opt.key);
+          const disabled = !selected && motmList.length >= 2;
+          return (
+            <button
+              key={opt.key}
+              type="button"
+              disabled={disabled}
+              onClick={() => toggle(opt)}
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                selected
+                  ? "border-gold bg-gold/10 text-gold"
+                  : disabled
+                  ? "border-border bg-surface-2 text-muted/40 cursor-not-allowed"
+                  : "border-border bg-surface-2 text-muted hover:border-gold/50 hover:text-white"
+              }`}
+            >
+              {opt.display}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 export default function CurrentRoundBoard({
   matchId,
   opponentName: initialOpponentName,
@@ -202,11 +299,10 @@ export default function CurrentRoundBoard({
     }))
   );
 
-  const [motmId, setMotmId] = useState("");
+  const [motmList, setMotmList] = useState<MotmEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // এখন গোল যোগফল না — প্রতিটা স্কোয়াড ব্যাটলে কে জিতেছে সেই ব্যাটল-জয়ের সংখ্যা গোনা হয়
   const totalFalcon = rows.reduce((s, r) => {
     const fs = r.fs === "" ? null : Number(r.fs);
     const os = r.os === "" ? null : Number(r.os);
@@ -275,18 +371,22 @@ export default function CurrentRoundBoard({
       .update({ status: "completed", score_home: totalFalcon, score_away: totalOpponent })
       .eq("id", matchId);
 
-    if (motmId) {
-      await supabase
-        .from("match_events")
-        .delete()
-        .eq("match_id", matchId)
-        .eq("event_type", "motm");
+    // MOTM — আগেরগুলো মুছে নতুন insert
+    await supabase
+      .from("match_events")
+      .delete()
+      .eq("match_id", matchId)
+      .eq("event_type", "motm");
 
-      await supabase.from("match_events").insert({
-        match_id: matchId,
-        scorer_id: motmId,
-        event_type: "motm",
-      });
+    if (motmList.length > 0) {
+      await supabase.from("match_events").insert(
+        motmList.map((m) => ({
+          match_id: matchId,
+          event_type: "motm",
+          scorer_id: m.scorer_id ?? null,
+          opponent_label: m.opponent_label ?? null,
+        }))
+      );
     }
 
     await recalcAllPlayerStats(supabase);
@@ -300,7 +400,6 @@ export default function CurrentRoundBoard({
       {/* ===== Header ===== */}
       <div className="relative bg-linear-to-b from-gold/10 via-surface to-surface px-3 sm:px-4 md:px-6 pb-6 pt-6">
         <div className="mx-auto flex w-full max-w-md items-center justify-between gap-3">
-          {/* Falcon Warriors — fixed logo */}
           <div className="flex flex-1 flex-col items-center gap-2">
             <div className="relative h-13 w-13 shrink-0 overflow-hidden rounded-full ring-2 ring-gold/40">
               <Image src="/logo.jpg" alt="Falcon Warriors" fill sizes="52px" className="object-cover" />
@@ -308,7 +407,6 @@ export default function CurrentRoundBoard({
             <span className="text-sm font-semibold text-white">Falcon Warriors</span>
           </div>
 
-          {/* Falcon Warriors — fixed logo */}
           <div className="flex shrink-0 flex-col items-center gap-1 px-2">
             <span className="font-display text-4xl font-bold tabular-nums">
               {totalFalcon}
@@ -317,7 +415,6 @@ export default function CurrentRoundBoard({
             </span>
           </div>
 
-          {/* Opponent — inline editable name + uploadable logo */}
           <div className="flex flex-1 flex-col items-center gap-2">
             <UploadableAvatar url={opponentLogoUrl} size={52} onUploaded={handleOpponentLogoUpload} />
             <InlineEditableText
@@ -328,7 +425,6 @@ export default function CurrentRoundBoard({
           </div>
         </div>
 
-        {/* Round Stage — always visible dropdown */}
         <div className="mx-auto mt-5 max-w-55">
           <RoundStageSelect value={roundStage} onChange={handleRoundStageChange} />
         </div>
@@ -353,26 +449,19 @@ export default function CurrentRoundBoard({
               className="rounded-xl border border-border bg-surface-2/60 p-3 transition-colors hover:bg-surface-2"
             >
               <div className="flex items-center gap-3">
-                {/* Falcon player */}
                 <div className="flex min-w-0 flex-1 items-center gap-2.5">
                   <Avatar url={null} fallback={r.falcon_username} size={32} />
-                  <span
-                    className={`truncate text-sm font-medium ${
-                      falconLeading ? "text-white" : "text-white/80"
-                    }`}
-                  >
+                  <span className={`truncate text-sm font-medium ${falconLeading ? "text-white" : "text-white/80"}`}>
                     {r.falcon_username}
                   </span>
                 </div>
 
-                {/* Score steppers */}
                 <div className="flex shrink-0 items-center gap-2">
                   <NumberStepper value={r.fs} onChange={(v) => updateRow(r.id, { fs: v })} />
                   <span className="text-xs font-bold text-muted">:</span>
                   <NumberStepper value={r.os} onChange={(v) => updateRow(r.id, { os: v })} />
                 </div>
 
-                {/* Opponent slot — inline editable name + uploadable image */}
                 <div className="flex min-w-0 flex-1 items-center justify-end gap-2.5">
                   <InlineEditableText
                     value={r.opponent_label}
@@ -393,17 +482,9 @@ export default function CurrentRoundBoard({
         })}
       </div>
 
-      <div className="mt-2 px-1">
-        <SelectField
-          label="Man of the Match"
-          value={motmId}
-          onChange={setMotmId}
-          placeholder="— Select MOTM (optional) —"
-          options={rows.map((r) => ({
-            value: r.falcon_player_id ?? "",
-            label: r.falcon_username,
-          }))}
-        />
+      {/* ===== MOTM Picker ===== */}
+      <div className="mt-2">
+        <MotmPicker rows={rows} motmList={motmList} onChange={setMotmList} />
       </div>
 
       {/* ===== Footer ===== */}
