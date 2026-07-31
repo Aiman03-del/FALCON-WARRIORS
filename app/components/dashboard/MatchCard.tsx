@@ -13,7 +13,7 @@ const statusStyles: Record<string, string> = {
 type MatchCardProps = {
   id: string;
   slug?: string | null;
-  opponentName: string | null;   // null অনুমতি দিন
+  opponentName: string | null;   // allow null
   opponentLogoUrl?: string | null;
   competition?: string | null;
   matchDate: string;

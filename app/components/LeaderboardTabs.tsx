@@ -82,7 +82,7 @@ export default function LeaderboardTabs({
             }}
             className={`rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition ${
               activeTab === tab.key
-                ? "bg-white/10 text-white"
+                ? "bg-gold text-black"
                 : "border border-border bg-surface-2 text-muted hover:text-white"
             }`}
           >

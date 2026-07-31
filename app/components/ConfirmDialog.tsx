@@ -48,7 +48,7 @@ export function ConfirmDialog({
         {/* Header */}
         <div className="mb-4 flex items-start justify-between">
           <div className="flex items-start gap-3">
-            <AlertCircle size={24} className={isDangerous ? "text-gold" : "text-indigo-light"} />
+            <AlertCircle size={24} className={isDangerous ? "text-danger-light" : "text-indigo-light"} />
             <h2 className="font-display text-lg font-bold text-white">{title}</h2>
           </div>
           <button
@@ -76,7 +76,7 @@ export function ConfirmDialog({
             disabled={isLoading}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
               isDangerous
-                ? "bg-gold/20 text-gold hover:bg-gold/30"
+                ? "bg-danger/20 text-danger-light hover:bg-danger/30"
                 : "bg-indigo/20 text-indigo-light hover:bg-indigo/30"
             }`}
           >
