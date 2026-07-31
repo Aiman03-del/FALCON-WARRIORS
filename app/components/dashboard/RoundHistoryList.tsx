@@ -33,7 +33,7 @@ function TeamBlock({
         }`}
       >
         {logoUrl ? (
-          <Image src={logoUrl} alt={safeName} fill className="object-cover" />
+          <Image src={logoUrl} alt={safeName} fill sizes="(min-width: 640px) 40px, 36px" className="object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-surface-2 text-[10px] font-bold text-gold">
             {safeName.slice(0, 2).toUpperCase()}

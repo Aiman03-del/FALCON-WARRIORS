@@ -22,7 +22,7 @@ function Avatar({
       }`}
     >
       {url ? (
-        <Image src={url} alt={fallback} fill className="object-cover" />
+        <Image src={url} alt={fallback} fill sizes={`${size}px`} className="object-cover" />
       ) : (
         <div
           className="flex h-full w-full items-center justify-center font-display font-bold text-gold"

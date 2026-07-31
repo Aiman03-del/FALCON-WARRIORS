@@ -70,7 +70,7 @@ export default function LeaderboardList({
                 <div className="flex items-center gap-3">
                   <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-surface-2">
                     {entry.avatarUrl ? (
-                      <Image src={entry.avatarUrl} alt={entry.realName || entry.username} fill className="object-cover" />
+                      <Image src={entry.avatarUrl} alt={entry.realName || entry.username} fill sizes="32px" className="object-cover" />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-gold">
                         {(entry.realName || entry.username).slice(0, 2).toUpperCase()}

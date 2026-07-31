@@ -197,6 +197,25 @@ export default function PeriodPerformerCard() {
         motmMap[e.scorer_id] = (motmMap[e.scorer_id] ?? 0) + 1;
       }
 
+      // MOTM লুপে playerInfo সেট হয় না (শুধু scorer_id থাকে) — যাদের গোল/জয়
+      // কোনোটাই এই পিরিয়ডে নেই কিন্তু MOTM আছে, তাদের নাম/এভাটার এখানে আলাদাভাবে আনা হচ্ছে
+      const missingIds = Object.keys(motmMap).filter((id) => !playerInfo[id]);
+      if (missingIds.length > 0) {
+        const { data: missingRows } = await supabase
+          .from("player_details")
+          .select("id, slug, efootball_username, real_name, avatar_url")
+          .in("id", missingIds);
+
+        for (const p of missingRows ?? []) {
+          playerInfo[p.id] = {
+            username: p.efootball_username,
+            realName: p.real_name ?? null,
+            avatarUrl: p.avatar_url,
+            slug: p.slug ?? null,
+          };
+        }
+      }
+
       if (!active) return;
 
       // Rank by (wins + motm) first, tiebreak by goals
@@ -263,10 +282,16 @@ export default function PeriodPerformerCard() {
           >
             <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border-2 border-gold/50 bg-surface-2">
               {performer.avatarUrl ? (
-                <Image src={performer.avatarUrl} alt={performer.username} fill className="object-cover" />
+                <Image
+                  src={performer.avatarUrl}
+                  alt={performer.realName || performer.username || "Player"}
+                  fill
+                  sizes="56px"
+                  className="object-cover"
+                />
               ) : (
                 <div className="flex h-full w-full items-center justify-center font-display text-lg font-bold text-gold">
-                  {performer.username.slice(0, 2).toUpperCase()}
+                  {(performer.realName || performer.username || "??").slice(0, 2).toUpperCase()}
                 </div>
               )}
             </div>

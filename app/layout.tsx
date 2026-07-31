@@ -78,7 +78,7 @@ export default async function RootLayout({
   const { faviconUrl } = await getSiteSettings();
 
   return (
-    <html className="bg-background" lang="en">
+    <html className="bg-background" lang="en" data-scroll-behavior="smooth">
       <head>
         <link rel="icon" href={faviconUrl} type="image/png" />
       </head>

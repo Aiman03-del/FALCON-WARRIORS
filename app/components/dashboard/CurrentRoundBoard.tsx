@@ -56,7 +56,7 @@ function Avatar({
       }`}
     >
       {url ? (
-        <Image src={url} alt={safeFallback} fill className="object-cover" />
+        <Image src={url} alt={safeFallback} fill sizes={`${size}px`} className="object-cover" />
       ) : (
         <div
           className="flex h-full w-full items-center justify-center font-display font-bold text-gold"
@@ -86,7 +86,7 @@ function UploadableAvatar({
         style={{ width: size, height: size }}
         className="relative shrink-0 overflow-hidden rounded-full bg-surface-2"
       >
-        <Image src={url} alt="Opponent" fill className="object-cover" />
+        <Image src={url} alt="Opponent" fill sizes={`${size}px`} className="object-cover" />
       </div>
     );
   }

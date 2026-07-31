@@ -96,6 +96,7 @@ export default async function MatchCard({
                   src={opponentLogoUrl}
                   alt={opponentName?.trim() ? opponentName : "Opponent team logo"}
                   fill
+                  sizes="48px"
                   className="object-cover"
                 />
               ) : (
