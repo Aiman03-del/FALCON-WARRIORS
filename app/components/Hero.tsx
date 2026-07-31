@@ -61,11 +61,11 @@ export default async function Hero() {
               <ArrowRight size={16} className="sm:hidden" />
             </FillButton>
             <OutlineButton
-              href="https://www.facebook.com/groups/1312106901028571/user/61579023831850"
-              className="w-full sm:w-auto"
+              href="https://www.facebook.com/profile.php?id=61579023831850"
+              className="w-full gap-2 sm:w-auto"
             >
               <FaFacebook size={16} />
-              <span>Facebook Page</span>
+              <span>Facebook</span>
               <ExternalLink size={14} className="sm:hidden" />
             </OutlineButton>
           </div>
