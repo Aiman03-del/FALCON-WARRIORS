@@ -21,7 +21,7 @@ export default async function OfficialTournamentOverview({
 
   const { data: matches } = await supabase
     .from("matches")
-    .select("id, opponent_name, opponent_logo_url, round_stage, match_date, status, score_home, score_away")
+    .select("id, slug, opponent_name, opponent_logo_url, round_stage, match_date, status, score_home, score_away")
     .eq("tournament_id", tournamentId)
     .order("match_date", { ascending: false });
 
