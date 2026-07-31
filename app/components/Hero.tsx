@@ -29,8 +29,6 @@ export default async function Hero() {
           <span className="text-gold">●</span>
           <span>Est. {foundedYear}</span>
           <span className="text-gold/40">/</span>
-          <span>{location}</span>
-          <span className="text-gold/40">/</span>
           <span>Elite eFootball Division</span>
         </div>
 
