@@ -4,16 +4,7 @@ import { useState } from "react";
 import { LeaderboardData, LeaderboardScope } from "../lib/queries/leaderboards";
 import LeaderboardList from "./LeaderboardList";
 
-type TabKey = "goals" | "winrate" | "motm" | "rating";
-
 type ScopedLeaderboardData = Record<LeaderboardScope, LeaderboardData>;
-
-const statTabs: Array<{ key: TabKey; label: string; valueLabel: string }> = [
-  { key: "goals", label: "Top Scorers", valueLabel: "Goals" },
-  { key: "winrate", label: "Best Win Rate", valueLabel: "Win%" },
-  { key: "motm", label: "MOTM", valueLabel: "MOTM" },
-  { key: "rating", label: "Best Rating", valueLabel: "Rating" },
-];
 
 const scopeTabs: Array<{ key: LeaderboardScope; label: string; description: string }> = [
   {
@@ -39,14 +30,12 @@ export default function LeaderboardTabs({
 }) {
   const [page, setPage] = useState(1);
   const [activeScope, setActiveScope] = useState<LeaderboardScope>("official");
-  const [activeTab, setActiveTab] = useState<TabKey>("goals");
 
-  const currentEntries = data[activeScope][activeTab];
+  const currentEntries = data[activeScope].points;
   const totalPages = Math.max(1, Math.ceil(currentEntries.length / PAGE_SIZE));
   const startIndex = (page - 1) * PAGE_SIZE;
   const endIndex = startIndex + PAGE_SIZE;
   const pageEntries = currentEntries.slice(startIndex, endIndex);
-  const activeStatTab = statTabs.find((tab) => tab.key === activeTab);
   const activeScopeTab = scopeTabs.find((tab) => tab.key === activeScope);
 
   return (
@@ -71,37 +60,16 @@ export default function LeaderboardTabs({
         ))}
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {statTabs.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => {
-              setActiveTab(tab.key);
-              setPage(1);
-            }}
-            className={`rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition ${
-              activeTab === tab.key
-                ? "bg-gold text-black"
-                : "border border-border bg-surface-2 text-muted hover:text-white"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
       <div className="rounded-xl border border-border bg-surface-2/60 p-4">
         <p className="text-xs font-bold uppercase tracking-wide text-gold">
-          {activeScopeTab?.label} · {activeStatTab?.label}
+          {activeScopeTab?.label} · Ranked by Points
         </p>
         <p className="mt-1 text-sm text-muted">{activeScopeTab?.description}</p>
       </div>
 
       <LeaderboardList
         entries={pageEntries}
-        statType={activeTab}
-        emptyMessage={`No ${activeScopeTab?.label.toLowerCase()} ${activeStatTab?.label.toLowerCase()} data yet.`}
+        emptyMessage={`No ${activeScopeTab?.label.toLowerCase()} rankings yet.`}
         isAdmin={isAdmin}
       />
 

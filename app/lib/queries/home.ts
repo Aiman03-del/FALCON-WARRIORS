@@ -1,5 +1,4 @@
-import { createClient } from "../supabase/client";
-import { getTopScorers } from "./leaderboards";
+import { createClient } from "../supabase/client";import { getTopByPoints } from "./leaderboards";
 
 const MOCK_RECENT_RESULTS = [
   {
@@ -94,7 +93,7 @@ export async function getRecentResults() {
     const { data, error } = await supabase
       .from("matches")
       .select(
-        "id, opponent_name, opponent_tag, opponent_logo_url, competition, match_type, score_home, score_away, match_date, tournament_id"
+        "id, slug, opponent_name, opponent_tag, opponent_logo_url, competition, match_type, score_home, score_away, match_date, tournament_id"
       )
       .eq("status", "completed")
       .order("match_date", { ascending: false })
@@ -187,15 +186,16 @@ export async function getRunningTournaments() {
 
 export async function getTopPerformers() {
   try {
-    const topScorers = await getTopScorers("official", 6);
-    return topScorers.map((s) => ({
+    const top = await getTopByPoints("official", 4);
+    return top.map((s) => ({
       id: s.playerId,
       slug: s.slug ?? null,
       username: s.username,
       name: s.realName?.trim() || s.username,
       avatarUrl: s.avatarUrl,
-      statLabel: "GOALS",
-      statValue: String(s.value),
+      statLabel: "POINTS",
+      statValue: String(s.points ?? 0),
+      record: `${s.wins}W ${s.draws}D ${s.losses}L · ${s.value} goals`,
     }));
   } catch (error) {
     return [];

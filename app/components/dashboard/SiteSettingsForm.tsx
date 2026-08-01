@@ -4,12 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Calendar, CheckCircle2, Crown, ImageIcon, MapPin, UserCog, AlertCircle } from "lucide-react";
 import { createClient } from "@/app/lib/supabase/client";
+import { useToast } from "@/app/providers/ToastProvider";
 import ImageUploadInput from "./ImageUploadInput";
 import { SiteSettings } from "@/app/lib/queries/siteSettings";
 
 export default function SiteSettingsForm({ initial }: { initial: SiteSettings }) {
   const supabase = createClient();
   const router = useRouter();
+  const { addToast } = useToast();
 
   const [logoUrl, setLogoUrl] = useState(initial.logoUrl);
   const [faviconUrl, setFaviconUrl] = useState(initial.faviconUrl);
@@ -44,10 +46,13 @@ export default function SiteSettingsForm({ initial }: { initial: SiteSettings })
 
     if (updateError) {
       setError(updateError.message);
+      addToast(updateError.message, "error");
       return;
     }
 
-    setMessage("Site settings updated. Some visitors may still see the old favicon for a while due to browser caching.");
+    const successMessage = "Site settings updated. Some visitors may still see the old favicon for a while due to browser caching.";
+    setMessage(successMessage);
+    addToast(successMessage, "success");
     router.refresh();
   }
 

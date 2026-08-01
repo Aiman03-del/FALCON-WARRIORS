@@ -8,10 +8,13 @@ import { createClient } from "../lib/supabase/client";
 
 type Period = "weekly" | "monthly" | "yearly";
 
-const periodLabels: Record<Period, string> = {
-  weekly: "This Week",
-  monthly: "This Month",
-  yearly: "This Year",
+type PlayerDetail = {
+  id: string;
+  slug: string | null;
+  efootball_username: string;
+  real_name: string | null;
+  avatar_url: string | null;
+  membership_status?: string | null;
 };
 
 type Performer = {
@@ -23,26 +26,42 @@ type Performer = {
   wins: number;
   motm: number;
   goals: number;
-} | null;
+};
+
+type PeriodAccumulator = {
+  wins: number;
+  motm: number;
+  goals: number;
+};
+
+const periodLabels: Record<Period, string> = {
+  weekly: "This Week",
+  monthly: "This Month",
+  yearly: "This Year",
+};
 
 function getPeriodStart(period: Period): Date {
   const now = new Date();
+
   if (period === "weekly") {
-    const day = now.getDay();
-    const diffToMonday = day === 0 ? 6 : day - 1;
+    const diffToMonday = now.getDay() === 0 ? 6 : now.getDay() - 1;
     const start = new Date(now);
     start.setDate(now.getDate() - diffToMonday);
     start.setHours(0, 0, 0, 0);
     return start;
   }
-  if (period === "monthly") return new Date(now.getFullYear(), now.getMonth(), 1);
+
+  if (period === "monthly") {
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+
   return new Date(now.getFullYear(), 0, 1);
 }
 
 export default function PeriodPerformerCard() {
   const supabase = createClient();
   const [period, setPeriod] = useState<Period>("monthly");
-  const [performer, setPerformer] = useState<Performer>(null);
+  const [performer, setPerformer] = useState<Performer | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -50,50 +69,68 @@ export default function PeriodPerformerCard() {
 
     async function load() {
       setLoading(true);
+
       const start = getPeriodStart(period).toISOString();
+      const accumulator: Record<string, PeriodAccumulator> = {};
+      const playerInfo: Record<string, PlayerDetail> = {};
 
-      const goalMap: Record<string, number> = {};
-      const winMap: Record<string, number> = {};
-      const motmMap: Record<string, number> = {};
-      const playerInfo: Record<string, { username: string; realName: string | null; avatarUrl: string | null; slug: string | null }> = {};
+      const { data: activePlayers } = await supabase
+        .from("player_details")
+        .select("id, slug, efootball_username, real_name, avatar_url, membership_status")
+        .eq("membership_status", "active");
 
-      // 1. Internal matches (player vs player)
+      for (const row of activePlayers ?? []) {
+        accumulator[row.id] = { wins: 0, motm: 0, goals: 0 };
+        playerInfo[row.id] = row;
+      }
+
       const { data: internalMatches } = await supabase
         .from("matches")
-        .select(
-          "player1_id, player2_id, score_home, score_away, match_date, player1:player1_id(id, slug, efootball_username, real_name, avatar_url), player2:player2_id(id, slug, efootball_username, real_name, avatar_url)"
-        )
+        .select("player1_id, player2_id, score_home, score_away, match_date")
         .eq("match_type", "internal")
         .eq("status", "completed")
         .gte("match_date", start);
 
-      for (const m of (internalMatches ?? []) as any[]) {
-        if (m.score_home === null || m.score_away === null) continue;
-        const p1 = Array.isArray(m.player1) ? m.player1[0] : m.player1;
-        const p2 = Array.isArray(m.player2) ? m.player2[0] : m.player2;
-        if (p1) {
-          goalMap[p1.id] = (goalMap[p1.id] ?? 0) + m.score_home;
-          playerInfo[p1.id] = {
-            username: p1.efootball_username,
-            realName: p1.real_name ?? null,
-            avatarUrl: p1.avatar_url,
-            slug: p1.slug ?? null,
-          };
+      for (const match of internalMatches ?? []) {
+        if (match.score_home === null || match.score_away === null) continue;
+        if (!match.player1_id || !match.player2_id) continue;
+
+        accumulator[match.player1_id] ??= { wins: 0, motm: 0, goals: 0 };
+        accumulator[match.player2_id] ??= { wins: 0, motm: 0, goals: 0 };
+
+        accumulator[match.player1_id].goals += Number(match.score_home ?? 0);
+        accumulator[match.player2_id].goals += Number(match.score_away ?? 0);
+
+        if (match.score_home > match.score_away) {
+          accumulator[match.player1_id].wins += 1;
+        } else if (match.score_away > match.score_home) {
+          accumulator[match.player2_id].wins += 1;
         }
-        if (p2) {
-          goalMap[p2.id] = (goalMap[p2.id] ?? 0) + m.score_away;
-          playerInfo[p2.id] = {
-            username: p2.efootball_username,
-            realName: p2.real_name ?? null,
-            avatarUrl: p2.avatar_url,
-            slug: p2.slug ?? null,
-          };
-        }
-        if (m.score_home > m.score_away && p1) winMap[p1.id] = (winMap[p1.id] ?? 0) + 1;
-        else if (m.score_away > m.score_home && p2) winMap[p2.id] = (winMap[p2.id] ?? 0) + 1;
       }
 
-      // 2. External matches (single "played by" player)
+      const { data: tournamentMatches } = await supabase
+        .from("tournament_matches")
+        .select("player1_id, player2_id, player1_score, player2_score, created_at")
+        .eq("status", "completed")
+        .gte("created_at", start);
+
+      for (const match of tournamentMatches ?? []) {
+        if (match.player1_score === null || match.player2_score === null) continue;
+        if (!match.player1_id || !match.player2_id) continue;
+
+        accumulator[match.player1_id] ??= { wins: 0, motm: 0, goals: 0 };
+        accumulator[match.player2_id] ??= { wins: 0, motm: 0, goals: 0 };
+
+        accumulator[match.player1_id].goals += Number(match.player1_score ?? 0);
+        accumulator[match.player2_id].goals += Number(match.player2_score ?? 0);
+
+        if (match.player1_score > match.player2_score) {
+          accumulator[match.player1_id].wins += 1;
+        } else if (match.player2_score > match.player1_score) {
+          accumulator[match.player2_id].wins += 1;
+        }
+      }
+
       const { data: externalMatches } = await supabase
         .from("matches")
         .select("id, score_home, score_away, match_date")
@@ -102,137 +139,71 @@ export default function PeriodPerformerCard() {
         .gte("match_date", start);
 
       if (externalMatches && externalMatches.length > 0) {
-        const ids = externalMatches.map((m) => m.id);
+        const externalIds = externalMatches.map((match) => match.id);
+
         const { data: squadRows } = await supabase
           .from("match_squad")
-          .select("match_id, player_id, player_details(id, slug, efootball_username, real_name, avatar_url)")
-          .in("match_id", ids);
+          .select("match_id, player_id")
+          .in("match_id", externalIds);
 
-        const byMatch: Record<string, any> = {};
-        for (const row of (squadRows ?? []) as any[]) {
-          byMatch[row.match_id] = Array.isArray(row.player_details)
-            ? row.player_details[0]
-            : row.player_details;
+        const { data: goalEntries } = await supabase
+          .from("match_goal_entries")
+          .select("match_id, player_id, goals")
+          .in("match_id", externalIds);
+
+        const goalMap: Record<string, Record<string, number>> = {};
+        for (const entry of goalEntries ?? []) {
+          if (!entry.match_id || !entry.player_id) continue;
+          goalMap[entry.match_id] ??= {};
+          goalMap[entry.match_id][entry.player_id] = Number(entry.goals ?? 0);
         }
 
-        for (const m of externalMatches) {
-          const p = byMatch[m.id];
-          if (!p || m.score_home === null) continue;
-          goalMap[p.id] = (goalMap[p.id] ?? 0) + m.score_home;
-          playerInfo[p.id] = {
-            username: p.efootball_username,
-            realName: p.real_name ?? null,
-            avatarUrl: p.avatar_url,
-            slug: p.slug ?? null,
-          };
-          if (m.score_away !== null && m.score_home > m.score_away) {
-            winMap[p.id] = (winMap[p.id] ?? 0) + 1;
+        for (const match of externalMatches) {
+          for (const row of squadRows ?? []) {
+            if (row.match_id !== match.id || !row.player_id) continue;
+
+            accumulator[row.player_id] ??= { wins: 0, motm: 0, goals: 0 };
+            accumulator[row.player_id].goals += Number(goalMap[match.id]?.[row.player_id] ?? 0);
+
+            if (match.score_home !== null && match.score_away !== null && match.score_home > match.score_away) {
+              accumulator[row.player_id].wins += 1;
+            }
           }
         }
       }
 
-      // 3. Internal tournament matches
-      const { data: tournamentMatches } = await supabase
-        .from("tournament_matches")
-        .select(
-          "player1_id, player2_id, player1_score, player2_score, status, created_at, tournaments!inner(status)"
-        )
-        .eq("status", "completed")
-        .gte("created_at", start);
-
-      if (tournamentMatches && tournamentMatches.length > 0) {
-        const playerIds = Array.from(
-          new Set(
-            tournamentMatches.flatMap((m: any) => [m.player1_id, m.player2_id]).filter(Boolean)
-          )
-        );
-        const { data: playerRows } = await supabase
-          .from("player_details")
-          .select("id, slug, efootball_username, real_name, avatar_url")
-          .in("id", playerIds);
-
-        const playerLookup: Record<string, any> = {};
-        for (const p of playerRows ?? []) playerLookup[p.id] = p;
-
-        for (const m of tournamentMatches as any[]) {
-          if (!m.player1_id || !m.player2_id) continue;
-          if (m.player1_score === null || m.player2_score === null) continue;
-
-          const p1 = playerLookup[m.player1_id];
-          const p2 = playerLookup[m.player2_id];
-          if (p1) {
-            goalMap[p1.id] = (goalMap[p1.id] ?? 0) + m.player1_score;
-            playerInfo[p1.id] = {
-              username: p1.efootball_username,
-              realName: p1.real_name ?? null,
-              avatarUrl: p1.avatar_url,
-              slug: p1.slug ?? null,
-            };
-          }
-          if (p2) {
-            goalMap[p2.id] = (goalMap[p2.id] ?? 0) + m.player2_score;
-            playerInfo[p2.id] = {
-              username: p2.efootball_username,
-              realName: p2.real_name ?? null,
-              avatarUrl: p2.avatar_url,
-              slug: p2.slug ?? null,
-            };
-          }
-          if (m.player1_score > m.player2_score && p1) winMap[p1.id] = (winMap[p1.id] ?? 0) + 1;
-          else if (m.player2_score > m.player1_score && p2) winMap[p2.id] = (winMap[p2.id] ?? 0) + 1;
-        }
-      }
-
-      // 4. MOTM awards (internal + external matches only — tournament fixtures
-      // don't have a MOTM picker yet)
       const { data: motmEvents } = await supabase
         .from("match_events")
-        .select("scorer_id, matches!inner(status, match_date)")
+        .select("scorer_id, created_at")
         .eq("event_type", "motm")
-        .eq("matches.status", "completed")
-        .gte("matches.match_date", start);
+        .gte("created_at", start);
 
-      for (const e of (motmEvents ?? []) as any[]) {
-        if (!e.scorer_id) continue;
-        motmMap[e.scorer_id] = (motmMap[e.scorer_id] ?? 0) + 1;
+      for (const event of motmEvents ?? []) {
+        if (!event.scorer_id) continue;
+        accumulator[event.scorer_id] ??= { wins: 0, motm: 0, goals: 0 };
+        accumulator[event.scorer_id].motm += 1;
       }
 
-      // MOTM লুপে playerInfo সেট হয় না (শুধু scorer_id থাকে) — যাদের গোল/জয়
-      // কোনোটাই এই পিরিয়ডে নেই কিন্তু MOTM আছে, তাদের নাম/এভাটার এখানে আলাদাভাবে আনা হচ্ছে
-      const missingIds = Object.keys(motmMap).filter((id) => !playerInfo[id]);
-      if (missingIds.length > 0) {
-        const { data: missingRows } = await supabase
-          .from("player_details")
-          .select("id, slug, efootball_username, real_name, avatar_url")
-          .in("id", missingIds);
+      const playerIds = Object.keys(accumulator).filter((id) => playerInfo[id]);
+      const ranked = playerIds
+        .map((playerId) => {
+          const info = playerInfo[playerId];
+          const stats = accumulator[playerId];
 
-        for (const p of missingRows ?? []) {
-          playerInfo[p.id] = {
-            username: p.efootball_username,
-            realName: p.real_name ?? null,
-            avatarUrl: p.avatar_url,
-            slug: p.slug ?? null,
-          };
-        }
-      }
+          if (!info || stats.wins + stats.motm + stats.goals <= 0) return null;
 
-      if (!active) return;
-
-      // Rank by (wins + motm) first, tiebreak by goals
-      const allIds = new Set([
-        ...Object.keys(winMap),
-        ...Object.keys(motmMap),
-        ...Object.keys(goalMap),
-      ]);
-
-      const ranked = Array.from(allIds)
-        .map((id) => ({
-          playerId: id,
-          wins: winMap[id] ?? 0,
-          motm: motmMap[id] ?? 0,
-          goals: goalMap[id] ?? 0,
-        }))
-        .filter((p) => p.wins + p.motm + p.goals > 0)
+          return {
+            playerId,
+            username: info.efootball_username,
+            realName: info.real_name ?? null,
+            avatarUrl: info.avatar_url,
+            slug: info.slug ?? null,
+            wins: stats.wins,
+            motm: stats.motm,
+            goals: stats.goals,
+          } satisfies Performer;
+        })
+        .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
         .sort((a, b) => {
           const scoreA = a.wins + a.motm;
           const scoreB = b.wins + b.motm;
@@ -240,13 +211,8 @@ export default function PeriodPerformerCard() {
           return b.goals - a.goals;
         });
 
-      if (ranked.length === 0) {
-        setPerformer(null);
-      } else {
-        const top = ranked[0];
-        setPerformer({ ...top, ...playerInfo[top.playerId] } as Performer);
-      }
-
+      if (!active) return;
+      setPerformer(ranked[0] ?? null);
       setLoading(false);
     }
 
@@ -259,15 +225,15 @@ export default function PeriodPerformerCard() {
   return (
     <div>
       <div className="flex gap-2">
-        {(["weekly", "monthly", "yearly"] as Period[]).map((p) => (
+        {(["weekly", "monthly", "yearly"] as Period[]).map((item) => (
           <button
-            key={p}
-            onClick={() => setPeriod(p)}
+            key={item}
+            onClick={() => setPeriod(item)}
             className={`rounded-lg px-3 py-1.5 text-xs font-bold uppercase transition-colors ${
-              period === p ? "bg-gold text-bg" : "bg-surface-2 text-muted hover:text-white"
+              period === item ? "bg-gold text-bg" : "bg-surface-2 text-muted hover:text-white"
             }`}
           >
-            {periodLabels[p]}
+            {periodLabels[item]}
           </button>
         ))}
       </div>
@@ -278,9 +244,9 @@ export default function PeriodPerformerCard() {
         ) : performer ? (
           <Link
             href={`/players/${performer.slug ?? performer.playerId}`}
-            className="card flex items-center gap-4 border-gold/30 bg-linear-to-r from-gold/10 to-surface p-5"
+            className="card flex flex-col gap-4 border-gold/30 bg-linear-to-r from-gold/10 via-surface to-surface p-4 sm:flex-row sm:items-center sm:p-5"
           >
-            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border-2 border-gold/50 bg-surface-2">
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-gold/50 bg-surface-2 sm:h-14 sm:w-14">
               {performer.avatarUrl ? (
                 <Image
                   src={performer.avatarUrl}
@@ -295,15 +261,31 @@ export default function PeriodPerformerCard() {
                 </div>
               )}
             </div>
-            <div>
+
+            <div className="min-w-0 flex-1">
               <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-gold">
                 <Sparkles size={12} />
                 Top Performer — {periodLabels[period]}
               </p>
-              <p className="mt-1 text-lg font-semibold">{performer.realName || performer.username}</p>
-              <p className="text-xs text-muted">
-                {performer.wins} wins · {performer.motm} MOTM · {performer.goals} goals
+              <p className="mt-1 text-lg font-semibold text-white sm:text-xl">
+                {performer.realName || performer.username}
               </p>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                {[
+                  { label: "Wins", value: performer.wins },
+                  { label: "MOTM", value: performer.motm },
+                  { label: "Goals", value: performer.goals },
+                ].map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-center"
+                  >
+                    <div className="text-[10px] uppercase tracking-wide text-muted">{stat.label}</div>
+                    <div className="text-sm font-bold text-white">{stat.value}</div>
+                  </div>
+                ))}
+              </div>
             </div>
           </Link>
         ) : (

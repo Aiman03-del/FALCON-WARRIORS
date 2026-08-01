@@ -21,10 +21,7 @@ export type LeaderboardEntry = {
 export type LeaderboardScope = "official" | "unofficial";
 
 export type LeaderboardData = {
-  goals: LeaderboardEntry[];
-  winrate: LeaderboardEntry[];
-  motm: LeaderboardEntry[];
-  rating: LeaderboardEntry[];
+  points: LeaderboardEntry[];
 };
 
 type PlayerInfo = {
@@ -448,15 +445,42 @@ export async function getTopRating(
     }));
 }
 
-export async function getLeaderboardData(scope: LeaderboardScope): Promise<LeaderboardData> {
-  const [goals, winrate, motm, rating] = await Promise.all([
-    getTopScorers(scope),
-    getTopWinRate(scope),
-    getTopMotm(scope),
-    getTopRating(scope),
-  ]);
+export async function getTopByPoints(
+  scope: LeaderboardScope = "official",
+  limit = 500
+): Promise<LeaderboardEntry[]> {
+  const stats = await getBaseStats(scope);
+  return stats
+    .filter((s) => s.matches > 0)
+    .map((s) => ({
+      ...s,
+      points: s.wins * 3 + s.draws,
+      winRate: s.matches > 0 ? Math.round((s.wins / s.matches) * 100) : 0,
+    }))
+    // পয়েন্ট অনুযায়ী সাজানো — সমান পয়েন্ট হলে বেশি গোল যার, সে উপরে
+    .sort((a, b) => b.points - a.points || b.goals - a.goals)
+    .slice(0, limit)
+    .map((s) => ({
+      playerId: s.playerId,
+      slug: s.slug,
+      username: s.username,
+      realName: s.realName,
+      avatarUrl: s.avatarUrl,
+      value: s.goals,
+      matches: s.matches,
+      wins: s.wins,
+      draws: s.draws,
+      losses: s.losses,
+      points: s.points,
+      winRate: s.winRate,
+      motm: s.motm,
+      secondary: `${s.wins}W ${s.draws}D ${s.losses}L`,
+    }));
+}
 
-  return { goals, winrate, motm, rating };
+export async function getLeaderboardData(scope: LeaderboardScope): Promise<LeaderboardData> {
+  const points = await getTopByPoints(scope);
+  return { points };
 }
 
 export type Period = "weekly" | "monthly" | "yearly";

@@ -54,7 +54,7 @@ export default async function RecentResults({ results }: { results: Result[] }) 
             {results.map((r) => (
               <Link
                 key={r.id}
-                href={`/matches/${r.id}`}
+                href={`/matches/${r.slug ?? r.id}`}
                 className="card group relative overflow-hidden p-4 transition hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-lg hover:shadow-gold/10 sm:p-5"
               >
                 <div className="mb-3 flex items-center justify-between gap-2">

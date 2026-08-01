@@ -20,6 +20,7 @@ type Performer = {
   avatarUrl?: string | null;
   statLabel: string;
   statValue: string;
+  record?: string;
 };
 
 type Props = {
@@ -151,6 +152,9 @@ export default function FixturesAndPerformers({ tournaments, performers }: Props
                     <p className="text-[10px] uppercase tracking-wide text-gold">
                       {p.statLabel}: {p.statValue}
                     </p>
+                    {p.record && (
+                      <p className="mt-0.5 truncate text-[10px] text-muted">{p.record}</p>
+                    )}
                   </div>
                 </div>
               ))}

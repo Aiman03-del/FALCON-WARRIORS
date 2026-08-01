@@ -8,10 +8,12 @@ function TeamBlock({
   logoUrl,
   isFalcon,
 }: {
-  name: string;
+  name: string | null;
   logoUrl?: string | null;
   isFalcon?: boolean;
 }) {
+  const displayName = name?.trim() || "TBD";
+
   return (
     <div className="flex w-20 flex-col items-center gap-1.5 sm:w-28">
       <div
@@ -20,15 +22,15 @@ function TeamBlock({
         }`}
       >
         {logoUrl ? (
-          <Image src={logoUrl} alt={name} fill sizes="(min-width: 640px) 40px, 36px" className="object-cover" />
+          <Image src={logoUrl} alt={displayName} fill sizes="(min-width: 640px) 40px, 36px" className="object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-surface-2 text-[10px] font-bold text-gold">
-            {name.slice(0, 2).toUpperCase()}
+            {displayName.slice(0, 2).toUpperCase()}
           </div>
         )}
       </div>
       <span className="line-clamp-2 text-center text-xs font-medium leading-tight text-white/90">
-        {name}
+        {displayName}
       </span>
     </div>
   );

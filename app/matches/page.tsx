@@ -98,7 +98,7 @@ export default async function MatchesPage({
               {upcoming.map((m) => {
                 const isLive = m.status === "live";
                 return (
-                  <Link key={m.id} href={`/matches/${m.id}`} className="card block p-4">
+                  <Link key={m.id} href={`/matches/${m.slug ?? m.id}`} className="card block p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-4">
                         <div className="flex w-12 shrink-0 flex-col items-center justify-center rounded-lg bg-surface-2 py-1.5">
@@ -155,7 +155,7 @@ export default async function MatchesPage({
                 return (
                   <MatchResultRow
                     key={m.id}
-                    id={m.id}
+                    id={m.slug ?? m.id}
                     date={m.match_date}
                     competition={m.competition}
                     scoreHome={home}

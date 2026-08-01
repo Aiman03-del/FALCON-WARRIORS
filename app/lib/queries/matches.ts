@@ -11,8 +11,8 @@ export async function getMatches(params: MatchQueryParams = {}) {
 
   let query = supabase
     .from("matches")
-    .select(
-      `id, opponent_name, opponent_tag, opponent_logo_url, competition, round_stage, match_date, status, score_home, score_away, match_type, tournament_id`
+ .select(
+      `id, slug, opponent_name, opponent_tag, opponent_logo_url, competition, round_stage, match_date, status, score_home, score_away, match_type, tournament_id`
     )
     .order("match_date", { ascending: false });
 

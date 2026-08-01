@@ -10,10 +10,12 @@ function Avatar({
   ring,
 }: {
   url?: string | null;
-  fallback: string;
+  fallback: string | null;
   size?: number;
   ring?: boolean;
 }) {
+  const safeFallback = fallback?.trim() || "?";
+
   return (
     <div
       style={{ width: size, height: size }}
@@ -22,13 +24,13 @@ function Avatar({
       }`}
     >
       {url ? (
-        <Image src={url} alt={fallback} fill sizes={`${size}px`} className="object-cover" />
+        <Image src={url} alt={safeFallback} fill sizes={`${size}px`} className="object-cover" />
       ) : (
         <div
           className="flex h-full w-full items-center justify-center font-display font-bold text-gold"
           style={{ fontSize: size * 0.32 }}
         >
-          {fallback.slice(0, 2).toUpperCase()}
+          {safeFallback.slice(0, 2).toUpperCase()}
         </div>
       )}
     </div>
@@ -89,7 +91,7 @@ export default async function PublicMatchBoard({ match }: { match: PublicMatchDe
               fallback={match.opponent_name}
               size={52}
             />
-            <span className="text-sm font-semibold text-white">{match.opponent_name}</span>
+            <span className="text-sm font-semibold text-white">{match.opponent_name || "TBD"}</span>
           </div>
         </div>
 
@@ -152,12 +154,12 @@ export default async function PublicMatchBoard({ match }: { match: PublicMatchDe
 
                   {/* Opponent slot */}
                   <div className="flex min-w-0 flex-1 items-center justify-end gap-2.5">
-                    <span
+               <span
                       className={`truncate text-right text-sm font-medium ${
                         oppWin ? "text-white" : "text-white/70"
                       }`}
                     >
-                      {b.opponent_label}
+                      {b.opponent_label || "Opponent"}
                     </span>
                     <Avatar
                       url={b.opponent_logo_url}
