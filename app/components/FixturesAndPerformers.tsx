@@ -148,13 +148,9 @@ export default function FixturesAndPerformers({ tournaments, performers }: Props
                     <Link href={`/players/${p.slug ?? p.id}`} className="block truncate text-sm font-semibold text-white hover:text-gold">
                       {p.name}
                     </Link>
-                    <p className="text-[10px] text-muted">@{p.username}</p>
                     <p className="text-[10px] uppercase tracking-wide text-gold">
-                      {p.statLabel}: {p.statValue}
+                      {p.statValue} {p.statLabel}
                     </p>
-                    {p.record && (
-                      <p className="mt-0.5 truncate text-[10px] text-muted">{p.record}</p>
-                    )}
                   </div>
                 </div>
               ))}
