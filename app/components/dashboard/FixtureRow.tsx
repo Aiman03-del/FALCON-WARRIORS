@@ -115,6 +115,7 @@ export default function FixtureRow({
           player2_score: score2,
           winner_id: winnerId,
           status: "completed",
+          completed_at: new Date().toISOString(),
         })
         .eq("id", match.id);
 

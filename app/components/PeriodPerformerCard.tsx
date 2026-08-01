@@ -110,9 +110,9 @@ export default function PeriodPerformerCard() {
 
       const { data: tournamentMatches } = await supabase
         .from("tournament_matches")
-        .select("player1_id, player2_id, player1_score, player2_score, created_at")
+        .select("player1_id, player2_id, player1_score, player2_score, completed_at")
         .eq("status", "completed")
-        .gte("created_at", start);
+        .gte("completed_at", start);
 
       for (const match of tournamentMatches ?? []) {
         if (match.player1_score === null || match.player2_score === null) continue;
@@ -141,6 +141,7 @@ export default function PeriodPerformerCard() {
       if (externalMatches && externalMatches.length > 0) {
         const externalIds = externalMatches.map((match) => match.id);
 
+        // পুরনো সিস্টেম — match_squad + match_goal_entries (কিছু পুরনো ম্যাচ এখনো এভাবে সেভ থাকতে পারে)
         const { data: squadRows } = await supabase
           .from("match_squad")
           .select("match_id, player_id")
@@ -168,6 +169,27 @@ export default function PeriodPerformerCard() {
             if (match.score_home !== null && match.score_away !== null && match.score_home > match.score_away) {
               accumulator[row.player_id].wins += 1;
             }
+          }
+        }
+
+        // নতুন/আসল সিস্টেম — match_squad_battles (CurrentRoundBoard থেকে সেভ হয়, প্রতি
+        // প্লেয়ারের নিজস্ব ব্যাটল স্কোর, জয়-হার এখান থেকেই আসল হিসাব হওয়া উচিত)
+        const { data: battles } = await supabase
+          .from("match_squad_battles")
+          .select("match_id, falcon_player_id, falcon_score, opponent_score")
+          .in("match_id", externalIds)
+          .not("falcon_player_id", "is", null)
+          .not("falcon_score", "is", null)
+          .not("opponent_score", "is", null);
+
+        for (const b of battles ?? []) {
+          if (!b.falcon_player_id) continue;
+
+          accumulator[b.falcon_player_id] ??= { wins: 0, motm: 0, goals: 0 };
+          accumulator[b.falcon_player_id].goals += Number(b.falcon_score ?? 0);
+
+          if (Number(b.falcon_score) > Number(b.opponent_score)) {
+            accumulator[b.falcon_player_id].wins += 1;
           }
         }
       }
