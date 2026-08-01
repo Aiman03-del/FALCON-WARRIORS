@@ -4,6 +4,7 @@ import { getSiteSettings } from "@/app/lib/queries/siteSettings";
 
 type Result = {
   id: string;
+  slug?: string | null;
   competition: string;
   isOfficial?: boolean;
   opponent: string;
