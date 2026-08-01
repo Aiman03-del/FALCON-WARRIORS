@@ -1,11 +1,22 @@
-import { ArrowRight, Calendar, Crown, ExternalLink, MapPin, UserCog, Users } from 'lucide-react';
+import { ArrowRight, Calendar, Crown, ExternalLink, MapPin, UserCog, UserCircle, Users } from 'lucide-react';
 import FillButton from "./FillButton";
 import OutlineButton from "./OutlineButton";
 import { getSiteSettings } from "@/app/lib/queries/siteSettings";
+import { createClient } from "@/app/lib/supabase/server";
 import { FaFacebook } from 'react-icons/fa';
 
 export default async function Hero() {
   const { foundedYear, location, presidentName, managerName } = await getSiteSettings();
+
+  // লগইন করা থাকলে "Join the Club"-এর বদলে "My Profile" দেখাবে
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const primaryCta = user
+    ? { href: "/profile", label: "My Profile", icon: UserCircle }
+    : { href: "/register", label: "Join the Club", icon: Users };
 
   const infoItems = [
     { icon: Calendar, label: "Founded", value: foundedYear },
@@ -55,9 +66,9 @@ export default async function Hero() {
           </p>
 
           <div className="relative mt-5 flex w-full max-w-105 flex-col gap-2.5 sm:mt-6 sm:flex-row sm:justify-center">
-            <FillButton href="/register" className="w-full sm:w-auto">
-              <Users size={16} />
-              <span>Join the Club</span>
+            <FillButton href={primaryCta.href} className="w-full sm:w-auto">
+              <primaryCta.icon size={16} />
+              <span>{primaryCta.label}</span>
               <ArrowRight size={16} className="sm:hidden" />
             </FillButton>
             <OutlineButton
