@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import { MapPin, Briefcase, GraduationCap, Shirt, Flag, Star, ArrowLeft, Pencil } from "lucide-react";
+import { MapPin, Briefcase, GraduationCap, Shirt, Flag, Star, Trophy, Pencil } from "lucide-react";
 import { getPlayerBySlug } from "@/app/lib/queries/players";
 import { getPlayerForm } from "@/app/lib/queries/playerForm";
+import { getPlayerBallonDorHistory } from "@/app/lib/queries/ballonDor";
 import Navbar from "@/app/components/Navbar";
 import PlayerStatsGrid from "@/app/components/PlayerStatsGrid";
 import RecentFormStrip from "@/app/components/RecentFormStrip";
@@ -34,6 +35,7 @@ export default async function PlayerProfilePage({
   const isOwner = !!user && player.profile_id === user.id;
 
   const form = await getPlayerForm(player.id);
+  const { wins: ballonDorWins, nominations: ballonDorNominations } = await getPlayerBallonDorHistory(player.id);
 
   const stats = normalizeStats(player.player_stats);
 
@@ -54,7 +56,7 @@ export default async function PlayerProfilePage({
       <Navbar />
       <section className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
         {/* Back link */}
-<BackLink href="/players" label="Back to Roster" />
+        <BackLink href="/players" label="Back to Roster" />
 
         {/* Profile Header */}
         <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start">
@@ -75,9 +77,20 @@ export default async function PlayerProfilePage({
           </div>
 
           <div className="text-center sm:text-left">
-            <h1 className="font-display text-2xl font-bold uppercase tracking-wide sm:text-3xl">
-              {displayName}
-            </h1>
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+              <h1 className="font-display text-2xl font-bold uppercase tracking-wide sm:text-3xl">
+                {displayName}
+              </h1>
+              {ballonDorWins.length > 0 && (
+                <span
+                  title={`Ballon d'Or winner: ${ballonDorWins.join(", ")}`}
+                  className="flex items-center gap-1 rounded-full border border-gold/50 bg-gold/15 px-2.5 py-1 text-xs font-bold text-gold"
+                >
+                  <Trophy size={13} fill="currentColor" />
+                  {ballonDorWins.length > 1 ? `×${ballonDorWins.length}` : ballonDorWins[0]}
+                </span>
+              )}
+            </div>
             {secondaryName && (
               <p className="mt-1 text-sm text-muted">{secondaryName}</p>
             )}
@@ -106,6 +119,50 @@ export default async function PlayerProfilePage({
             )}
           </div>
         </div>
+
+        {/* Ballon d'Or history */}
+        {(ballonDorWins.length > 0 || ballonDorNominations.length > 0) && (
+          <div className="mt-8 sm:mt-10">
+            <div className="section-divider" />
+            <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-bold uppercase tracking-wide sm:text-xl">
+              <Trophy size={18} className="text-gold" />
+              Ballon d'Or
+            </h2>
+            <div className="card flex flex-col gap-4 p-4 sm:p-5">
+              {ballonDorWins.length > 0 && (
+                <div>
+                  <p className="mb-2 text-xs font-bold uppercase tracking-wide text-gold">Winner</p>
+                  <div className="flex flex-wrap gap-2">
+                    {ballonDorWins.map((year) => (
+                      <span
+                        key={year}
+                        className="flex items-center gap-1.5 rounded-full border border-gold/50 bg-gold/15 px-3 py-1.5 text-sm font-bold text-gold"
+                      >
+                        <Trophy size={13} fill="currentColor" />
+                        {year}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {ballonDorNominations.length > 0 && (
+                <div>
+                  <p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted">Nominated</p>
+                  <div className="flex flex-wrap gap-2">
+                    {ballonDorNominations.map((year) => (
+                      <span
+                        key={year}
+                        className="rounded-full border border-border bg-surface-2 px-3 py-1.5 text-sm font-medium text-white/80"
+                      >
+                        {year}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="mt-8 sm:mt-10">
