@@ -311,7 +311,7 @@ export default function RegisterPage() {
 
                 <div>
                   <label className="mb-1 block text-xs font-medium text-muted">
-                    Real Name <span className="normal-case text-gold/70">(Facebook profile name)</span>
+                    Your Name
                   </label>
                   <input
                     type="text"

@@ -172,11 +172,10 @@ export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
             required
           />
           <Field
-            label="Real Name"
+            label="Your Name"
             value={form.real_name}
             onChange={(v) => update("real_name", v)}
             placeholder="John Doe"
-            hint="Please enter the name shown on your Facebook profile."
           />
           <Field
             label="Age"
