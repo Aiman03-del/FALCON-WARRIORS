@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, LayoutDashboard, Menu, X, UserCircle2, Search } from "lucide-react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import FillButton from "./FillButton";
 import SearchBar from "@/app/components/SearchBar";
 import Skeleton from "./Skeleton";
@@ -94,6 +96,11 @@ export default function Navbar() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
+  const headerRef = useRef<HTMLElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const searchPanelRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     getSiteSettings().then((s) => setLogoUrl(s.logoUrl));
   }, []);
@@ -165,8 +172,71 @@ export default function Navbar() {
 
   const profileHref = profile?.slug ? `/players/${profile.slug}` : "/profile";
 
+  // Header entrance — runs once on mount
+  useGSAP(
+    () => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+      gsap.from(headerRef.current, {
+        y: -24,
+        opacity: 0,
+        duration: 0.6,
+        ease: "power3.out",
+      });
+    },
+    { scope: headerRef }
+  );
+
+  // Mobile menu open/close animation
+  useGSAP(
+    () => {
+      if (!menuOpen || !mobileMenuRef.current) return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+      gsap.fromTo(
+        mobileMenuRef.current,
+        { opacity: 0, y: -12 },
+        { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" }
+      );
+    },
+    { dependencies: [menuOpen], revertOnUpdate: true }
+  );
+
+  // Search panel open animation
+  useGSAP(
+    () => {
+      if (!searchOpen || !searchPanelRef.current) return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+      gsap.fromTo(
+        searchPanelRef.current,
+        { opacity: 0, y: -10 },
+        { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }
+      );
+    },
+    { dependencies: [searchOpen], revertOnUpdate: true }
+  );
+
+  // User dropdown open animation
+  useGSAP(
+    () => {
+      if (!userMenuOpen || !userMenuRef.current) return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+      gsap.fromTo(
+        userMenuRef.current,
+        { opacity: 0, y: -8, scale: 0.96, transformOrigin: "top right" },
+        { opacity: 1, y: 0, scale: 1, duration: 0.22, ease: "power2.out" }
+      );
+    },
+    { dependencies: [userMenuOpen], revertOnUpdate: true }
+  );
+
   return (
-    <header className="sticky top-0 z-50 w-full overflow-x-clip border-b border-border bg-bg/85 backdrop-blur-md">
+    <header
+      ref={headerRef}
+      className="sticky top-0 z-50 w-full overflow-x-clip border-b border-border bg-bg/85 backdrop-blur-md"
+    >
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
         <Link href="/" className="flex shrink-0 items-center gap-2.5">
           <Image
@@ -210,7 +280,10 @@ export default function Navbar() {
               </button>
 
               {userMenuOpen && (
-                <div className="absolute right-0 mt-2 w-52 rounded-xl border border-border bg-surface p-1.5 shadow-lg">
+                <div
+                  ref={userMenuRef}
+                  className="absolute right-0 mt-2 w-52 rounded-xl border border-border bg-surface p-1.5 shadow-lg"
+                >
                   <div className="mb-1.5 rounded-lg border border-border bg-bg/70 px-3 py-2">
                     <p className="text-sm font-semibold text-white">{profile.username}</p>
                   </div>
@@ -275,7 +348,7 @@ export default function Navbar() {
       </div>
 
       {searchOpen && (
-        <div className="hidden border-t border-border px-3 sm:px-4 md:px-6 py-3 xl:block">
+        <div ref={searchPanelRef} className="hidden border-t border-border px-3 sm:px-4 md:px-6 py-3 xl:block">
           <div className="mx-auto max-w-7xl">
             <SearchBar />
           </div>
@@ -283,7 +356,7 @@ export default function Navbar() {
       )}
 
       {menuOpen && (
-        <div className="border-t border-border px-4 py-3 sm:px-6 xl:hidden">
+        <div ref={mobileMenuRef} className="border-t border-border px-4 py-3 sm:px-6 xl:hidden">
           <div className="mb-3">
             <SearchBar />
           </div>

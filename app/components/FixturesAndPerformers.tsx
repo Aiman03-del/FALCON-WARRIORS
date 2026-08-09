@@ -1,5 +1,15 @@
+"use client";
+
+import { useRef } from "react";
 import Link from "next/link";
 import { Layers, Trophy } from "lucide-react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 type Tournament = {
   id: string;
@@ -53,6 +63,51 @@ function getTournamentStatusClass(status: Tournament["status"]) {
 }
 
 export default function FixturesAndPerformers({ tournaments, performers }: Props) {
+  const tournamentsRef = useRef<HTMLDivElement>(null);
+  const performersRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    if (tournamentsRef.current) {
+      const cards = gsap.utils.toArray<HTMLElement>(".tournament-card", tournamentsRef.current);
+      if (cards.length > 0) {
+        gsap.from(cards, {
+          opacity: 0,
+          x: -20,
+          duration: 0.5,
+          ease: "power2.out",
+          stagger: 0.08,
+          clearProps: "transform",
+          scrollTrigger: {
+            trigger: tournamentsRef.current,
+            start: "top 85%",
+            once: true,
+          },
+        });
+      }
+    }
+
+    if (performersRef.current) {
+      const cards = gsap.utils.toArray<HTMLElement>(".performer-card", performersRef.current);
+      if (cards.length > 0) {
+        gsap.from(cards, {
+          opacity: 0,
+          y: 20,
+          duration: 0.5,
+          ease: "power2.out",
+          stagger: 0.08,
+          clearProps: "transform",
+          scrollTrigger: {
+            trigger: performersRef.current,
+            start: "top 85%",
+            once: true,
+          },
+        });
+      }
+    }
+  }, { dependencies: [tournaments, performers] });
+
   return (
     <section className="border-b border-border">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:px-6 sm:py-14 md:grid-cols-2">
@@ -71,12 +126,12 @@ export default function FixturesAndPerformers({ tournaments, performers }: Props
           {tournaments.length === 0 ? (
             <p className="text-sm text-muted">No tournaments available right now.</p>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div ref={tournamentsRef} className="flex flex-col gap-3">
               {tournaments.map((t) => (
                 <Link
                   key={t.id}
                   href={`/tournaments/${t.slug ?? t.id}`}
-                  className="card group flex items-center justify-between gap-3 p-3 transition hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-lg hover:shadow-gold/10 sm:p-4"
+                  className="tournament-card card group flex items-center justify-between gap-3 p-3 transition hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-lg hover:shadow-gold/10 sm:p-4"
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gold/15 text-gold sm:h-12 sm:w-12">
@@ -128,9 +183,9 @@ export default function FixturesAndPerformers({ tournaments, performers }: Props
           {performers.length === 0 ? (
             <p className="text-sm text-muted">No matches played yet — check back once results are in.</p>
           ) : (
-            <div className="grid grid-cols-1 gap-3 xs:grid-cols-2 sm:grid-cols-2">
+            <div ref={performersRef} className="grid grid-cols-1 gap-3 xs:grid-cols-2 sm:grid-cols-2">
               {performers.map((p) => (
-                <div key={p.id || p.name} className="card flex items-center gap-3 p-3 sm:p-4">
+                <div key={p.id || p.name} className="performer-card card flex items-center gap-3 p-3 sm:p-4">
                   <Link
                     href={`/players/${p.slug ?? p.id}`}
                     className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gold/15"
