@@ -62,6 +62,7 @@ export default function HeroContent({
           const tl = gsap.timeline({
             defaults: { ease: "power3.out", duration: isMobile ? 0.5 : 0.7 },
           });
+          const ctaTargets = rootRef.current?.querySelectorAll<HTMLElement>(".hero-cta");
 
           tl.from(".hero-ticker", { opacity: 0, y: -12 })
             .from(
@@ -70,7 +71,12 @@ export default function HeroContent({
               "-=0.2"
             )
             .from(".hero-tagline", { opacity: 0, y: 16 }, "-=0.45")
-            .from(".hero-cta", { opacity: 0, y: 16, stagger: 0.08 }, "-=0.4")
+            .fromTo(
+              ctaTargets || [],
+              { opacity: 0, y: 16 },
+              { opacity: 1, y: 0, stagger: 0.08 },
+              "-=0.4"
+            )
             .from(
               ".hero-info-strip",
               { opacity: 0, y: isMobile ? 16 : 24 },
@@ -123,14 +129,14 @@ export default function HeroContent({
         </p>
 
         <div className="relative mt-5 flex w-full max-w-105 flex-col gap-2.5 sm:mt-6 sm:flex-row sm:justify-center">
-          <FillButton href={primaryCta.href} className="hero-cta w-full sm:w-auto">
+          <FillButton href={primaryCta.href} className="hero-cta relative z-10 w-full translate-y-0 opacity-100 sm:w-auto">
             <PrimaryIcon size={16} />
             <span>{primaryCta.label}</span>
             <ArrowRight size={16} className="sm:hidden" />
           </FillButton>
           <OutlineButton
             href="https://www.facebook.com/profile.php?id=61579023831850"
-            className="hero-cta w-full gap-2 sm:w-auto"
+            className="hero-cta relative z-10 w-full translate-y-0 opacity-100 gap-2 sm:w-auto"
           >
             <FaFacebook size={16} />
             <span>Facebook</span>
