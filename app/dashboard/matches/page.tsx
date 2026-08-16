@@ -57,7 +57,7 @@ export default function MatchesPage() {
         return;
       }
 
-      const normalizedOfficial = (officialMatches ?? []).map((m) => ({
+      const normalizedOfficial = (officialMatches ?? []).map((m: any) => ({
         id: m.id,
         slug: m.slug,
         kind: "official" as const,
@@ -70,7 +70,7 @@ export default function MatchesPage() {
         score_away: m.score_away,
       }));
 
-      const normalizedInternal = (internalMatches ?? []).map((m) => {
+      const normalizedInternal = (internalMatches ?? []).map((m: any) => {
         const p1 = Array.isArray(m.player1) ? m.player1[0] : m.player1;
         const p2 = Array.isArray(m.player2) ? m.player2[0] : m.player2;
         const tournamentName = Array.isArray(m.tournaments) ? m.tournaments[0]?.name : m.tournaments?.name;
