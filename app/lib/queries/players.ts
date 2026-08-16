@@ -52,3 +52,18 @@ export async function getPlayerBySlug(slug: string) {
   if (error || !data) return null;
   return data;
 }
+export async function getOfficialTournamentPlayers() {
+  const supabase = await createServerClient();
+
+  const { data, error } = await supabase
+    .from("player_details")
+    .select(
+      "id, slug, efootball_username, real_name, avatar_url, platform, rank_division, membership_status"
+    )
+    .eq("membership_status", "active")
+    .eq("is_academic_player", true)
+    .order("efootball_username");
+
+  if (error || !data) return [];
+  return data;
+}

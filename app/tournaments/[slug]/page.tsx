@@ -26,6 +26,7 @@ import { notFound } from "next/navigation";
 type JoinedPlayer = {
   id: string;
   efootball_username: string;
+  real_name?: string | null;
   avatar_url?: string | null;
 };
 
@@ -51,7 +52,7 @@ function computeChampion({
     const finalMatch = finalMatches[0];
     if (finalMatch.status === "bye") {
       const p = getJoinedPlayer(finalMatch.player1);
-      return p ? { name: p.efootball_username, avatarUrl: p.avatar_url ?? null, subtitle: "Tournament Champion" } : null;
+      return p ? { name: p.real_name?.trim() || p.efootball_username, avatarUrl: p.avatar_url ?? null, subtitle: "Tournament Champion" } : null;
     }
     if (finalMatch.status !== "completed") return null;
     const s1 = finalMatch.player1_score;
@@ -60,7 +61,7 @@ function computeChampion({
     const winner = getJoinedPlayer(s1 > s2 ? finalMatch.player1 : finalMatch.player2);
     if (!winner) return null;
     return {
-      name: winner.efootball_username,
+      name: winner.real_name?.trim() || winner.efootball_username,
       avatarUrl: winner.avatar_url ?? null,
       subtitle: `Won the Final ${s1} - ${s2}`,
     };
@@ -80,7 +81,7 @@ function computeChampion({
     const player = getJoinedPlayer((top as TournamentParticipant | undefined)?.player_details);
     if (!player) return null;
     return {
-      name: player.efootball_username,
+      name: player.real_name?.trim() || player.efootball_username,
       avatarUrl: player.avatar_url ?? null,
       subtitle: `League Champion · ${top.points} pts`,
     };
@@ -232,7 +233,7 @@ export default async function TournamentDetailPage({
           </h2>
           <div className="card flex items-center justify-between p-4 text-sm">
             <span className="font-medium">
-              {thirdPlaceMatch?.player1?.efootball_username ?? "TBD"}
+              {thirdPlaceMatch?.player1?.real_name?.trim() || thirdPlaceMatch?.player1?.efootball_username || "TBD"}
             </span>
             <span className="text-muted">
               {thirdPlaceMatch?.status === "completed"

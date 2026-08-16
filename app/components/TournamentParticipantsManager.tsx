@@ -7,7 +7,7 @@ type Participant = {
   id: string;
   playerId: string;
   status: "pending" | "approved" | "rejected";
-  player?: { efootball_username: string };
+  player?: { efootball_username: string; real_name?: string | null };
 };
 
 type Props = {
@@ -68,7 +68,9 @@ export default function TournamentParticipantsManager({
             {approved.map((p) => (
               <div key={p.id} className="card flex items-center justify-between gap-3 p-3">
                 <div>
-                  <p className="font-semibold">{p.player?.efootball_username || `Player ${p.playerId.slice(0, 4)}`}</p>
+                  <p className="font-semibold">
+                    {p.player?.real_name?.trim() || p.player?.efootball_username || `Player ${p.playerId.slice(0, 4)}`}
+                  </p>
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="rounded-full bg-indigo/20 px-2 py-1 text-xs font-semibold text-indigo-light">
@@ -98,7 +100,9 @@ export default function TournamentParticipantsManager({
             {pending.map((p) => (
               <div key={p.id} className="card flex items-center justify-between gap-3 p-3">
                 <div>
-                  <p className="font-semibold">{p.player?.efootball_username || `Player ${p.playerId.slice(0, 4)}`}</p>
+                  <p className="font-semibold">
+                    {p.player?.real_name?.trim() || p.player?.efootball_username || `Player ${p.playerId.slice(0, 4)}`}
+                  </p>
                   <p className="text-xs text-muted">Awaiting approval</p>
                 </div>
                 {isAdmin && (
@@ -131,7 +135,9 @@ export default function TournamentParticipantsManager({
             {rejected.map((p) => (
               <div key={p.id} className="card flex items-center justify-between gap-3 p-3">
                 <div>
-                  <p className="font-semibold">{p.player?.efootball_username || `Player ${p.playerId.slice(0, 4)}`}</p>
+                  <p className="font-semibold">
+                    {p.player?.real_name?.trim() || p.player?.efootball_username || `Player ${p.playerId.slice(0, 4)}`}
+                  </p>
                   <p className="text-xs text-muted">Request rejected</p>
                 </div>
                 <button

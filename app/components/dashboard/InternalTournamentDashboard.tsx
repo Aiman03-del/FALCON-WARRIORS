@@ -39,29 +39,37 @@ export default async function InternalTournamentDashboard({
   const { data: participantsRaw } = await supabase
     .from("tournament_participants")
     .select(
-      "id, player_id, group_name, points, status, matches_played, wins, draws, losses, goals_for, goals_against, player_details(efootball_username)"
+      "id, player_id, group_name, points, status, matches_played, wins, draws, losses, goals_for, goals_against, player_details(efootball_username, real_name)"
     )
     .eq("tournament_id", tournamentId);
 
   const { data: approvedParticipantsRaw } = await supabase
     .from("tournament_participants")
-    .select("player_id, group_name, player_details(id, efootball_username, avatar_url)")
+    .select("player_id, group_name, player_details(id, efootball_username, real_name, avatar_url)")
     .eq("tournament_id", tournamentId)
     .eq("status", "approved");
 
   const { data: allPlayers } = await supabase
     .from("player_details")
-    .select("id, efootball_username")
+    .select("id, efootball_username, real_name")
     .order("efootball_username");
 
   const participants = (approvedParticipantsRaw ?? [])
     .map((p: any) => {
       const pd = Array.isArray(p.player_details) ? p.player_details[0] : p.player_details;
       return pd
-        ? { id: pd.id, username: pd.efootball_username, avatar_url: pd.avatar_url ?? null }
+        ? {
+            id: pd.id,
+            username: pd.efootball_username,
+            real_name: pd.real_name ?? null,
+            avatar_url: pd.avatar_url ?? null,
+          }
         : null;
     })
-    .filter((p): p is { id: string; username: string; avatar_url: string | null } => !!p);
+    .filter(
+      (p): p is { id: string; username: string; real_name: string | null; avatar_url: string | null } =>
+        !!p
+    );
 
   const { data: matches } = await supabase
     .from("tournament_matches")
@@ -98,10 +106,10 @@ export default async function InternalTournamentDashboard({
     return {
       ...m,
       player1: p1
-        ? { efootball_username: p1.username, avatar_url: p1.avatar_url }
+        ? { efootball_username: p1.username, real_name: p1.real_name, avatar_url: p1.avatar_url }
         : (m.player1 ?? null),
       player2: p2
-        ? { efootball_username: p2.username, avatar_url: p2.avatar_url }
+        ? { efootball_username: p2.username, real_name: p2.real_name, avatar_url: p2.avatar_url }
         : (m.player2 ?? null),
     };
   };

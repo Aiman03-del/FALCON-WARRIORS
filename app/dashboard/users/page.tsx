@@ -10,6 +10,7 @@ type Player = {
   efootball_username: string;
   membership_status: string;
   join_date: string;
+  is_academic_player: boolean;
   profiles: { role: string } | { role: string }[] | null;
 };
 
@@ -23,10 +24,6 @@ export default function UsersPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [role, setRole] = useState<string>("player");
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
 
   async function fetchUsers() {
     const supabase = createClient();
@@ -46,12 +43,20 @@ export default function UsersPage() {
 
     const { data } = await supabase
       .from("player_details")
-      .select("id, profile_id, efootball_username, membership_status, join_date, profiles(role)")
+      .select(
+        "id, profile_id, efootball_username, membership_status, join_date, is_academic_player, profiles(role)"
+      )
       .order("join_date", { ascending: false });
 
-    setPlayers((data ?? []) as any);
+    setPlayers((data ?? []) as Player[]);
     setLoading(false);
   }
+
+  useEffect(() => {
+    void (async () => {
+      await fetchUsers();
+    })();
+  }, []);
 
   const staff = players.filter((p) => getRole(p) === "admin" || getRole(p) === "moderator");
   const regularPlayers = players.filter((p) => getRole(p) === "player");
@@ -95,7 +100,7 @@ export default function UsersPage() {
       {loading ? (
         <p className="mt-6 text-sm text-muted">Loading...</p>
       ) : (
-        <UsersTable players={filtered} isAdmin={isAdmin} />
+        <UsersTable players={filtered} isAdmin={isAdmin} onRefresh={fetchUsers} />
       )}
     </div>
   );

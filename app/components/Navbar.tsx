@@ -18,10 +18,7 @@ const navLinks = [
   { label: "Players", href: "/players" },
   { label: "Matches", href: "/matches" },
   { label: "Tournaments", href: "/tournaments" },
-  { label: "Achievements", href: "/achievements" },
-  { label: "Ballon d'Or", href: "/ballon-dor" },
   { label: "Leaderboards", href: "/leaderboards" },
-  { label: "News", href: "/news" },
 ];
 
 function isActiveNavLink(pathname: string, href: string) {
@@ -109,8 +106,14 @@ export default function Navbar() {
     let isMounted = true;
 
     function handleClickOutside(event: MouseEvent) {
-      const target = event.target as HTMLElement;
-      if (!target.closest("[data-user-menu]")) {
+      const target = event.target as Node | null;
+      if (!(target instanceof Element)) return;
+
+      const clickedInsideMenu =
+        target.closest("[data-user-menu-trigger]") ||
+        target.closest("[data-user-menu-panel]");
+
+      if (!clickedInsideMenu) {
         setUserMenuOpen(false);
       }
     }
@@ -235,7 +238,7 @@ export default function Navbar() {
   return (
     <header
       ref={headerRef}
-      className="sticky top-0 z-50 w-full overflow-x-clip border-b border-border bg-bg/85 backdrop-blur-md"
+      className="sticky top-0 z-50 w-full overflow-visible border-b border-border bg-bg/85 backdrop-blur-md"
     >
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
         <Link href="/" className="flex shrink-0 items-center gap-2.5">
@@ -268,11 +271,12 @@ export default function Navbar() {
           {loading ? (
             <Skeleton width="4.5rem" height="2rem" className="hidden rounded-full sm:block" />
           ) : profile ? (
-            <div className="relative hidden sm:block" data-user-menu>
+            <div className="relative hidden sm:block">
               <button
                 type="button"
                 onClick={() => setUserMenuOpen((open) => !open)}
                 aria-label="Open user menu"
+                data-user-menu-trigger
                 data-suspension-allowed
                 className="flex h-8 w-8 items-center justify-center rounded-full text-white hover:bg-surface-2 hover:text-gold"
               >
@@ -282,7 +286,8 @@ export default function Navbar() {
               {userMenuOpen && (
                 <div
                   ref={userMenuRef}
-                  className="absolute right-0 mt-2 w-52 rounded-xl border border-border bg-surface p-1.5 shadow-lg"
+                  data-user-menu-panel
+                  className="absolute right-0 z-50 mt-2 w-52 rounded-xl border border-border bg-surface p-1.5 shadow-lg"
                 >
                   <div className="mb-1.5 rounded-lg border border-border bg-bg/70 px-3 py-2">
                     <p className="text-sm font-semibold text-white">{profile.username}</p>

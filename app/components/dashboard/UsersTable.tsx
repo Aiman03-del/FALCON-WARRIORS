@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { createClient } from "@/app/lib/supabase/client";
 import ConfirmActionButton from "@/app/components/ConfirmActionButton";
@@ -14,6 +13,7 @@ type Player = {
   real_name?: string | null;
   membership_status: string;
   join_date: string;
+  is_academic_player: boolean; 
   profiles: { role: string } | { role: string }[] | null;
 };
 
@@ -25,19 +25,20 @@ function getRole(p: Player) {
 export default function UsersTable({
   players,
   isAdmin,
+  onRefresh,
 }: {
   players: Player[];
   isAdmin: boolean;
+  onRefresh: () => void | Promise<void>;
 }) {
   const supabase = createClient();
-  const router = useRouter();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   async function updateRole(profileId: string, role: string) {
     setUpdatingId(profileId);
     await supabase.from("profiles").update({ role }).eq("id", profileId);
     setUpdatingId(null);
-    router.refresh();
+    await onRefresh();
   }
 
   async function updateStatus(playerId: string, status: string) {
@@ -47,7 +48,17 @@ export default function UsersTable({
       .update({ membership_status: status })
       .eq("id", playerId);
     setUpdatingId(null);
-    router.refresh();
+    await onRefresh();
+  }
+
+  async function toggleAcademicPlayer(playerId: string, current: boolean) {
+    setUpdatingId(playerId);
+    await supabase
+      .from("player_details")
+      .update({ is_academic_player: !current })
+      .eq("id", playerId);
+    setUpdatingId(null);
+    await onRefresh();
   }
 
   async function handleDelete(playerId: string) {
@@ -55,7 +66,7 @@ export default function UsersTable({
     if (!result.ok) {
       throw new Error(result.error);
     }
-    router.refresh();
+    await onRefresh();
   }
 
   return (
@@ -123,6 +134,14 @@ export default function UsersTable({
                         className="btn-outline-sm disabled:opacity-50"
                       >
                         {p.membership_status === "active" ? "Suspend" : "Reactivate"}
+                      </button>
+
+                      <button
+                        disabled={busy}
+                        onClick={() => toggleAcademicPlayer(p.id, p.is_academic_player)}
+                        className="btn-outline-sm disabled:opacity-50"
+                      >
+                        {p.is_academic_player ? "Remove Academic" : "Make Academic"}
                       </button>
 
                       <ConfirmActionButton

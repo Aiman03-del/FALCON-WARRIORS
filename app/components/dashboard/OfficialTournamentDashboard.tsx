@@ -30,7 +30,7 @@ export default async function OfficialTournamentDashboard({
 
   const { data: squadRows } = await supabase
     .from("tournament_squad")
-    .select("player_details(id, efootball_username, avatar_url)")
+    .select("player_details(id, efootball_username, real_name, avatar_url)")
     .eq("tournament_id", tournamentId);
 
   const falconSquad = (squadRows ?? [])
@@ -51,22 +51,23 @@ export default async function OfficialTournamentDashboard({
     const { data: battleRows } = await supabase
       .from("match_squad_battles")
       .select(
-        "id, falcon_player_id, opponent_label, opponent_logo_url, falcon_score, opponent_score, player_details:falcon_player_id(efootball_username)"
+        "id, falcon_player_id, opponent_label, opponent_logo_url, falcon_score, opponent_score, player_details:falcon_player_id(efootball_username, real_name)"
       )
       .eq("match_id", currentMatch.id)
       .order("battle_order");
 
-    currentBattles = (battleRows ?? []).map((b: any) => ({
-      id: b.id,
-      falcon_player_id: b.falcon_player_id,
-      falcon_username: Array.isArray(b.player_details)
-        ? b.player_details[0]?.efootball_username
-        : b.player_details?.efootball_username ?? "Unknown",
-      opponent_label: b.opponent_label,
-      opponent_logo_url: b.opponent_logo_url,
-      falcon_score: b.falcon_score,
-      opponent_score: b.opponent_score,
-    }));
+    currentBattles = (battleRows ?? []).map((b: any) => {
+      const pd = Array.isArray(b.player_details) ? b.player_details[0] : b.player_details;
+      return {
+        id: b.id,
+        falcon_player_id: b.falcon_player_id,
+        falcon_username: pd?.real_name?.trim() || pd?.efootball_username || "Unknown",
+        opponent_label: b.opponent_label,
+        opponent_logo_url: b.opponent_logo_url,
+        falcon_score: b.falcon_score,
+        opponent_score: b.opponent_score,
+      };
+    });
   }
 
   const roundsContent = (
@@ -106,7 +107,7 @@ export default async function OfficialTournamentDashboard({
       <div className="card divide-y divide-border">
         {falconSquad.map((player: any) => (
           <div key={player.id} className="flex items-center justify-between px-4 py-3 text-sm">
-            <span className="font-medium">{player.efootball_username}</span>
+            <span className="font-medium">{player.real_name?.trim() || player.efootball_username}</span>
           </div>
         ))}
       </div>

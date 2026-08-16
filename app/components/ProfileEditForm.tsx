@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Gamepad, Laptop, Smartphone } from "lucide-react";
 import { createClient } from "@/app/lib/supabase/client";
 import FillButton from "@/app/components/FillButton";
 import ImageUploadInput from "@/app/components/ImageUploadInput";
