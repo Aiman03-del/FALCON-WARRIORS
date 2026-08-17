@@ -71,3 +71,53 @@ export async function getMyProfile() {
     player_stats: playerDetails?.player_stats ?? null,
   };
 }
+export async function getPlayerBySlug(slug: string) {
+  const supabase = await createClient();
+
+  const { data: playerDetails, error } = await supabase
+    .from("player_details")
+    .select(
+      `id, profile_id, slug, efootball_username, real_name, age, country, city,
+       supported_club, national_team, favorite_player, education, profession,
+       platform, rank_division, avatar_url, join_date,
+       membership_status, is_academic_player,
+       player_stats(goals, assists, matches, wins, draws, losses, motm_count),
+       profiles(role)`
+    )
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[profile-debug] getPlayerBySlug error:", error);
+  }
+
+  if (!playerDetails) return null;
+
+  const role = Array.isArray(playerDetails.profiles)
+    ? playerDetails.profiles[0]?.role ?? "player"
+    : (playerDetails.profiles as { role: string } | null)?.role ?? "player";
+
+  return {
+    id: playerDetails.id,
+    profile_id: playerDetails.profile_id,
+    slug: playerDetails.slug,
+    efootball_username: playerDetails.efootball_username,
+    real_name: playerDetails.real_name,
+    age: playerDetails.age,
+    country: playerDetails.country,
+    city: playerDetails.city,
+    supported_club: playerDetails.supported_club,
+    national_team: playerDetails.national_team,
+    favorite_player: playerDetails.favorite_player,
+    education: playerDetails.education,
+    profession: playerDetails.profession,
+    platform: playerDetails.platform,
+    rank_division: playerDetails.rank_division,
+    avatar_url: playerDetails.avatar_url,
+    join_date: playerDetails.join_date,
+    membership_status: playerDetails.membership_status,
+    is_academic_player: playerDetails.is_academic_player,
+    player_stats: playerDetails.player_stats,
+    role,
+  };
+}

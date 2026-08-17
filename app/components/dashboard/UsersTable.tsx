@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { createClient } from "@/app/lib/supabase/client";
@@ -9,6 +10,7 @@ import { deleteUserAccount } from "@/app/lib/actions/deleteUser";
 type Player = {
   id: string;
   profile_id: string;
+  slug: string;
   efootball_username: string;
   real_name?: string | null;
   avatar_url?: string | null;
@@ -91,7 +93,10 @@ export default function UsersTable({
             return (
               <tr key={p.id} className="border-b border-border last:border-0">
                 <td className="px-4 py-3 font-medium">
-                  <div className="flex items-center gap-2.5">
+                  <Link
+                    href={`/dashboard/users/${p.slug}`}
+                    className="flex items-center gap-2.5 hover:underline"
+                  >
                     <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-surface-2">
                       {p.avatar_url ? (
                         <Image
@@ -107,7 +112,7 @@ export default function UsersTable({
                       )}
                     </div>
                     <span>{displayName}</span>
-                  </div>
+                  </Link>
                 </td>
                 <td className="px-4 py-3">
                   <span className="rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-bold uppercase text-gold">

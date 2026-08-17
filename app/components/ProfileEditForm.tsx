@@ -34,7 +34,13 @@ type PlayerDetails = {
   avatar_url: string | null;
 };
 
-export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
+export default function ProfileEditForm({
+  player,
+  redirectTo = "/profile",
+}: {
+  player: PlayerDetails;
+  redirectTo?: string;
+}) {
   const supabase = createClient();
   const router = useRouter();
   const { isSuspended } = useAccountStatus();
@@ -94,6 +100,11 @@ export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
       return;
     }
 
+    // যদি অ্যাডমিন অন্য কারো প্রোফাইল এডিট করে, targetProfileId হবে সেই ইউজারের নিজস্ব profile_id।
+    // নিজের প্রোফাইল এডিট করলে targetProfileId === user.id
+    const targetProfileId = player.profile_id || user.id;
+    const isOwnProfile = targetProfileId === user.id;
+
     const payload = {
       efootball_username: form.username.trim(),
       real_name: form.real_name || null,
@@ -109,22 +120,24 @@ export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
       avatar_url: avatarUrl || null,
     };
 
-    // Update auth user_metadata (keeps metadata in sync)
-    const { error: updateUserError } = await supabase.auth.updateUser({
-      data: payload,
-    });
+    // নিজের প্রোফাইল হলেই auth user_metadata আপডেট হবে (অন্য কারো auth মেটাডেটা ক্লায়েন্ট থেকে বদলানো যায় না)
+    if (isOwnProfile) {
+      const { error: updateUserError } = await supabase.auth.updateUser({
+        data: payload,
+      });
 
-    if (updateUserError) {
-      setLoading(false);
-      setError(updateUserError.message);
-      return;
+      if (updateUserError) {
+        setLoading(false);
+        setError(updateUserError.message);
+        return;
+      }
     }
 
     // Upsert into player_details so the profile page always reads fresh data
     const { error: upsertError } = await supabase
       .from("player_details")
       .upsert(
-        { ...payload, profile_id: user.id },
+        { ...payload, profile_id: targetProfileId },
         { onConflict: "profile_id" }
       );
 
@@ -135,7 +148,7 @@ export default function ProfileEditForm({ player }: { player: PlayerDetails }) {
       return;
     }
 
-    router.push("/profile");
+    router.push(redirectTo);
     router.refresh();
   }
 

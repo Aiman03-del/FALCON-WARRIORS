@@ -7,6 +7,7 @@ import { createClient } from "@/app/lib/supabase/client";
 type Player = {
   id: string;
   profile_id: string;
+  slug: string;
   efootball_username: string;
   real_name?: string | null;
   avatar_url?: string | null;
@@ -43,12 +44,12 @@ export default function UsersPage() {
       setRole(myProfile?.role ?? "player");
     }
 
-   const { data } = await supabase
-  .from("player_details")
-  .select(
-    "id, profile_id, efootball_username, real_name, avatar_url, membership_status, join_date, is_academic_player, profiles(role)"
-  )
-.order("join_date", { ascending: false });
+    const { data } = await supabase
+      .from("player_details")
+      .select(
+        "id, profile_id, slug, efootball_username, real_name, avatar_url, membership_status, join_date, is_academic_player, profiles(role)"
+      )
+      .order("join_date", { ascending: false });
 
     setPlayers((data ?? []) as Player[]);
     setLoading(false);
