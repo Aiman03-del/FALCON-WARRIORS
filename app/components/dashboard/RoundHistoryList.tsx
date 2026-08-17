@@ -29,7 +29,7 @@ function TeamBlock({
     <div className="flex w-28 flex-col items-center">
       <div className={`relative h-14 w-14 overflow-hidden rounded-full border ${isFalcon ? "border-gold" : "border-white/10"}`}>
         {logoUrl ? (
-          <Image src={logoUrl} alt={safeName} fill className="object-cover" />
+          <Image src={logoUrl} alt={safeName} fill sizes="56px" className="object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-surface-2 text-gold font-bold">
             {safeName.slice(0,2).toUpperCase()}

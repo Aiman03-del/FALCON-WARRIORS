@@ -103,6 +103,7 @@ export default function UsersTable({
                           src={p.avatar_url}
                           alt={displayName}
                           fill
+                          sizes="32px"
                           className="object-cover"
                         />
                       ) : (
