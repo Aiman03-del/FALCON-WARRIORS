@@ -36,7 +36,7 @@ type CurrentBattle = {
   falcon_player_id: string | null;
   falcon_username: string;
   falcon_avatar_url: string | null;
-  opponent_label: string | null;
+  opponent_label: string;
   opponent_logo_url: string | null;
   falcon_score: number | null;
   opponent_score: number | null;
@@ -70,7 +70,11 @@ export default async function OfficialTournamentDashboard({
 
   const falconSquad = ((squadRows as SquadRow[] | null) ?? [])
     .map((s) => (Array.isArray(s.player_details) ? s.player_details[0] : s.player_details))
-    .filter((player): player is FalconSquadPlayer => Boolean(player));
+    .filter((player): player is FalconSquadPlayer => Boolean(player))
+    .map((player) => ({
+      ...player,
+      efootball_username: player.efootball_username?.trim() || "Unknown",
+    }));
 
   const { data: matches } = await supabase
     .from("matches")
@@ -98,7 +102,7 @@ export default async function OfficialTournamentDashboard({
         falcon_player_id: b.falcon_player_id,
         falcon_username: pd?.real_name?.trim() || pd?.efootball_username || "Unknown",
         falcon_avatar_url: pd?.avatar_url ?? null,
-        opponent_label: b.opponent_label,
+        opponent_label: b.opponent_label ?? "TBD",
         opponent_logo_url: b.opponent_logo_url,
         falcon_score: b.falcon_score,
         opponent_score: b.opponent_score,
