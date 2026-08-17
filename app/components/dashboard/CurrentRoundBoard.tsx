@@ -14,6 +14,7 @@ type Battle = {
   id: string;
   falcon_player_id: string | null;
   falcon_username: string;
+  falcon_avatar_url?: string | null;
   opponent_label: string;
   opponent_logo_url: string | null;
   falcon_score: number | null;
@@ -456,7 +457,7 @@ export default function CurrentRoundBoard({
             >
               <div className="flex items-center gap-3">
                 <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                  <Avatar url={null} fallback={r.falcon_username} size={32} />
+                  <Avatar url={r.falcon_avatar_url ?? null} fallback={r.falcon_username} size={32} />
                   <span className={`truncate text-sm font-medium ${falconLeading ? "text-white" : "text-white/80"}`}>
                     {r.falcon_username}
                   </span>

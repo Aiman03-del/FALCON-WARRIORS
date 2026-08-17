@@ -7,7 +7,12 @@ import { createClient } from "@/app/lib/supabase/client";
 import { recalcAllPlayerStats } from "@/app/lib/matches/recalcPlayerStats";
 import SelectField from "../SelectField";
 
-type PlayerOption = { id: string; efootball_username: string; avatar_url?: string | null };
+type PlayerOption = {
+  id: string;
+  efootball_username: string;
+  real_name?: string | null;
+  avatar_url?: string | null;
+};
 
 type Props = {
   matchId: string;
@@ -49,9 +54,9 @@ function PlayerTile({
       }`}
     >
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface text-[10px] font-bold text-gold">
-        {player.efootball_username.slice(0, 2).toUpperCase()}
+        {(player.real_name?.trim() || player.efootball_username).slice(0, 2).toUpperCase()}
       </div>
-      <span className="truncate flex-1">{player.efootball_username}</span>
+      <span className="truncate flex-1">{player.real_name?.trim() || player.efootball_username}</span>
       {selected && <Check size={15} className="text-gold shrink-0" />}
     </button>
   );
@@ -367,7 +372,7 @@ export default function MatchResultForm({
 
           {status === "completed" && matchType === "external" && playedEntries.length > 0 && (
             <div className="mt-4 flex flex-col gap-2">
-              <p className="text-xs font-medium text-muted">Enter each player's goals and rating</p>
+              <p className="text-xs font-medium text-muted">Enter each player&apos;s goals and rating</p>
               {playedEntries.map((entry) => {
                 const p = rosterPool.find((x) => x.id === entry.playerId);
                 return (
@@ -375,7 +380,9 @@ export default function MatchResultForm({
                     key={entry.playerId}
                     className="grid grid-cols-[1fr_80px_80px] items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2"
                   >
-                    <span className="truncate text-sm">{p?.efootball_username ?? "Unknown"}</span>
+                    <span className="truncate text-sm">
+                      {p?.real_name?.trim() || p?.efootball_username || "Unknown"}
+                    </span>
                     <input
                       type="number"
                       min={0}
