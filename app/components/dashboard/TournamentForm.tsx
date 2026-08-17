@@ -67,10 +67,7 @@ type TournamentFormProps = {
 };
 
 
-
-type PlayerOption = { id: string; efootball_username: string };
-
-
+type PlayerOption = { id: string; efootball_username: string; real_name?: string | null };
 
 function toDateInputValue(value: string | null) {
 
@@ -166,15 +163,11 @@ export default function TournamentForm({
 
   useEffect(() => {
 
-    supabase
-
-      .from("player_details")
-
-      .select("id, efootball_username")
-
-      .order("efootball_username")
-
-      .then(({ data }) => setPlayers(data ?? []));
+  supabase
+  .from("player_details")
+  .select("id, efootball_username, real_name")
+  .order("efootball_username")
+  .then(({ data }) => setPlayers(data ?? []));
 
 
 

@@ -6,6 +6,7 @@ import { Check, ChevronDown, Search, X } from "lucide-react";
 type PlayerOption = {
   id: string;
   efootball_username: string;
+  real_name?: string | null;
 };
 
 type SquadSelectorProps = {
@@ -21,12 +22,20 @@ export default function SquadSelector({ players, selected, onChange, label = "Of
   const containerRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
+  function nameOf(player: PlayerOption) {
+    return player.real_name?.trim() || player.efootball_username;
+  }
+
   const filteredPlayers = useMemo(() => {
     const query = search.trim().toLowerCase();
 
     if (!query) return players;
 
-    return players.filter((player) => player.efootball_username.toLowerCase().includes(query));
+    return players.filter(
+      (player) =>
+        player.efootball_username.toLowerCase().includes(query) ||
+        (player.real_name ?? "").toLowerCase().includes(query)
+    );
   }, [players, search]);
 
   useEffect(() => {
@@ -59,7 +68,7 @@ export default function SquadSelector({ players, selected, onChange, label = "Of
   const selectedPlayers = players.filter((player) => selected.includes(player.id));
   const summary =
     selectedPlayers.length > 0
-      ? selectedPlayers.map((player) => player.efootball_username).join(", ")
+      ? selectedPlayers.map((player) => nameOf(player)).join(", ")
       : "Select players";
 
   return (
@@ -120,7 +129,7 @@ export default function SquadSelector({ players, selected, onChange, label = "Of
                       checked ? "text-gold" : "text-white/90"
                     }`}
                   >
-                    <span>{player.efootball_username}</span>
+                    <span>{nameOf(player)}</span>
                     {checked && <Check size={14} />}
                   </button>
                 );
