@@ -1,5 +1,5 @@
 "use client";
-
+import Image from "next/image";
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { createClient } from "@/app/lib/supabase/client";
@@ -11,9 +11,10 @@ type Player = {
   profile_id: string;
   efootball_username: string;
   real_name?: string | null;
+  avatar_url?: string | null;
   membership_status: string;
   join_date: string;
-  is_academic_player: boolean; 
+  is_academic_player: boolean;
   profiles: { role: string } | { role: string }[] | null;
 };
 
@@ -89,7 +90,25 @@ export default function UsersTable({
 
             return (
               <tr key={p.id} className="border-b border-border last:border-0">
-                <td className="px-4 py-3 font-medium">{displayName}</td>
+                <td className="px-4 py-3 font-medium">
+                  <div className="flex items-center gap-2.5">
+                    <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-surface-2">
+                      {p.avatar_url ? (
+                        <Image
+                          src={p.avatar_url}
+                          alt={displayName}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[11px] font-bold text-muted">
+                          {displayName.slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <span>{displayName}</span>
+                  </div>
+                </td>
                 <td className="px-4 py-3">
                   <span className="rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-bold uppercase text-gold">
                     {role}
