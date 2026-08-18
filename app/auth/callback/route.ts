@@ -91,7 +91,5 @@ export async function GET(request: Request) {
    * The register page will detect the active Google
    * session and show the "Finish Setup" form.
    */
-  return NextResponse.redirect(
-    `${origin}/register?complete=1`
-  );
+  return NextResponse.redirect(`${origin}/register`);
 }
