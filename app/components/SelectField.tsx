@@ -79,6 +79,8 @@ export default function SelectField({
       <button
         type="button"
         disabled={disabled}
+        aria-required={required}
+        required={required}
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center justify-between rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-left text-sm outline-none focus:border-white/30 disabled:opacity-50"
       >

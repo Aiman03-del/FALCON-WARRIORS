@@ -117,14 +117,33 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    const trimmedUsername = username.trim();
+    const trimmedRealName = realName.trim();
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+
+    if (
+      !trimmedUsername ||
+      !trimmedRealName ||
+      !trimmedEmail ||
+      (!isCompletingGoogleProfile && !trimmedPassword) ||
+      !country ||
+      !city ||
+      !platform
+    ) {
+      setError("Please fill in all required fields: username, full name, email, country, city, and platform.");
+      return;
+    }
+
     setLoading(true);
 
     // ── Path 1: finishing registration after Google sign-in ──
     if (mode === "completeProfile" && googleUserId) {
       const { error: updateError } = await supabase.auth.updateUser({
         data: {
-          efootball_username: username,
-          real_name: realName,
+          efootball_username: trimmedUsername,
+          real_name: trimmedRealName,
           country,
           city,
           platform,
@@ -138,15 +157,18 @@ export default function RegisterPage() {
         return;
       }
 
-      const { error: insertError } = await supabase.from("player_details").insert({
-        profile_id: googleUserId,
-        efootball_username: username,
-        real_name: realName || null,
-        country: country || null,
-        city: city || null,
-        platform: platform || null,
-        avatar_url: avatarUrl || null,
-      });
+      const { error: insertError } = await supabase.from("player_details").upsert(
+        {
+          profile_id: googleUserId,
+          efootball_username: trimmedUsername,
+          real_name: trimmedRealName || null,
+          country: country || null,
+          city: city || null,
+          platform: platform || null,
+          avatar_url: avatarUrl || null,
+        },
+        { onConflict: "profile_id" }
+      );
 
       setLoading(false);
 
@@ -162,13 +184,13 @@ export default function RegisterPage() {
 
     // ── Path 2: normal email/password registration ──
     const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
+email: trimmedEmail,
+        password: trimmedPassword,
+        options: {
         emailRedirectTo: "https://falcon-warriors.vercel.app/",
         data: {
-          efootball_username: username,
-          real_name: realName,
+          efootball_username: trimmedUsername,
+          real_name: trimmedRealName,
           country,
           city,
           platform,
@@ -193,8 +215,26 @@ export default function RegisterPage() {
     }
 
     // Email confirmation is disabled in this project, so signUp already
-    // returns an active session — log the user straight in.
-    if (data.session) {
+    // returns an active session — create the player profile row before redirecting.
+    if (data.session && data.user) {
+      const { error: insertError } = await supabase.from("player_details").upsert(
+        {
+          profile_id: data.user.id,
+          efootball_username: trimmedUsername,
+          real_name: trimmedRealName || null,
+          country: country || null,
+          city: city || null,
+          platform: platform || null,
+          avatar_url: avatarUrl || null,
+        },
+        { onConflict: "profile_id" }
+      );
+
+      if (insertError) {
+        setError(insertError.message);
+        return;
+      }
+
       router.replace("/");
       router.refresh();
       return;
@@ -353,7 +393,7 @@ export default function RegisterPage() {
 
                   <div>
                     <label className="mb-2 block text-[11px] font-bold uppercase tracking-[0.18em] text-muted">
-                      Full Name
+                      Full Name <span className="text-red-400">*</span>
                     </label>
                     <div className="relative">
                       <User
@@ -362,6 +402,7 @@ export default function RegisterPage() {
                       />
                       <input
                         type="text"
+                        required
                         value={realName}
                         onChange={(e) => setRealName(e.target.value)}
                         className="w-full rounded-xl border border-border bg-surface py-3 pl-10 pr-4 text-sm text-white outline-none transition-all duration-200 placeholder:text-muted/70 hover:border-border/80 focus:border-gold/60 focus:ring-2 focus:ring-gold/20"
@@ -433,6 +474,7 @@ export default function RegisterPage() {
                       options={COUNTRIES}
                       placeholder="Select"
                       searchable
+                      required
                       className="w-full"
                     />
 
@@ -448,6 +490,7 @@ export default function RegisterPage() {
                             : []
                       }
                       placeholder={country ? "Select" : "Country first"}
+                      required
                       className="w-full"
                     />
                   </div>
@@ -458,6 +501,7 @@ export default function RegisterPage() {
                     onChange={setPlatform}
                     options={PLATFORMS}
                     placeholder="Select Platform"
+                    required
                     className="w-full"
                   />
 
