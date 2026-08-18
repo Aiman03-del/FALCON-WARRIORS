@@ -54,9 +54,27 @@ function GoogleIcon() {
   );
 }
 
+function getGoogleProfileData(userMetadata?: Record<string, unknown>) {
+  const metadata = (userMetadata ?? {}) as Record<string, unknown>;
+
+  const googleName =
+    (typeof metadata.full_name === "string" && metadata.full_name.trim()) ||
+    (typeof metadata.name === "string" && metadata.name.trim()) ||
+    "";
+
+  const googleAvatar =
+    (typeof metadata.avatar_url === "string" && metadata.avatar_url.trim()) ||
+    (typeof metadata.picture === "string" && metadata.picture.trim()) ||
+    "";
+
+  return {
+    googleName,
+    googleAvatar,
+  };
+}
+
 export default function RegisterPage() {
   const router = useRouter();
-  
 
   const supabase = createClient();
 
@@ -165,22 +183,20 @@ export default function RegisterPage() {
       const meta =
         (user.user_metadata ?? {}) as Record<
           string,
-          string | undefined
+          unknown
         >;
 
-      const fullName =
-        meta.full_name ||
-        meta.name ||
-        "";
+      const { googleName, googleAvatar } =
+        getGoogleProfileData(meta);
 
       const firstName =
-        fullName.trim().split(/\s+/)[0] || "";
+        googleName.trim().split(/\s+/)[0] || "";
 
       setGoogleUserId(user.id);
 
       setEmail(user.email ?? "");
 
-      setRealName(fullName);
+      setRealName(googleName);
 
       /*
        * We only use Google's name as a suggestion.
@@ -188,15 +204,12 @@ export default function RegisterPage() {
        * The user can edit it.
        */
       setUsername(
-        meta.efootball_username ||
-          firstName
+        (typeof meta.efootball_username === "string"
+          ? meta.efootball_username
+          : "") || firstName
       );
 
-      setAvatarUrl(
-        meta.avatar_url ||
-          meta.picture ||
-          ""
-      );
+      setAvatarUrl(googleAvatar);
 
       setMode("completeProfile");
 
@@ -293,26 +306,43 @@ export default function RegisterPage() {
         return;
       }
 
+      const finalGoogleUsername = username.trim();
+      const finalGoogleRealName = realName.trim();
+      const finalGoogleAvatarUrl = avatarUrl.trim();
+
+      const { data: existingGoogleProfile, error: existingGoogleProfileError } =
+        await supabase
+          .from("player_details")
+          .select("id")
+          .eq("profile_id", googleUserId)
+          .maybeSingle();
+
+      if (existingGoogleProfileError) {
+        console.error(
+          "Google profile existence check error:",
+          existingGoogleProfileError
+        );
+      }
+
+      if (existingGoogleProfile) {
+        setLoading(false);
+        router.replace("/");
+        router.refresh();
+        return;
+      }
+
       /*
        * Update Supabase Auth metadata.
        */
       const { error: updateError } =
         await supabase.auth.updateUser({
           data: {
-            efootball_username:
-              username.trim(),
-
-            real_name:
-              realName.trim(),
-
+            efootball_username: finalGoogleUsername,
+            real_name: finalGoogleRealName,
             country,
-
             city,
-
             platform,
-
-            avatar_url:
-              avatarUrl || null,
+            avatar_url: finalGoogleAvatarUrl || null,
           },
         });
 
@@ -322,6 +352,16 @@ export default function RegisterPage() {
         return;
       }
 
+      const finalGoogleProfilePayload = {
+        profile_id: googleUserId,
+        efootball_username: finalGoogleUsername,
+        real_name: finalGoogleRealName || null,
+        country: country || null,
+        city: city || null,
+        platform: platform || null,
+        avatar_url: finalGoogleAvatarUrl || null,
+      };
+
       /*
        * Create player_details record.
        *
@@ -330,27 +370,7 @@ export default function RegisterPage() {
       const { error: insertError } =
         await supabase
           .from("player_details")
-          .insert({
-            profile_id: googleUserId,
-
-            efootball_username:
-              username.trim(),
-
-            real_name:
-              realName.trim() || null,
-
-            country:
-              country || null,
-
-            city:
-              city || null,
-
-            platform:
-              platform || null,
-
-            avatar_url:
-              avatarUrl || null,
-          });
+          .insert(finalGoogleProfilePayload);
 
       setLoading(false);
 

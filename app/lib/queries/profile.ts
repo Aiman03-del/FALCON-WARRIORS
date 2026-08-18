@@ -24,6 +24,15 @@ export async function getMyProfile() {
     .maybeSingle();
 
   const metadata = (user.user_metadata ?? {}) as Record<string, any>;
+  const googleName =
+    metadata.full_name ||
+    metadata.name ||
+    metadata.real_name ||
+    "";
+  const googleAvatar =
+    metadata.avatar_url ||
+    metadata.picture ||
+    "";
 
   if (error && error.code !== "PGRST116") {
     console.error("[profile-debug] playerDetails error:", error);
@@ -34,13 +43,13 @@ export async function getMyProfile() {
     const seedPayload = {
       profile_id: user.id,
       efootball_username: metadata.efootball_username || user.email?.split("@")[0] || "Player",
-      real_name: metadata.real_name || null,
+      real_name: googleName || null,
       country: metadata.country || null,
       city: metadata.city || null,
       supported_club: metadata.supported_club || null,
       national_team: metadata.national_team || null,
       platform: metadata.platform || null,
-      avatar_url: metadata.avatar_url || null,
+      avatar_url: googleAvatar || null,
     };
     const { error: seedError } = await supabase
       .from("player_details")
@@ -54,7 +63,7 @@ export async function getMyProfile() {
     id: playerDetails?.id ?? "",
     profile_id: playerDetails?.profile_id ?? user.id,
     efootball_username: playerDetails?.efootball_username || metadata.efootball_username || user.email?.split("@")[0] || "Player",
-    real_name: playerDetails?.real_name || metadata.real_name || null,
+    real_name: playerDetails?.real_name || googleName || null,
     age: playerDetails?.age ?? metadata.age ?? null,
     country: playerDetails?.country || metadata.country || null,
     city: playerDetails?.city || metadata.city || null,
@@ -65,7 +74,7 @@ export async function getMyProfile() {
     profession: playerDetails?.profession || metadata.profession || null,
     platform: playerDetails?.platform || metadata.platform || null,
     rank_division: playerDetails?.rank_division || metadata.rank_division || null,
-    avatar_url: playerDetails?.avatar_url || metadata.avatar_url || null,
+    avatar_url: playerDetails?.avatar_url || googleAvatar || null,
     join_date: playerDetails?.join_date || metadata.join_date || null,
     membership_status: playerDetails?.membership_status || metadata.membership_status || null,
     player_stats: playerDetails?.player_stats ?? null,

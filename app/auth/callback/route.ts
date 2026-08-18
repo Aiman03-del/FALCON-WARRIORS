@@ -45,6 +45,16 @@ export async function GET(request: Request) {
     );
   }
 
+  const metadata = (user.user_metadata ?? {}) as Record<string, unknown>;
+  const googleName =
+    (typeof metadata.full_name === "string" && metadata.full_name.trim()) ||
+    (typeof metadata.name === "string" && metadata.name.trim()) ||
+    "";
+  const googleAvatar =
+    (typeof metadata.avatar_url === "string" && metadata.avatar_url.trim()) ||
+    (typeof metadata.picture === "string" && metadata.picture.trim()) ||
+    "";
+
   /*
    * Check whether this authenticated user already has
    * a player profile in player_details.
