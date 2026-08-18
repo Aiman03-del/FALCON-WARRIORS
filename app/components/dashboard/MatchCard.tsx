@@ -12,6 +12,9 @@ const statusStyles: Record<string, string> = {
 type MatchCardProps = {
   id: string;
   slug?: string | null;
+  kind?: "official" | "internal";
+  homeName?: string;
+  homeLogoUrl?: string | null;
   opponentName: string | null;
   opponentLogoUrl?: string | null;
   competition?: string | null;
@@ -25,6 +28,9 @@ type MatchCardProps = {
 export default function MatchCard({
   id,
   slug,
+  kind = "official",
+  homeName,
+  homeLogoUrl,
   opponentName,
   opponentLogoUrl,
   competition,
@@ -64,17 +70,39 @@ export default function MatchCard({
         <div className="flex flex-1 items-center justify-between gap-4">
           {/* Home Team */}
           <div className="flex flex-1 flex-col items-center justify-center gap-2">
-            <div className="relative h-12 w-12 overflow-hidden rounded-full border-2 border-gold/60 bg-gold/10 shadow-[0_0_14px_rgba(212,175,55,0.25)]">
-              <Image
-                src={logoUrl}
-                alt="Falcon Warriors"
-                fill
-                sizes="48px"
-                className="object-cover"
-              />
+            <div
+              className={`relative h-12 w-12 overflow-hidden rounded-full ${
+                kind === "internal"
+                  ? "bg-surface-2 border border-border"
+                  : "border-2 border-gold/60 bg-gold/10 shadow-[0_0_14px_rgba(212,175,55,0.25)]"
+              }`}
+            >
+              {kind === "internal" ? (
+                homeLogoUrl ? (
+                  <Image
+                    src={homeLogoUrl}
+                    alt={homeName?.trim() ? homeName : "Player"}
+                    fill
+                    sizes="48px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center font-display text-xs font-bold text-white/70">
+                    {homeName?.trim() ? homeName.slice(0, 2).toUpperCase() : "?"}
+                  </div>
+                )
+              ) : (
+                <Image
+                  src={logoUrl}
+                  alt="Falcon Warriors"
+                  fill
+                  sizes="48px"
+                  className="object-cover"
+                />
+              )}
             </div>
             <span className="max-w-full truncate text-center text-xs font-semibold leading-tight text-foreground">
-              Falcon Warriors
+              {kind === "internal" ? (homeName?.trim() ? homeName : "TBD") : "Falcon Warriors"}
             </span>
           </div>
 

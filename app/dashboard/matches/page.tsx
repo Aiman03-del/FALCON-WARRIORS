@@ -10,6 +10,8 @@ type MatchItem = {
   id: string;
   slug: string | null;
   kind: "official" | "internal";
+  home_name?: string;
+  home_avatar_url?: string | null;
   opponent_name: string;
   opponent_logo_url: string | null;
   competition: string | null;
@@ -45,7 +47,7 @@ export default function MatchesPage() {
       const { data: internalMatches, error: err2 } = await supabase
         .from("tournament_matches")
         .select(
-          "id, round, status, player1_score, player2_score, created_at, tournament_id, tournaments!inner(type, name), player1:player1_id(efootball_username), player2:player2_id(efootball_username)"
+          "id, round, status, player1_score, player2_score, created_at, tournament_id, tournaments!inner(type, name), player1:player1_id(efootball_username, real_name, avatar_url), player2:player2_id(efootball_username, real_name, avatar_url)"
         )
         .eq("tournaments.type", "internal")
         .order("created_at", { ascending: false });
@@ -75,12 +77,16 @@ export default function MatchesPage() {
         const p1 = Array.isArray(m.player1) ? m.player1[0] : m.player1;
         const p2 = Array.isArray(m.player2) ? m.player2[0] : m.player2;
         const tournamentName = Array.isArray(m.tournaments) ? m.tournaments[0]?.name : m.tournaments?.name;
+        const p1Name = p1?.real_name?.trim() || p1?.efootball_username || "TBD";
+        const p2Name = p2?.real_name?.trim() || p2?.efootball_username || "TBD";
         return {
           id: m.id,
           slug: null,
           kind: "internal" as const,
-          opponent_name: `${p1?.efootball_username ?? "?"} vs ${p2?.efootball_username ?? "?"}`,
-          opponent_logo_url: null,
+          home_name: p1Name,
+          home_avatar_url: p1?.avatar_url ?? null,
+          opponent_name: p2Name,
+          opponent_logo_url: p2?.avatar_url ?? null,
           competition: tournamentName ?? `Round ${m.round}`,
           match_date: m.created_at,
           status: m.status,
@@ -159,6 +165,9 @@ export default function MatchesPage() {
             key={m.id}
             id={m.id}
             slug={m.slug}
+            kind={m.kind}
+            homeName={m.home_name}
+            homeLogoUrl={m.home_avatar_url}
             logoUrl={logoUrl}
             opponentName={m.opponent_name}
             opponentLogoUrl={m.opponent_logo_url}

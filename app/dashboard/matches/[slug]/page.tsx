@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import MatchResultForm from "@/app/components/dashboard/MatchResultForm";
 import CurrentRoundBoard from "@/app/components/dashboard/CurrentRoundBoard";
 import { requireStaff } from "@/app/lib/queries/dashboard";
@@ -21,7 +21,27 @@ export default async function ManageMatchPage({
     .eq("slug", slug)
     .single();
 
-  if (!match) notFound();
+  if (!match) {
+    // matches টেবিলে না পেলে, এটা হয়তো একটা unofficial (tournament_matches) ম্যাচ —
+    // সেক্ষেত্রে id হিসেবে param এসেছে, slug হিসেবে না
+    const { data: internalMatch } = await supabase
+      .from("tournament_matches")
+      .select("id, tournament_id, tournaments!inner(slug)")
+      .eq("id", slug)
+      .single();
+
+    if (internalMatch) {
+      const tournament = Array.isArray(internalMatch.tournaments)
+        ? internalMatch.tournaments[0]
+        : internalMatch.tournaments;
+
+      if (tournament?.slug) {
+        redirect(`/dashboard/tournaments/${tournament.slug}`);
+      }
+    }
+
+    notFound();
+  }
 
   const p1 = Array.isArray(match.player1) ? match.player1[0] : match.player1;
   const p2 = Array.isArray(match.player2) ? match.player2[0] : match.player2;
