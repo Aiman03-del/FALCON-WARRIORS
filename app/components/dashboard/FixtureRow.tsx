@@ -7,7 +7,12 @@ import { createClient } from "@/app/lib/supabase/client";
 import { recalcStandings } from "@/app/lib/fixtures/recalcStandings";
 import { recalcAllPlayerStats } from "@/app/lib/matches/recalcPlayerStats";
 
-type PlayerOption = { id: string; username: string; avatar_url?: string | null };
+type PlayerOption = {
+  id: string;
+  username: string;
+  real_name?: string | null;
+  avatar_url?: string | null;
+};
 
 type Match = {
   id: string;
@@ -47,7 +52,8 @@ export default function FixtureRow({
 
   function nameOf(id: string | null) {
     if (!id) return "— BYE —";
-    return allParticipants.find((p) => p.id === id)?.username ?? "Unknown";
+    const player = allParticipants.find((p) => p.id === id);
+    return player?.real_name?.trim() || player?.username || "Unknown";
   }
 
   function avatarUrlOf(id: string | null) {
@@ -179,7 +185,7 @@ export default function FixtureRow({
               <option value="">— None —</option>
               {allParticipants.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.username}
+                  {p.real_name?.trim() || p.username}
                 </option>
               ))}
             </select>
@@ -194,7 +200,7 @@ export default function FixtureRow({
               <option value="">— None —</option>
               {allParticipants.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.username}
+                  {p.real_name?.trim() || p.username}
                 </option>
               ))}
             </select>

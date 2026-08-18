@@ -21,12 +21,19 @@ type Participant = {
   losses: number;
   goals_for: number;
   goals_against: number;
-  player_details: { efootball_username: string } | { efootball_username: string }[] | null;
+  player_details:
+    | { efootball_username: string; real_name?: string | null }
+    | { efootball_username: string; real_name?: string | null }[]
+    | null;
 };
 
 function getUsername(p: Participant) {
-  if (Array.isArray(p.player_details)) return p.player_details[0]?.efootball_username ?? "—";
-  return p.player_details?.efootball_username ?? "—";
+  if (Array.isArray(p.player_details)) {
+    const pd = p.player_details[0];
+    return pd?.real_name?.trim() || pd?.efootball_username || "—";
+  }
+
+  return p.player_details?.real_name?.trim() || p.player_details?.efootball_username || "—";
 }
 
 function getDisplayName(player: { efootball_username: string; real_name?: string | null }) {

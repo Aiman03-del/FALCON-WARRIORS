@@ -27,9 +27,17 @@ type Match = {
   is_third_place?: boolean | null;
 };
 
-type ParticipantOption = { id: string; username: string; avatar_url?: string | null };
+type ParticipantOption = {
+  id: string;
+  username: string;
+  real_name?: string | null;
+  avatar_url?: string | null;
+};
 
-type PlayerDetails = { id: string; efootball_username: string } | { id: string; efootball_username: string }[] | null;
+type PlayerDetails =
+  | { id: string; efootball_username: string; real_name?: string | null }
+  | { id: string; efootball_username: string; real_name?: string | null }[]
+  | null;
 type StandingRow = { player_id: string; points?: number; player_details: PlayerDetails };
 
 type Props = {
@@ -48,7 +56,7 @@ type Props = {
 
 function getUsername(pd: PlayerDetails): string {
   const p = Array.isArray(pd) ? pd[0] : pd;
-  return p?.efootball_username ?? "Unknown";
+  return p?.real_name?.trim() || p?.efootball_username || "Unknown";
 }
 
 function isDone(m: Match) {
