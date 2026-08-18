@@ -1,12 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Edit3 } from "lucide-react";
+import { Edit3, Radio } from "lucide-react";
 import DeleteMatchButton from "./DeleteMatchButton";
 
 const statusStyles: Record<string, string> = {
-  upcoming: "bg-white/10 text-muted",
-  live: "bg-red-500/15 text-red-400",
-  completed: "bg-indigo/20 text-indigo-light",
+  upcoming: "border border-border text-muted bg-transparent",
+  live: "border border-red-500/40 text-red-400 bg-red-500/10",
+  completed: "border border-indigo/40 text-indigo-light bg-indigo/10",
 };
 
 type MatchCardProps = {
@@ -42,25 +42,29 @@ export default function MatchCard({
   });
 
   return (
-    <Link href={`/dashboard/matches/${slug ?? id}`}>
-      <div className="card group p-6 transition hover:bg-surface-2">
+    <Link href={`/dashboard/matches/${slug ?? id}`} className="block h-full">
+      <div className="card group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface p-6 transition-all duration-300 hover:border-gold/30 hover:shadow-[0_0_24px_rgba(212,175,55,0.12)]">
         {/* Date and Status */}
         <div className="mb-4 flex items-center justify-between">
           <span className="text-xs text-muted font-medium">{formattedDate}</span>
           <span
-            className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${statusStyles[status]}`}
+            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${statusStyles[status]}`}
           >
+            {status === "live" && (
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-400" />
+              </span>
+            )}
             {status}
           </span>
         </div>
 
         {/* Match Content */}
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-1 items-center justify-between gap-4">
           {/* Home Team */}
           <div className="flex flex-1 flex-col items-center justify-center gap-2">
-            <div
-              className="relative h-12 w-12 overflow-hidden rounded-full border-2 border-gold/60 bg-gold/10"
-            >
+            <div className="relative h-12 w-12 overflow-hidden rounded-full border-2 border-gold/60 bg-gold/10 shadow-[0_0_14px_rgba(212,175,55,0.25)]">
               <Image
                 src={logoUrl}
                 alt="Falcon Warriors"
@@ -69,7 +73,7 @@ export default function MatchCard({
                 className="object-cover"
               />
             </div>
-            <span className="text-center text-xs font-semibold leading-tight text-foreground">
+            <span className="max-w-full truncate text-center text-xs font-semibold leading-tight text-foreground">
               Falcon Warriors
             </span>
           </div>
@@ -105,7 +109,7 @@ export default function MatchCard({
                 </div>
               )}
             </div>
-            <span className="text-center text-xs font-semibold leading-tight text-foreground">
+            <span className="max-w-full truncate text-center text-xs font-semibold leading-tight text-foreground">
               {opponentName?.trim() ? opponentName : "TBD"}
             </span>
           </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Gamepad2 } from "lucide-react";
 import MatchCard from "@/app/components/dashboard/MatchCard";
 import { createClient } from "@/app/lib/supabase/client";
 import { getSiteSettings } from "@/app/lib/queries/siteSettings";
@@ -169,7 +170,8 @@ export default function MatchesPage() {
           />
         ))}
         {!loading && filteredMatches.length === 0 && (
-          <div className="col-span-full rounded-lg border border-border bg-surface-2 px-6 py-12 text-center">
+          <div className="col-span-full flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border px-6 py-16 text-center">
+            <Gamepad2 size={28} className="text-muted/50" />
             <p className="text-sm text-muted">No {activeTab} matches yet.</p>
           </div>
         )}

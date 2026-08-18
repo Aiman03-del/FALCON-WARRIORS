@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Search } from "lucide-react";
 import UsersTable from "@/app/components/dashboard/UsersTable";
 import { createClient } from "@/app/lib/supabase/client";
 
@@ -27,6 +28,9 @@ export default function UsersPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [role, setRole] = useState<string>("player");
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "suspended">("all");
+  const [academicFilter, setAcademicFilter] = useState<"all" | "academic" | "non-academic">("all");
 
   async function fetchUsers() {
     const supabase = createClient();
@@ -65,7 +69,26 @@ export default function UsersPage() {
   const regularPlayers = players.filter((p) => getRole(p) === "player");
   const isAdmin = role === "admin";
 
-  const filtered = activeTab === "staff" ? staff : regularPlayers;
+  const tabFiltered = activeTab === "staff" ? staff : regularPlayers;
+
+  const filtered = tabFiltered.filter((p) => {
+    const name = (p.real_name?.trim() || p.efootball_username).toLowerCase();
+    const query = search.trim().toLowerCase();
+    const matchesSearch =
+      !query || name.includes(query) || p.efootball_username.toLowerCase().includes(query);
+
+    const matchesStatus =
+      statusFilter === "all" ? true : p.membership_status === statusFilter;
+
+    const matchesAcademic =
+      academicFilter === "all"
+        ? true
+        : academicFilter === "academic"
+        ? p.is_academic_player
+        : !p.is_academic_player;
+
+    return matchesSearch && matchesStatus && matchesAcademic;
+  });
 
   return (
     <div>
@@ -100,8 +123,48 @@ export default function UsersPage() {
         </button>
       </div>
 
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <Search
+            size={15}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+          />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name or username..."
+            className="w-full rounded-lg border border-border bg-surface px-4 py-2 pl-9 text-sm outline-none transition-colors focus:border-gold/60 focus:ring-2 focus:ring-gold/20"
+          />
+        </div>
+
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-white outline-none focus:border-gold/60"
+        >
+          <option value="all">All Status</option>
+          <option value="active">Active</option>
+          <option value="suspended">Suspended</option>
+        </select>
+
+        {activeTab === "players" && (
+          <select
+            value={academicFilter}
+            onChange={(e) => setAcademicFilter(e.target.value as typeof academicFilter)}
+            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-white outline-none focus:border-gold/60"
+          >
+            <option value="all">All Players</option>
+            <option value="academic">Academic Only</option>
+            <option value="non-academic">Non-Academic Only</option>
+          </select>
+        )}
+      </div>
+
       {loading ? (
         <p className="mt-6 text-sm text-muted">Loading...</p>
+      ) : filtered.length === 0 ? (
+        <p className="mt-8 text-center text-sm text-muted">No users match your search or filter.</p>
       ) : (
         <UsersTable players={filtered} isAdmin={isAdmin} onRefresh={fetchUsers} />
       )}
