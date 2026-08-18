@@ -26,7 +26,7 @@ export default function NextRoundGenerator({
 }: {
   tournamentId: string;
   matches: Match[];
-  allParticipants: { id: string; username: string }[];
+  allParticipants: { id: string; username: string; real_name?: string | null }[];
   tournamentStatus: string;
   byeMethod?: "seed" | "random";
   thirdPlaceMatch?: boolean;
@@ -48,7 +48,9 @@ export default function NextRoundGenerator({
 
   const championId = allDone && winners.length === 1 ? winners[0] : null;
   const championName = championId
-    ? allParticipants.find((p) => p.id === championId)?.username ?? "Unknown"
+    ? allParticipants.find((p) => p.id === championId)?.real_name?.trim() ||
+      allParticipants.find((p) => p.id === championId)?.username ||
+      "Unknown"
     : null;
 
   // When a final round winner emerges, the tournament can automatically move to "completed" —

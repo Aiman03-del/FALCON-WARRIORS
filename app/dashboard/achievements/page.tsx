@@ -21,7 +21,7 @@ export default async function AchievementsPage() {
         .order("created_at", { ascending: false }),
       supabase
         .from("awards")
-        .select("id, title, season, player_details(efootball_username)")
+        .select("id, title, season, player_details(efootball_username, real_name)")
         .order("created_at", { ascending: false }),
     ]);
 
@@ -103,20 +103,21 @@ export default async function AchievementsPage() {
             </tr>
           </thead>
           <tbody>
-            {(awards ?? []).map((a: any) => (
-              <tr key={a.id} className="border-b border-border last:border-0">
-                <td className="px-4 py-3 font-medium">{a.title}</td>
-                <td className="px-4 py-3 text-muted">
-                  {Array.isArray(a.player_details)
-                    ? a.player_details[0]?.efootball_username ?? "—"
-                    : a.player_details?.efootball_username ?? "—"}
-                </td>
-                <td className="px-4 py-3 text-muted">{a.season ?? "—"}</td>
-                <td className="px-4 py-3 text-right">
-                  <DeleteAchievementButton id={a.id} table="awards" />
-                </td>
-              </tr>
-            ))}
+            {(awards ?? []).map((a: any) => {
+              const player = Array.isArray(a.player_details) ? a.player_details[0] : a.player_details;
+              const playerName = player?.real_name?.trim() || player?.efootball_username || "—";
+
+              return (
+                <tr key={a.id} className="border-b border-border last:border-0">
+                  <td className="px-4 py-3 font-medium">{a.title}</td>
+                  <td className="px-4 py-3 text-muted">{playerName}</td>
+                  <td className="px-4 py-3 text-muted">{a.season ?? "—"}</td>
+                  <td className="px-4 py-3 text-right">
+                    <DeleteAchievementButton id={a.id} table="awards" />
+                  </td>
+                </tr>
+              );
+            })}
             {(awards ?? []).length === 0 && (
               <tr>
                 <td colSpan={4} className="px-4 py-6 text-center text-muted">

@@ -135,7 +135,11 @@ export default function FixturesStepper({
     return null;
   }, [current, atLastStep]);
 
-  const championName = championId ? participants.find((p) => p.id === championId)?.username ?? "Unknown" : null;
+  const championName = championId
+    ? participants.find((p) => p.id === championId)?.real_name?.trim() ||
+      participants.find((p) => p.id === championId)?.username ||
+      "Unknown"
+    : null;
 
   // In a pure "league" format there is no knockout stage — when the final round
   // finishes, the top team in the points table is the champion.

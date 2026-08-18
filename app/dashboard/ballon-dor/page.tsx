@@ -11,7 +11,7 @@ export default async function BallonDorDashboardPage() {
 
   const { data: nominees } = await supabase
     .from("ballon_dor_nominees")
-    .select("id, year, is_winner, player_details(id, efootball_username, avatar_url)")
+    .select("id, year, is_winner, player_details(id, efootball_username, real_name, avatar_url)")
     .order("year", { ascending: false });
 
   const grouped = (nominees ?? []).reduce((acc: Record<number, any[]>, n: any) => {
@@ -58,9 +58,11 @@ export default async function BallonDorDashboardPage() {
                 <tbody>
                   {grouped[year].map((n: any) => {
                     const player = Array.isArray(n.player_details) ? n.player_details[0] : n.player_details;
+                    const playerName = player?.real_name?.trim() || player?.efootball_username || "—";
+
                     return (
                       <tr key={n.id} className="border-b border-border last:border-0">
-                        <td className="px-4 py-3 font-medium">{player?.efootball_username ?? "—"}</td>
+                        <td className="px-4 py-3 font-medium">{playerName}</td>
                         <td className="px-4 py-3">
                           {n.is_winner ? (
                             <span className="flex items-center gap-1 text-xs font-bold uppercase text-gold">

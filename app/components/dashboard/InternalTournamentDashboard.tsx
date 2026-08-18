@@ -267,7 +267,9 @@ export default async function InternalTournamentDashboard({
           </h2>
           <div className="card flex items-center justify-between p-4 text-sm">
             <span className="font-medium">
-              {participants.find((p) => p.id === thirdPlaceMatch.player1_id)?.username ?? "Unknown"}
+              {participants.find((p) => p.id === thirdPlaceMatch.player1_id)?.real_name?.trim() ||
+                participants.find((p) => p.id === thirdPlaceMatch.player1_id)?.username ||
+                "Unknown"}
             </span>
             <span className="text-muted">
               {thirdPlaceMatch.status === "completed"
@@ -275,7 +277,9 @@ export default async function InternalTournamentDashboard({
                 : "vs"}
             </span>
             <span className="font-medium">
-              {participants.find((p) => p.id === thirdPlaceMatch.player2_id)?.username ?? "Unknown"}
+              {participants.find((p) => p.id === thirdPlaceMatch.player2_id)?.real_name?.trim() ||
+                participants.find((p) => p.id === thirdPlaceMatch.player2_id)?.username ||
+                "Unknown"}
             </span>
           </div>
         </div>
