@@ -9,6 +9,7 @@ import { createClient } from "@/app/lib/supabase/client";
 import { recalcAllPlayerStats } from "@/app/lib/matches/recalcPlayerStats";
 import RoundStageSelect from "./RoundStageSelect";
 import NumberStepper from "../NumberStepper";
+import SelectField from "../SelectField";
 
 type Battle = {
   id: string;
@@ -191,7 +192,6 @@ function MotmPicker({
   motmList: MotmEntry[];
   onChange: (list: MotmEntry[]) => void;
 }) {
-  // সব candidate: Falcon players + unique opponent labels
   const falconOptions: MotmEntry[] = rows
     .filter((r) => r.falcon_player_id)
     .map((r) => ({
@@ -210,69 +210,47 @@ function MotmPicker({
     display: r.opponent_label,
   }));
 
-  const allOptions = [...falconOptions, ...opponentOptions];
-  const selectedKeys = new Set(motmList.map((m) => m.key));
+  const falconSelected = motmList.find((m) => m.key.startsWith("falcon-")) ?? null;
+  const opponentSelected = motmList.find((m) => m.key.startsWith("opp-")) ?? null;
 
-  function toggle(entry: MotmEntry) {
-    if (selectedKeys.has(entry.key)) {
-      onChange(motmList.filter((m) => m.key !== entry.key));
-    } else {
-      if (motmList.length >= 2) return; // max 2
-      onChange([...motmList, entry]);
-    }
+  function setFalconMotm(value: string) {
+    const rest = motmList.filter((m) => !m.key.startsWith("falcon-"));
+    const entry = falconOptions.find((o) => o.key === value) ?? null;
+    onChange(entry ? [...rest, entry] : rest);
+  }
+
+  function setOpponentMotm(value: string) {
+    const rest = motmList.filter((m) => !m.key.startsWith("opp-"));
+    const entry = opponentOptions.find((o) => o.key === value) ?? null;
+    onChange(entry ? [...rest, entry] : rest);
   }
 
   return (
-    <div className="px-4 pb-2 sm:px-6">
-      <p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted">
-        Man of the Match{" "}
+    <div className="mx-4 mb-4 rounded-xl border border-border bg-surface-2/40 p-4 sm:mx-6 sm:p-5">
+      <p className="mb-3 flex items-center gap-2 border-b border-border/60 pb-3 text-xs font-bold uppercase tracking-wide text-gold">
+        🏅 Man of the Match{" "}
         <span className="normal-case font-normal text-muted/60">(max 2, optional)</span>
       </p>
 
-      {/* Selected badges */}
-      {motmList.length > 0 && (
-        <div className="mb-3 flex flex-wrap gap-2">
-          {motmList.map((m) => (
-            <div
-              key={m.key}
-              className="flex items-center gap-1.5 rounded-full bg-gold/15 px-3 py-1 text-xs font-semibold text-gold"
-            >
-              <span>{m.display}</span>
-              <button
-                type="button"
-                onClick={() => onChange(motmList.filter((x) => x.key !== m.key))}
-                className="text-gold/60 hover:text-gold"
-              >
-                <X size={11} />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Option grid */}
-      <div className="flex flex-wrap gap-2">
-        {allOptions.map((opt) => {
-          const selected = selectedKeys.has(opt.key);
-          const disabled = !selected && motmList.length >= 2;
-          return (
-            <button
-              key={opt.key}
-              type="button"
-              disabled={disabled}
-              onClick={() => toggle(opt)}
-              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                selected
-                  ? "border-gold bg-gold/10 text-gold"
-                  : disabled
-                  ? "border-border bg-surface-2 text-muted/40 cursor-not-allowed"
-                  : "border-border bg-surface-2 text-muted hover:border-gold/50 hover:text-white"
-              }`}
-            >
-              {opt.display}
-            </button>
-          );
-        })}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <SelectField
+          label="Falcon Side"
+          value={falconSelected?.key ?? ""}
+          onChange={setFalconMotm}
+          options={falconOptions.map((o) => ({ value: o.key, label: o.display }))}
+          placeholder="Search team member..."
+          searchable
+          clearable
+        />
+        <SelectField
+          label="Opponent Side"
+          value={opponentSelected?.key ?? ""}
+          onChange={setOpponentMotm}
+          options={opponentOptions.map((o) => ({ value: o.key, label: o.display }))}
+          placeholder="Search opponent..."
+          searchable
+          clearable
+        />
       </div>
     </div>
   );
@@ -457,7 +435,7 @@ export default function CurrentRoundBoard({
             >
               <div className="flex items-center gap-3">
                 <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                  <Avatar url={r.falcon_avatar_url ?? null} fallback={r.falcon_username} size={32} />
+                  <Avatar url={r.falcon_avatar_url ?? null} fallback={r.falcon_username} size={36} ring />
                   <span className={`truncate text-sm font-medium ${falconLeading ? "text-white" : "text-white/80"}`}>
                     {r.falcon_username}
                   </span>
@@ -469,7 +447,7 @@ export default function CurrentRoundBoard({
                   <NumberStepper value={r.os} onChange={(v) => updateRow(r.id, { os: v })} />
                 </div>
 
-                <div className="flex min-w-0 flex-1 items-center justify-end gap-2.5">
+                <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
                   <InlineEditableText
                     value={r.opponent_label}
                     placeholder="Opponent"
@@ -477,11 +455,22 @@ export default function CurrentRoundBoard({
                     align="right"
                     className={oppLeading ? "text-white" : "text-white/80"}
                   />
-                  <UploadableAvatar
-                    url={r.opponent_logo_url}
-                    size={32}
-                    onUploaded={(url) => handleSlotLogoUpload(r.id, url)}
-                  />
+                  <Avatar url={r.opponent_logo_url ?? null} fallback="OP" size={32} />
+                  <label className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border bg-surface-2 text-muted transition-colors hover:border-gold hover:text-gold">
+                    <Upload size={12} />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const { uploadToImageKit } = await import("@/app/lib/imagekit/upload");
+                        const result = await uploadToImageKit(file, "/falcon-warriors/opponent-players");
+                        handleSlotLogoUpload(r.id, result.url);
+                      }}
+                    />
+                  </label>
                 </div>
               </div>
             </div>

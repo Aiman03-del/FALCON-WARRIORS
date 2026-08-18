@@ -3,6 +3,7 @@ import CurrentRoundBoard from "@/app/components/dashboard/CurrentRoundBoard";
 import OfficialTournamentTabs, {
   type OfficialTournamentTab,
 } from "@/app/components/dashboard/OfficialTournamentTabs";
+import ParticipantsBenchList from "@/app/components/dashboard/ParticipantsBenchList";
 import { RoundHistoryList } from "@/app/components/dashboard/RoundHistoryList";
 import StartNewRoundForm from "@/app/components/dashboard/StartNewRoundForm";
 import TournamentForm from "@/app/components/dashboard/TournamentForm";
@@ -12,9 +13,11 @@ type FalconSquadPlayer = {
   efootball_username?: string | null;
   real_name?: string | null;
   avatar_url?: string | null;
+  is_benched: boolean;
 };
 
 type SquadRow = {
+  is_benched?: boolean | null;
   player_details?: FalconSquadPlayer | FalconSquadPlayer[] | null;
 };
 
@@ -65,16 +68,21 @@ export default async function OfficialTournamentDashboard({
 
   const { data: squadRows } = await supabase
     .from("tournament_squad")
-    .select("player_details(id, efootball_username, real_name, avatar_url)")
+    .select("is_benched, player_details(id, efootball_username, real_name, avatar_url)")
     .eq("tournament_id", tournamentId);
 
   const falconSquad = ((squadRows as SquadRow[] | null) ?? [])
-    .map((s) => (Array.isArray(s.player_details) ? s.player_details[0] : s.player_details))
+    .map((s) => {
+      const pd = Array.isArray(s.player_details) ? s.player_details[0] : s.player_details;
+      return pd ? { ...pd, is_benched: s.is_benched ?? false } : null;
+    })
     .filter((player): player is FalconSquadPlayer => Boolean(player))
     .map((player) => ({
       ...player,
       efootball_username: player.efootball_username?.trim() || "Unknown",
     }));
+
+  const playingSquad = falconSquad.filter((p) => !p.is_benched);
 
   const { data: matches } = await supabase
     .from("matches")
@@ -95,19 +103,23 @@ export default async function OfficialTournamentDashboard({
       .eq("match_id", currentMatch.id)
       .order("battle_order");
 
-    currentBattles = ((battleRows as BattleRow[] | null) ?? []).map((b) => {
-      const pd = Array.isArray(b.player_details) ? b.player_details[0] : b.player_details;
-      return {
-        id: b.id,
-        falcon_player_id: b.falcon_player_id,
-        falcon_username: pd?.real_name?.trim() || pd?.efootball_username || "Unknown",
-        falcon_avatar_url: pd?.avatar_url ?? null,
-        opponent_label: b.opponent_label ?? "TBD",
-        opponent_logo_url: b.opponent_logo_url,
-        falcon_score: b.falcon_score,
-        opponent_score: b.opponent_score,
-      };
-    });
+    const benchedIds = new Set(falconSquad.filter((p) => p.is_benched).map((p) => p.id));
+
+    currentBattles = ((battleRows as BattleRow[] | null) ?? [])
+      .map((b) => {
+        const pd = Array.isArray(b.player_details) ? b.player_details[0] : b.player_details;
+        return {
+          id: b.id,
+          falcon_player_id: b.falcon_player_id,
+          falcon_username: pd?.real_name?.trim() || pd?.efootball_username || "Unknown",
+          falcon_avatar_url: pd?.avatar_url ?? null,
+          opponent_label: b.opponent_label ?? "TBD",
+          opponent_logo_url: b.opponent_logo_url,
+          falcon_score: b.falcon_score,
+          opponent_score: b.opponent_score,
+        };
+      })
+      .filter((b) => b.falcon_player_id == null || !benchedIds.has(b.falcon_player_id));
   }
 
   const roundsContent = (
@@ -125,7 +137,7 @@ export default async function OfficialTournamentDashboard({
             battles={currentBattles}
           />
         ) : (
-          <StartNewRoundForm tournamentId={tournamentId} falconSquad={falconSquad} />
+          <StartNewRoundForm tournamentId={tournamentId} falconSquad={playingSquad} />
         )}
       </div>
     </div>
@@ -144,13 +156,7 @@ export default async function OfficialTournamentDashboard({
 
   const participantsContent =
     falconSquad.length > 0 ? (
-      <div className="card divide-y divide-border">
-        {falconSquad.map((player) => (
-          <div key={player.id} className="flex items-center justify-between px-4 py-3 text-sm">
-            <span className="font-medium">{player.real_name?.trim() || player.efootball_username}</span>
-          </div>
-        ))}
-      </div>
+      <ParticipantsBenchList tournamentId={tournamentId} players={falconSquad} />
     ) : (
       <div className="card p-8 text-center text-sm text-muted">
         No participants added yet. Use the Edit tab to select the official squad.
