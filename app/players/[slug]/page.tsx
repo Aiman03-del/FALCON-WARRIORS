@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import { MapPin, Briefcase, GraduationCap, Shirt, Flag, Star, Trophy, Pencil } from "lucide-react";
+import { MapPin, Briefcase, GraduationCap, Star, Trophy, Pencil } from "lucide-react";
 import { getPlayerBySlug } from "@/app/lib/queries/players";
 import { getPlayerForm } from "@/app/lib/queries/playerForm";
 import { getPlayerBallonDorHistory } from "@/app/lib/queries/ballonDor";
@@ -44,8 +44,6 @@ export default async function PlayerProfilePage({
 
   const infoRows = [
     { icon: MapPin, label: "Location", value: [player.city, player.country].filter(Boolean).join(", ") || "—" },
-    { icon: Shirt, label: "Supported Club", value: player.supported_club || "—" },
-    { icon: Flag, label: "National Team", value: player.national_team || "—" },
     { icon: Star, label: "Favorite Player", value: player.favorite_player || "—" },
     { icon: GraduationCap, label: "Education", value: player.education || "—" },
     { icon: Briefcase, label: "Profession", value: player.profession || "—" },

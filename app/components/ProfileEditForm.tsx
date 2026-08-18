@@ -7,7 +7,6 @@ import FillButton from "@/app/components/FillButton";
 import ImageUploadInput from "@/app/components/ImageUploadInput";
 import SelectField from "@/app/components/SelectField";
 import { COUNTRIES, getCitiesForCountry } from "@/app/lib/data/countries";
-import { FOOTBALL_CLUBS, NATIONAL_TEAMS } from "@/app/lib/data/clubs";
 import { useAccountStatus } from "@/app/providers/AccountStatusProvider";
 import { useToast } from "@/app/providers/ToastProvider";
 
@@ -25,8 +24,6 @@ type PlayerDetails = {
   age: number | null;
   country: string | null;
   city: string | null;
-  supported_club: string | null;
-  national_team: string | null;
   favorite_player: string | null;
   education: string | null;
   profession: string | null;
@@ -52,8 +49,6 @@ export default function ProfileEditForm({
     age: player.age?.toString() ?? "",
     country: player.country ?? "",
     city: player.city ?? "",
-    supported_club: player.supported_club ?? "",
-    national_team: player.national_team ?? "",
     favorite_player: player.favorite_player ?? "",
     education: player.education ?? "",
     profession: player.profession ?? "",
@@ -111,8 +106,6 @@ export default function ProfileEditForm({
       age: form.age ? Number(form.age) : null,
       country: form.country || null,
       city: form.city || null,
-      supported_club: form.supported_club || null,
-      national_team: form.national_team || null,
       favorite_player: form.favorite_player || null,
       education: form.education || null,
       profession: form.profession || null,
@@ -245,33 +238,6 @@ export default function ProfileEditForm({
                   : []
             }
             placeholder={form.country ? "Select your city" : "Select country first"}
-            className="w-full"
-          />
-        </div>
-      </div>
-
-      {/* Football Info */}
-      <div>
-        <p className="mb-3 font-display text-xs font-bold uppercase tracking-widest text-gold">
-          Football
-        </p>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <SelectField
-            label="Supported Club"
-            value={form.supported_club}
-            onChange={(v) => update("supported_club", v)}
-            options={FOOTBALL_CLUBS}
-            placeholder="Select your club"
-            searchable
-            className="w-full"
-          />
-          <SelectField
-            label="National Team"
-            value={form.national_team}
-            onChange={(v) => update("national_team", v)}
-            options={NATIONAL_TEAMS}
-            placeholder="Select national team"
-            searchable
             className="w-full"
           />
         </div>

@@ -10,7 +10,6 @@ import { createClient } from "../lib/supabase/client";
 import ImageUploadInput from "../components/ImageUploadInput";
 import SelectField from "@/app/components/SelectField";
 import { COUNTRIES, getCitiesForCountry } from "../lib/data/countries";
-import { FOOTBALL_CLUBS, NATIONAL_TEAMS } from "../lib/data/clubs";
 
 const PLATFORMS = [
   { value: "mobile", label: "Mobile" },
@@ -33,6 +32,15 @@ export default function RegisterPage() {
   const router = useRouter();
   const supabase = createClient();
   const [logoUrl, setLogoUrl] = useState("/logo.jpg");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [username, setUsername] = useState("");
+  const [realName, setRealName] = useState("");
+  const [country, setCountry] = useState("");
+  const [city, setCity] = useState("");
+  const [platform, setPlatform] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
 
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [mode, setMode] = useState<"form" | "completeProfile">("form");
@@ -66,7 +74,7 @@ export default function RegisterPage() {
 
       // Signed in via Google but hasn't finished the profile form yet
       const user = session.user;
-      const meta = (user.user_metadata ?? {}) as Record<string, any>;
+      const meta = (user.user_metadata ?? {}) as Record<string, string | undefined>;
       setGoogleUserId(user.id);
       setEmail(user.email ?? "");
       setRealName(meta.full_name || meta.name || "");
@@ -77,18 +85,6 @@ export default function RegisterPage() {
     }
     init();
   }, [router, supabase]);
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [username, setUsername] = useState("");
-  const [realName, setRealName] = useState("");
-  const [country, setCountry] = useState("");
-  const [city, setCity] = useState("");
-  const [club, setClub] = useState("");
-  const [team, setTeam] = useState("");
-  const [platform, setPlatform] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -131,8 +127,6 @@ export default function RegisterPage() {
           real_name: realName,
           country,
           city,
-          supported_club: club,
-          national_team: team,
           platform,
           avatar_url: avatarUrl,
         },
@@ -150,8 +144,6 @@ export default function RegisterPage() {
         real_name: realName || null,
         country: country || null,
         city: city || null,
-        supported_club: club || null,
-        national_team: team || null,
         platform: platform || null,
         avatar_url: avatarUrl || null,
       });
@@ -179,8 +171,6 @@ export default function RegisterPage() {
           real_name: realName,
           country,
           city,
-          supported_club: club,
-          national_team: team,
           platform,
           avatar_url: avatarUrl,
         },
@@ -397,34 +387,6 @@ export default function RegisterPage() {
                         : []
                   }
                   placeholder={country ? "Select your city" : "Select country first"}
-                  className="w-full"
-                />
-              </div>
-            </div>
-
-            {/* ── Football Info ── */}
-            <div>
-              <p className="mb-3 font-display text-xs font-bold uppercase tracking-widest text-gold">
-                Football
-              </p>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <SelectField
-                  label="Supported Club"
-                  value={club}
-                  onChange={setClub}
-                  options={FOOTBALL_CLUBS}
-                  placeholder="Select your club"
-                  searchable
-                  className="w-full"
-                />
-
-                <SelectField
-                  label="National Team"
-                  value={team}
-                  onChange={setTeam}
-                  options={NATIONAL_TEAMS}
-                  placeholder="Select national team"
-                  searchable
                   className="w-full"
                 />
               </div>

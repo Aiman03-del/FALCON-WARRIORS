@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Pencil, MapPin, Briefcase, GraduationCap, Shirt, Flag, Star, ArrowLeft } from "lucide-react";
+import { Pencil, MapPin, Briefcase, GraduationCap, Star, ArrowLeft } from "lucide-react";
 import FillButton from "@/app/components/FillButton";
 import ProfileEditForm from "@/app/components/ProfileEditForm";
 import PlayerStatsGrid from "@/app/components/PlayerStatsGrid";
@@ -61,8 +61,6 @@ export default function UserProfileView({
 
   const infoRows = [
     { icon: MapPin, label: "Location", value: [player.city, player.country].filter(Boolean).join(", ") || "—" },
-    { icon: Shirt, label: "Supported Club", value: player.supported_club || "—" },
-    { icon: Flag, label: "National Team", value: player.national_team || "—" },
     { icon: Star, label: "Favorite Player", value: player.favorite_player || "—" },
     { icon: GraduationCap, label: "Education", value: player.education || "—" },
     { icon: Briefcase, label: "Profession", value: player.profession || "—" },

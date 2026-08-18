@@ -1,7 +1,7 @@
 import FillButton from "@/app/components/FillButton";
 import Link from "next/link";
 import Image from "next/image";
-import { Pencil, MapPin, Briefcase, GraduationCap, Shirt, Flag, Star } from "lucide-react";
+import { Pencil, MapPin, Briefcase, GraduationCap, Star } from "lucide-react";
 import { getMyProfile } from "../lib/queries/profile";
 import { getPlayerForm } from "@/app/lib/queries/playerForm";
 import Navbar from "../components/Navbar";
@@ -22,8 +22,6 @@ export default async function MyProfilePage() {
 
   const infoRows = [
     { icon: MapPin, label: "Location", value: [player.city, player.country].filter(Boolean).join(", ") || "—" },
-    { icon: Shirt, label: "Supported Club", value: player.supported_club || "—" },
-    { icon: Flag, label: "National Team", value: player.national_team || "—" },
     { icon: Star, label: "Favorite Player", value: player.favorite_player || "—" },
     { icon: GraduationCap, label: "Education", value: player.education || "—" },
     { icon: Briefcase, label: "Profession", value: player.profession || "—" },
