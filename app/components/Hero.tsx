@@ -18,6 +18,12 @@ export default async function Hero() {
 
   return (
     <section className="relative flex min-h-svh flex-col justify-center overflow-hidden border-b border-border bg-background">
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/hero.png')" }}
+      />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,12,18,0.25),rgba(6,12,18,0.72)_58%,rgba(6,12,18,0.9))]" />
+
       {/* Pitch markings — center circle + halfway line */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute left-1/2 top-1/2 h-px w-full -translate-x-1/2 -translate-y-1/2 bg-gold/10" />

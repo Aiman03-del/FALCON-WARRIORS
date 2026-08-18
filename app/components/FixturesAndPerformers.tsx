@@ -72,17 +72,21 @@ export default function FixturesAndPerformers({ tournaments, performers }: Props
     if (tournamentsRef.current) {
       const cards = gsap.utils.toArray<HTMLElement>(".tournament-card", tournamentsRef.current);
       if (cards.length > 0) {
-        gsap.from(cards, {
-          opacity: 0,
-          x: -20,
-          duration: 0.5,
-          ease: "power2.out",
-          stagger: 0.08,
-          clearProps: "transform",
-          scrollTrigger: {
-            trigger: tournamentsRef.current,
-            start: "top 85%",
-            once: true,
+        gsap.set(cards, { opacity: 0, x: -20 });
+
+        ScrollTrigger.create({
+          trigger: tournamentsRef.current,
+          start: "top 85%",
+          once: true,
+          onEnter: () => {
+            gsap.to(cards, {
+              opacity: 1,
+              x: 0,
+              duration: 0.5,
+              ease: "power2.out",
+              stagger: 0.08,
+              clearProps: "transform,opacity",
+            });
           },
         });
       }
@@ -91,17 +95,21 @@ export default function FixturesAndPerformers({ tournaments, performers }: Props
     if (performersRef.current) {
       const cards = gsap.utils.toArray<HTMLElement>(".performer-card", performersRef.current);
       if (cards.length > 0) {
-        gsap.from(cards, {
-          opacity: 0,
-          y: 20,
-          duration: 0.5,
-          ease: "power2.out",
-          stagger: 0.08,
-          clearProps: "transform",
-          scrollTrigger: {
-            trigger: performersRef.current,
-            start: "top 85%",
-            once: true,
+        gsap.set(cards, { opacity: 0, y: 20 });
+
+        ScrollTrigger.create({
+          trigger: performersRef.current,
+          start: "top 85%",
+          once: true,
+          onEnter: () => {
+            gsap.to(cards, {
+              opacity: 1,
+              y: 0,
+              duration: 0.5,
+              ease: "power2.out",
+              stagger: 0.08,
+              clearProps: "transform,opacity",
+            });
           },
         });
       }

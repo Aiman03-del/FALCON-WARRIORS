@@ -50,19 +50,24 @@ export default function RecentResultsGrid({
       if (!gridRef.current) return;
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-      const cards = gsap.utils.toArray<HTMLElement>(".result-card");
+      const cards = gsap.utils.toArray<HTMLElement>(".result-card", gridRef.current);
       if (cards.length === 0) return;
 
-      gsap.from(cards, {
-        opacity: 0,
-        y: 28,
-        duration: 0.5,
-        ease: "power2.out",
-        stagger: 0.08,clearProps: "transform",
-        scrollTrigger: {
-          trigger: gridRef.current,
-          start: "top 88%",
-          once: true,
+      gsap.set(cards, { opacity: 0, y: 28 });
+
+      ScrollTrigger.create({
+        trigger: gridRef.current,
+        start: "top 88%",
+        once: true,
+        onEnter: () => {
+          gsap.to(cards, {
+            opacity: 1,
+            y: 0,
+            duration: 0.5,
+            ease: "power2.out",
+            stagger: 0.08,
+            clearProps: "transform,opacity",
+          });
         },
       });
     },

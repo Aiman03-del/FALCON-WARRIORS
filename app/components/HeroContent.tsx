@@ -107,16 +107,7 @@ export default function HeroContent({
         <span>Elite eFootball Division</span>
       </div>
 
-      {/* Headline with ghost squad number signature */}
       <div className="relative flex flex-col items-center">
-        <span
-          aria-hidden
-          className="pointer-events-none absolute -top-4 select-none font-display text-[5rem] font-black leading-none text-transparent sm:-top-6 sm:text-[7.5rem] md:text-[8.5rem]"
-          style={{ WebkitTextStroke: "1.5px var(--color-gold, #D4AF37)", opacity: 0.15 }}
-        >
-          07
-        </span>
-
         <h1 className="hero-headline relative font-display text-4xl font-bold uppercase leading-[0.95] tracking-wide text-white sm:text-5xl md:text-7xl">
           Falcon
           <br />
