@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Gamepad2 } from "lucide-react";
 import MatchCard from "@/app/components/dashboard/MatchCard";
 import { createClient } from "@/app/lib/supabase/client";
@@ -22,11 +23,21 @@ type MatchItem = {
 };
 
 export default function MatchesPage() {
-  const [activeTab, setActiveTab] = useState<"official" | "unofficial">("official");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const initialTab =
+    searchParams.get("tab") === "unofficial" ? "unofficial" : "official";
+  const [activeTab, setActiveTab] = useState<"official" | "unofficial">(initialTab);
   const [matches, setMatches] = useState<MatchItem[]>([]);
   const [logoUrl, setLogoUrl] = useState("/logo.jpg");
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const nextTab = searchParams.get("tab") === "unofficial" ? "unofficial" : "official";
+    setActiveTab(nextTab);
+  }, [searchParams]);
 
   useEffect(() => {
     let active = true;
@@ -128,7 +139,11 @@ export default function MatchesPage() {
       {/* Tabs */}
       <div className="mt-6 flex gap-4 border-b border-border">
         <button
-          onClick={() => setActiveTab("official")}
+          onClick={() => {
+            const params = new URLSearchParams(searchParams.toString());
+            params.set("tab", "official");
+            router.replace(`/dashboard/matches?${params.toString()}`);
+          }}
           className={`px-4 py-3 font-medium text-sm transition ${
             activeTab === "official"
               ? "border-b-2 border-gold text-gold"
@@ -138,7 +153,11 @@ export default function MatchesPage() {
           Official
         </button>
         <button
-          onClick={() => setActiveTab("unofficial")}
+          onClick={() => {
+            const params = new URLSearchParams(searchParams.toString());
+            params.set("tab", "unofficial");
+            router.replace(`/dashboard/matches?${params.toString()}`);
+          }}
           className={`px-4 py-3 font-medium text-sm transition ${
             activeTab === "unofficial"
               ? "border-b-2 border-gold text-gold"
