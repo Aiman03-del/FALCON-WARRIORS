@@ -44,7 +44,7 @@ export default function InternalTournamentTabs({
   }
 
   const tabClass = (tab: InternalTournamentTab) =>
-    `rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wide transition ${
+    `cursor-pointer rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wide transition ${
       activeTab === tab
         ? "bg-gold text-black"
         : "border border-border bg-surface-2 text-muted hover:text-white"

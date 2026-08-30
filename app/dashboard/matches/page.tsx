@@ -144,7 +144,7 @@ export default function MatchesPage() {
             params.set("tab", "official");
             router.replace(`/dashboard/matches?${params.toString()}`);
           }}
-          className={`px-4 py-3 font-medium text-sm transition ${
+          className={`cursor-pointer px-4 py-3 font-medium text-sm transition ${
             activeTab === "official"
               ? "border-b-2 border-gold text-gold"
               : "text-muted hover:text-foreground"
@@ -158,7 +158,7 @@ export default function MatchesPage() {
             params.set("tab", "unofficial");
             router.replace(`/dashboard/matches?${params.toString()}`);
           }}
-          className={`px-4 py-3 font-medium text-sm transition ${
+          className={`cursor-pointer px-4 py-3 font-medium text-sm transition ${
             activeTab === "unofficial"
               ? "border-b-2 border-gold text-gold"
               : "text-muted hover:text-foreground"

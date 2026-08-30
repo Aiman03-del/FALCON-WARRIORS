@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/app/lib/supabase/client";
+import FillButton from "@/app/components/FillButton";
 import ImageUploadInput from "@/app/components/ImageUploadInput";
 
 export default function GalleryUploadForm() {
@@ -63,7 +64,7 @@ export default function GalleryUploadForm() {
           <input
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
-            className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-gold"
+            className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted focus:border-white/30"
             placeholder="Match Winning Goal"
           />
         </div>
@@ -74,21 +75,16 @@ export default function GalleryUploadForm() {
           <input
             value={eventTag}
             onChange={(e) => setEventTag(e.target.value)}
-            className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-gold"
+            className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted focus:border-white/30"
             placeholder="World Finals 2024"
           />
         </div>
 
         {error && <p className="text-xs text-gold">{error}</p>}
 
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="btn-primary w-fit disabled:opacity-50"
-        >
+        <FillButton type="button" onClick={handleSave} disabled={saving} className="w-fit">
           {saving ? "Saving..." : "Add to Gallery"}
-        </button>
+        </FillButton>
       </div>
     </div>
   );

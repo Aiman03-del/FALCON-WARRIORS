@@ -24,8 +24,9 @@ export default function SearchableSelect({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [dropup, setDropup] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const selected = options.find((o) => o.value === value);
 
@@ -46,6 +47,25 @@ export default function SearchableSelect({
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  useEffect(() => {
+    if (!open || !containerRef.current) return;
+
+    const trigger = containerRef.current.querySelector("button");
+    if (!trigger) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const needsDropup = spaceBelow < 220 && spaceAbove > 220;
+    setDropup(needsDropup);
+
+    const timer = window.setTimeout(() => {
+      searchInputRef.current?.blur();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [open, value, query]);
+
   // Close on Escape key
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
@@ -61,7 +81,6 @@ export default function SearchableSelect({
   function handleOpen() {
     setOpen(true);
     setQuery("");
-    setTimeout(() => inputRef.current?.focus(), 50);
   }
 
   function handleSelect(opt: Option) {
@@ -88,7 +107,7 @@ export default function SearchableSelect({
       <button
         type="button"
         onClick={handleOpen}
-        className="flex w-full items-center justify-between rounded-lg border border-border bg-surface px-3 py-2.5 text-left text-sm outline-none transition-colors focus:border-gold hover:border-border/80 sm:px-4"
+        className="flex w-full items-center justify-between rounded-lg border border-border bg-surface px-3 py-2.5 text-left text-sm outline-none transition-colors focus:outline-none focus-visible:outline-none hover:border-border/80 sm:px-4"
       >
         <span className={`truncate ${selected ? "text-white" : "text-muted"}`}>
           {selected ? selected.label : placeholder}
@@ -109,19 +128,23 @@ export default function SearchableSelect({
         </div>
       </button>
 
-      {/* Dropdown — uses fixed on mobile to avoid clipping inside forms */}
+      {/* Dropdown — opens upward when there is not enough room below the trigger */}
       {open && (
-        <div className="absolute left-0 right-0 z-50 mt-1 overflow-hidden rounded-xl border border-border bg-surface shadow-xl shadow-black/50">
+        <div
+          className={`absolute left-0 right-0 z-50 overflow-hidden rounded-xl border border-border bg-surface shadow-xl shadow-black/50 ${
+            dropup ? "bottom-full mb-1" : "top-full mt-1"
+          }`}
+        >
           {/* Search */}
           <div className="flex items-center gap-2 border-b border-border px-3 py-2">
             <Search size={13} className="shrink-0 text-muted" />
             <input
-              ref={inputRef}
+              ref={searchInputRef}
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Type to search..."
-              className="w-full bg-transparent text-sm text-white outline-none placeholder:text-muted/60"
+              className="w-full bg-transparent text-sm text-white placeholder:text-muted/60 focus:outline-none focus-visible:outline-none focus:ring-0"
             />
           </div>
 

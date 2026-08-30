@@ -4,7 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/app/providers/ToastProvider";
 import { createClient } from "@/app/lib/supabase/client";
+import FillButton from "@/app/components/FillButton";
 import ImageUploadInput from "@/app/components/ImageUploadInput";
+import SelectField, { type SelectOption } from "@/app/components/SelectField";
 
 type NewsFormProps = {
   mode: "create" | "edit";
@@ -36,6 +38,11 @@ export default function NewsForm({ mode, newsId, initial }: NewsFormProps) {
   const [coverUrl, setCoverUrl] = useState(initial?.cover_image_url ?? "");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const categoryOptions: SelectOption[] = categories.map((categoryItem) => ({
+    value: categoryItem.value,
+    label: categoryItem.label,
+  }));
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -89,25 +96,18 @@ export default function NewsForm({ mode, newsId, initial }: NewsFormProps) {
           required
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-gold"
+          className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted focus:border-white/30"
           placeholder="Season 4 Tryouts Now Open"
         />
       </div>
 
-      <div>
-        <label className="mb-1 block text-xs font-medium text-muted">Category</label>
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-gold"
-        >
-          {categories.map((c) => (
-            <option key={c.value} value={c.value}>
-              {c.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <SelectField
+        label="Category"
+        value={category}
+        onChange={setCategory}
+        options={categoryOptions}
+        className="w-full"
+      />
 
       <ImageUploadInput
         label="Cover Image (optional)"
@@ -123,7 +123,7 @@ export default function NewsForm({ mode, newsId, initial }: NewsFormProps) {
           rows={8}
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          className="w-full resize-y rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-gold"
+          className="w-full resize-y rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted focus:border-white/30"
           placeholder="Write the full announcement here..."
         />
       </div>
@@ -132,9 +132,9 @@ export default function NewsForm({ mode, newsId, initial }: NewsFormProps) {
         <p className="rounded-lg bg-gold/15 px-3 py-2 text-sm text-gold">{error}</p>
       )}
 
-      <button type="submit" disabled={loading} className="btn-primary mt-2 disabled:opacity-50">
+      <FillButton type="submit" disabled={loading} className="mt-2 w-full justify-center">
         {loading ? "Saving..." : mode === "create" ? "Publish Post" : "Update Post"}
-      </button>
+      </FillButton>
     </form>
   );
 }   

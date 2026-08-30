@@ -36,6 +36,7 @@ export default function SelectField({
 }: SelectFieldProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [dropup, setDropup] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -61,8 +62,21 @@ export default function SelectField({
   }, []);
 
   useEffect(() => {
+    if (!open || !containerRef.current) return;
+
+    const trigger = containerRef.current.querySelector("button");
+    if (!trigger) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const needsDropup = spaceBelow < 220 && spaceAbove > 220;
+    setDropup(needsDropup);
+  }, [open, value, search]);
+
+  useEffect(() => {
     if (open && searchable) {
-      setTimeout(() => searchRef.current?.focus(), 10);
+      setSearch("");
     }
   }, [open, searchable]);
 
@@ -107,7 +121,11 @@ export default function SelectField({
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 z-50 mt-2 w-full min-w-0 overflow-hidden rounded-lg border border-border bg-surface shadow-xl">
+        <div
+          className={`absolute left-0 right-0 z-50 w-full min-w-0 overflow-hidden rounded-lg border border-border bg-surface shadow-xl ${
+            dropup ? "bottom-full mb-2" : "top-full mt-2"
+          }`}
+        >
           {searchable && (
             <div className="flex items-center gap-2 border-b border-border px-3 py-2">
               <Search size={14} className="text-muted" />

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import FillButton from "@/app/components/FillButton";
+import SelectField, { type SelectOption } from "@/app/components/SelectField";
 import { createClient } from "@/app/lib/supabase/client";
 
 export default function NewAchievementPage() {
@@ -13,6 +15,14 @@ export default function NewAchievementPage() {
   const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const seasonOptions: SelectOption[] = [
+    { value: "2023/24", label: "2023/24" },
+    { value: "2024/25", label: "2024/25" },
+    { value: "2025/26", label: "2025/26" },
+    { value: "2026/27", label: "2026/27" },
+    { value: "2027/28", label: "2027/28" },
+  ];
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -50,18 +60,21 @@ export default function NewAchievementPage() {
             required
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-gold"
+            className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted focus:border-white/30"
             placeholder="Pro League Champions"
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-medium text-muted">Season (optional)</label>
-          <input
+          <SelectField
+            label="Season (optional)"
             value={season}
-            onChange={(e) => setSeason(e.target.value)}
-            className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-gold"
-            placeholder="2024"
+            onChange={setSeason}
+            options={seasonOptions}
+            placeholder="Select season"
+            searchable
+            clearable
+            className="w-full"
           />
         </div>
 
@@ -71,7 +84,7 @@ export default function NewAchievementPage() {
             rows={3}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full resize-y rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-gold"
+            className="w-full resize-y rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted focus:border-white/30"
           />
         </div>
 
@@ -79,9 +92,9 @@ export default function NewAchievementPage() {
           <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</p>
         )}
 
-        <button type="submit" disabled={loading} className="btn-primary mt-2 disabled:opacity-50">
+        <FillButton type="submit" disabled={loading} className="mt-2 w-full justify-center">
           {loading ? "Saving..." : "Add Achievement"}
-        </button>
+        </FillButton>
       </form>
     </div>
   );

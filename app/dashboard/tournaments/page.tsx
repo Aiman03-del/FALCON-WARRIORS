@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import FillButton from "@/app/components/FillButton";
 import DeleteTournamentButton from "@/app/components/dashboard/DeleteTournamentButton";
 import Link from "next/link";
@@ -14,10 +15,20 @@ const statusStyles: Record<string, string> = {
 };
 
 export default function TournamentsPage() {
-  const [activeTab, setActiveTab] = useState<"official" | "unofficial">("official");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const initialTab =
+    searchParams.get("tab") === "unofficial" ? "unofficial" : "official";
+  const [activeTab, setActiveTab] = useState<"official" | "unofficial">(initialTab);
   const [tournaments, setTournaments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const nextTab = searchParams.get("tab") === "unofficial" ? "unofficial" : "official";
+    setActiveTab(nextTab);
+  }, [searchParams]);
 
   useEffect(() => {
     fetchTournaments();
@@ -67,8 +78,12 @@ export default function TournamentsPage() {
       {/* Tabs */}
       <div className="mt-6 flex gap-4 border-b border-border">
         <button
-          onClick={() => setActiveTab("official")}
-          className={`px-4 py-3 font-medium text-sm transition ${
+          onClick={() => {
+            const params = new URLSearchParams(searchParams.toString());
+            params.set("tab", "official");
+            router.replace(`/dashboard/tournaments?${params.toString()}`);
+          }}
+          className={`cursor-pointer px-4 py-3 font-medium text-sm transition ${
             activeTab === "official"
               ? "border-b-2 border-gold text-gold"
               : "text-muted hover:text-foreground"
@@ -77,8 +92,12 @@ export default function TournamentsPage() {
           Official
         </button>
         <button
-          onClick={() => setActiveTab("unofficial")}
-          className={`px-4 py-3 font-medium text-sm transition ${
+          onClick={() => {
+            const params = new URLSearchParams(searchParams.toString());
+            params.set("tab", "unofficial");
+            router.replace(`/dashboard/tournaments?${params.toString()}`);
+          }}
+          className={`cursor-pointer px-4 py-3 font-medium text-sm transition ${
             activeTab === "unofficial"
               ? "border-b-2 border-gold text-gold"
               : "text-muted hover:text-foreground"

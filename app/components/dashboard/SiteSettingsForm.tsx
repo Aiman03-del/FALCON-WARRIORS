@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Calendar, CheckCircle2, Crown, ImageIcon, MapPin, UserCog, AlertCircle } from "lucide-react";
 import { createClient } from "@/app/lib/supabase/client";
 import { useToast } from "@/app/providers/ToastProvider";
+import FillButton from "@/app/components/FillButton";
 import ImageUploadInput from "./ImageUploadInput";
 import { SiteSettings } from "@/app/lib/queries/siteSettings";
 
@@ -115,7 +116,7 @@ export default function SiteSettingsForm({ initial }: { initial: SiteSettings })
               <input
                 value={value}
                 onChange={(e) => set(e.target.value)}
-                className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm text-white outline-none transition-colors focus:border-gold/70 focus:ring-1 focus:ring-gold/20 hover:border-border/80"
+                className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted focus:border-white/30 hover:border-border/80"
                 placeholder={placeholder}
               />
             </div>
@@ -142,13 +143,9 @@ export default function SiteSettingsForm({ initial }: { initial: SiteSettings })
             <p className="text-xs text-muted">Changes apply site-wide immediately after saving.</p>
           )}
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="btn-primary shrink-0 text-sm disabled:opacity-50"
-        >
+        <FillButton onClick={handleSave} disabled={saving} className="shrink-0 text-sm">
           {saving ? "Saving..." : "Save Changes"}
-        </button>
+        </FillButton>
       </div>
     </div>
   );

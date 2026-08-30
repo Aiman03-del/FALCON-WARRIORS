@@ -11,12 +11,10 @@ export default async function DashboardLeaderboardPage() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-bold uppercase tracking-wide">Leaderboard</h1>
-          <p className="mt-1 text-sm text-muted">Admin view for top player rankings and stats.</p>
-        </div>
-      </div>
+      <h1 className="font-display text-2xl font-bold uppercase tracking-wide">Leaderboard</h1>
+      <p className="mt-1 text-sm text-muted">
+        {role === "admin" ? "Admin view for top player rankings and stats." : "View leaderboard rankings and player stats."}
+      </p>
 
       <LeaderboardTabs data={{ official, unofficial }} isAdmin={role === "admin"} />
     </div>

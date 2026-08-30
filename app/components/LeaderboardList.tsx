@@ -8,10 +8,12 @@ export default function LeaderboardList({
   entries,
   emptyMessage = "No data available yet.",
   isAdmin = false,
+  hideManageColumn = false,
 }: {
   entries: LeaderboardEntry[];
   emptyMessage?: string;
   isAdmin?: boolean;
+  hideManageColumn?: boolean;
 }) {
   if (entries.length === 0) {
     return <div className="card p-6 text-center text-sm text-muted">{emptyMessage}</div>;
@@ -30,7 +32,7 @@ export default function LeaderboardList({
             <th className="px-2 py-3 text-center">L</th>
             <th className="px-2 py-3 text-center">GF</th>
             <th className="px-3 py-3 text-right">Pts</th>
-            {isAdmin && <th className="px-3 py-3 text-right">Manage</th>}
+            {!hideManageColumn && isAdmin && <th className="px-3 py-3 text-right">Manage</th>}
           </tr>
         </thead>
         <tbody>
@@ -71,7 +73,7 @@ export default function LeaderboardList({
               <td className="px-3 py-3 text-right">
                 <span className="font-display text-lg font-bold text-gold">{entry.points ?? 0}</span>
               </td>
-              {isAdmin && (
+              {!hideManageColumn && isAdmin && (
                 <td className="px-3 py-3 text-right">
                   <ClearPlayerStatsButton playerId={entry.playerId} username={entry.realName || entry.username} />
                 </td>

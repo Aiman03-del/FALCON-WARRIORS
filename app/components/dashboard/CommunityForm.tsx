@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/app/lib/supabase/client";
+import FillButton from "@/app/components/FillButton";
 import ImageUploadInput from "@/app/components/ImageUploadInput";
 
 type CommunityFormProps = {
@@ -69,7 +70,7 @@ export default function CommunityForm({ mode, communityId, initial }: CommunityF
           required
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-gold"
+          className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted focus:border-white/30"
           placeholder="COBEG"
         />
       </div>
@@ -79,7 +80,7 @@ export default function CommunityForm({ mode, communityId, initial }: CommunityF
         <input
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
-          className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-gold"
+          className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted focus:border-white/30"
           placeholder="Cox's Bazar eFootball Gaming"
         />
       </div>
@@ -96,7 +97,7 @@ export default function CommunityForm({ mode, communityId, initial }: CommunityF
         <input
           value={websiteUrl}
           onChange={(e) => setWebsiteUrl(e.target.value)}
-          className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-gold"
+          className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-muted focus:border-white/30"
           placeholder="https://..."
         />
       </div>
@@ -107,7 +108,7 @@ export default function CommunityForm({ mode, communityId, initial }: CommunityF
           type="number"
           value={displayOrder}
           onChange={(e) => setDisplayOrder(e.target.value)}
-          className="w-32 rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-gold"
+          className="w-32 rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm text-white outline-none transition-colors focus:border-white/30"
         />
       </div>
 
@@ -125,9 +126,9 @@ export default function CommunityForm({ mode, communityId, initial }: CommunityF
         <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</p>
       )}
 
-      <button type="submit" disabled={loading} className="btn-primary mt-2 disabled:opacity-50">
+      <FillButton type="submit" disabled={loading} className="mt-2 w-full justify-center">
         {loading ? "Saving..." : mode === "create" ? "Add Community" : "Save Changes"}
-      </button>
+      </FillButton>
     </form>
   );
 }
