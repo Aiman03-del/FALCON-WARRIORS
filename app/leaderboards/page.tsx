@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Footer from "../components/Footer";
 import LeaderboardTabs from "../components/LeaderboardTabs";
 import Navbar from "../components/Navbar";
@@ -33,7 +34,15 @@ export default async function LeaderboardsPage() {
         </div>
 
         <div className="mt-8">
-          <LeaderboardTabs data={{ official, unofficial }} />
+          <Suspense
+            fallback={
+              <div className="rounded-xl border border-border bg-surface-2/60 p-4 text-sm text-muted">
+                Loading leaderboard...
+              </div>
+            }
+          >
+            <LeaderboardTabs data={{ official, unofficial }} />
+          </Suspense>
         </div>
       </section>
       <Footer />
