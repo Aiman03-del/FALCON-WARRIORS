@@ -5,11 +5,14 @@ import {
 } from "@/app/lib/fixtures/buildFullKnockoutBracket";
 import { computeStandingsFromMatches } from "@/app/lib/fixtures/computeStandings";
 import { rankStandings } from "@/app/lib/fixtures/tiebreakers";
+import { getTournamentStandings, getGroupStandings } from "@/app/lib/queries/tournaments";
 import BracketPanel from "@/app/components/dashboard/BracketPanel";
 import FixtureGenerator from "@/app/components/dashboard/FixtureGenerator";
+import GroupKnockoutTransition from "@/app/components/dashboard/GroupKnockoutTransition";
 import InternalTournamentTabs, {
   type InternalTournamentTab,
 } from "@/app/components/dashboard/InternalTournamentTabs";
+import LeaguePlayoffTransition from "@/app/components/dashboard/LeaguePlayoffTransition";
 import ParticipantsManager from "@/app/components/dashboard/ParticipantsManager";
 import StandingsTable from "@/app/components/dashboard/StandingsTable";
 import TournamentForm from "@/app/components/dashboard/TournamentForm";
@@ -171,6 +174,14 @@ export default async function InternalTournamentDashboard({
 
   const hasFixtures = (matches ?? []).length > 0;
 
+  // Standings needed to power the "generate the knockout stage" transition
+  // buttons once the earlier stage is fully complete. Only fetched for the
+  // formats that actually have a later knockout/playoff stage to unlock.
+  const leagueStandingsForPlayoff =
+    tournament.format === "league_playoff" ? await getTournamentStandings(tournamentId) : [];
+  const groupStandingsForKnockout =
+    tournament.format === "group_knockout" ? await getGroupStandings(tournamentId) : [];
+
   const standingsContent = (
     <>
       {tournament.format === "group_knockout" && groupNames.length > 0
@@ -273,6 +284,28 @@ export default async function InternalTournamentDashboard({
               </div>
             )}
 
+          {tournament.format === "league_playoff" && (
+            <LeaguePlayoffTransition
+              tournamentId={tournament.id}
+              matches={(matches ?? []).map((m) => ({ status: m.status, stage: m.stage }))}
+              standings={leagueStandingsForPlayoff}
+              playoffSize={tournament.playoff_size ?? 4}
+            />
+          )}
+
+          {tournament.format === "group_knockout" && (
+            <GroupKnockoutTransition
+              tournamentId={tournament.id}
+              matches={(matches ?? []).map((m) => ({
+                round: m.round,
+                status: m.status,
+                stage: m.stage,
+              }))}
+              groupStandings={groupStandingsForKnockout}
+              qualifiersPerGroup={tournament.qualifiers_per_group ?? 2}
+            />
+          )}
+
           {bracketViewMatches.length > 0 && (
             <div>
               <h2 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-gold">
@@ -288,7 +321,9 @@ export default async function InternalTournamentDashboard({
                 tournamentId={tournament.id}
                 format={tournament.format}
                 fixtureGenerator={
-                  tournament.format !== "league" ? (
+                  tournament.format !== "league" &&
+                  tournament.format !== "league_playoff" &&
+                  tournament.format !== "group_knockout" ? (
                     <FixtureGenerator
                       tournamentId={tournament.id}
                       format={tournament.format}

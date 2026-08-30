@@ -29,11 +29,20 @@ export function emptyStandingStats(): StandingStats {
   };
 }
 
-/** Derive league/group standings stats from completed non-knockout matches. */
+/**
+ * Derive standings stats from completed matches.
+ * options.includeKnockout — খাঁটি (pure) Knockout ফরম্যাটে সব ম্যাচই "knockout" stage-এর হয়,
+ * তাই সেখানে এই ম্যাচগুলোও গোনা দরকার। কিন্তু group_knockout / league_playoff-এর মতো
+ * hybrid ফরম্যাটে গ্রুপ/লিগ স্টেজ পয়েন্ট টেবিলে নকআউট ম্যাচ গোনা ঠিক না — সেক্ষেত্রে
+ * এটা false (ডিফল্ট) রাখতে হবে।
+ */
 export function computeStandingsFromMatches(
   participantIds: string[],
-  matches: MatchRow[]
+  matches: MatchRow[],
+  options?: { includeKnockout?: boolean }
 ): Record<string, StandingStats> {
+  const includeKnockout = options?.includeKnockout ?? false;
+
   const statsMap: Record<string, StandingStats> = {};
   for (const id of participantIds) {
     statsMap[id] = emptyStandingStats();
@@ -43,7 +52,7 @@ export function computeStandingsFromMatches(
     if (m.status !== "completed") continue;
     if (!m.player1_id || !m.player2_id) continue;
     if (m.player1_score === null || m.player2_score === null) continue;
-    if (m.stage === "knockout") continue;
+    if (m.stage === "knockout" && !includeKnockout) continue;
 
     const s1 = statsMap[m.player1_id];
     const s2 = statsMap[m.player2_id];

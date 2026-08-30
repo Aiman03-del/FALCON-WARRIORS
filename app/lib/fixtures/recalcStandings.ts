@@ -2,6 +2,16 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { computeStandingsFromMatches } from "./computeStandings";
 
 export async function recalcStandings(supabase: SupabaseClient, tournamentId: string) {
+  const { data: tournamentRow } = await supabase
+    .from("tournaments")
+    .select("format")
+    .eq("id", tournamentId)
+    .single();
+
+  // খাঁটি Knockout ফরম্যাটে সব ম্যাচই "knockout" stage-এর — তাই সেগুলোও পয়েন্ট
+  // টেবিলে গোনা দরকার। গ্রুপ/লিগ+প্লেঅফের মতো ফরম্যাটে আগের মতোই নকআউট বাদ থাকবে।
+  const includeKnockout = tournamentRow?.format === "knockout";
+
   const { data: participants, error: participantsError } = await supabase
     .from("tournament_participants")
     .select("id, player_id")
@@ -21,7 +31,8 @@ export async function recalcStandings(supabase: SupabaseClient, tournamentId: st
 
   const statsMap = computeStandingsFromMatches(
     participants.map((p) => p.player_id),
-    matches ?? []
+    matches ?? [],
+    { includeKnockout }
   );
 
   const updates = await Promise.all(

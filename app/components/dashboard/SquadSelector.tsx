@@ -14,9 +14,17 @@ type SquadSelectorProps = {
   selected: string[];
   onChange: (next: string[]) => void;
   label?: string;
+  /** Selection order beyond this count is treated as bench. Omit/0 = no limit. */
+  maxParticipants?: number | null;
 };
 
-export default function SquadSelector({ players, selected, onChange, label = "Official Squad" }: SquadSelectorProps) {
+export default function SquadSelector({
+  players,
+  selected,
+  onChange,
+  label = "Official Squad",
+  maxParticipants = null,
+}: SquadSelectorProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -65,10 +73,19 @@ export default function SquadSelector({ players, selected, onChange, label = "Of
     onChange([...selected, playerId]);
   }
 
-  const selectedPlayers = players.filter((player) => selected.includes(player.id));
+  // Preserve selection order (not player-list order) so "first N picked = main
+  // squad" matches what the admin actually clicked.
+  const selectedPlayers = selected
+    .map((id) => players.find((player) => player.id === id))
+    .filter((player): player is PlayerOption => Boolean(player));
+
+  const hasLimit = !!maxParticipants && maxParticipants > 0;
+  const mainSquad = hasLimit ? selectedPlayers.slice(0, maxParticipants!) : selectedPlayers;
+  const benchSquad = hasLimit ? selectedPlayers.slice(maxParticipants!) : [];
+
   const summary =
     selectedPlayers.length > 0
-      ? selectedPlayers.map((player) => nameOf(player)).join(", ")
+      ? `${selectedPlayers.length} selected${hasLimit ? ` (${mainSquad.length} main, ${benchSquad.length} bench)` : ""}`
       : "Select players";
 
   return (
@@ -119,6 +136,7 @@ export default function SquadSelector({ players, selected, onChange, label = "Of
             ) : (
               filteredPlayers.map((player) => {
                 const checked = selected.includes(player.id);
+                const isBenched = checked && benchSquad.some((p) => p.id === player.id);
 
                 return (
                   <button
@@ -129,7 +147,14 @@ export default function SquadSelector({ players, selected, onChange, label = "Of
                       checked ? "text-gold" : "text-white/90"
                     }`}
                   >
-                    <span>{nameOf(player)}</span>
+                    <span className="flex items-center gap-2">
+                      {nameOf(player)}
+                      {isBenched && (
+                        <span className="rounded-full border border-white/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
+                          Bench
+                        </span>
+                      )}
+                    </span>
                     {checked && <Check size={14} />}
                   </button>
                 );
@@ -139,9 +164,47 @@ export default function SquadSelector({ players, selected, onChange, label = "Of
         </div>
       )}
 
-      <p className="mt-2 text-xs text-muted">
-        Selected: {selected.length} player{selected.length === 1 ? "" : "s"}.
-      </p>
+      {hasLimit && selectedPlayers.length > 0 ? (
+        <div className="mt-3 flex flex-col gap-2">
+          <div>
+            <p className="mb-1 text-xs font-bold uppercase tracking-wide text-muted">
+              Main Squad ({mainSquad.length}/{maxParticipants})
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {mainSquad.map((player) => (
+                <span
+                  key={player.id}
+                  className="rounded-full border border-gold/40 bg-gold/10 px-2.5 py-1 text-xs font-medium text-gold"
+                >
+                  {nameOf(player)}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {benchSquad.length > 0 && (
+            <div>
+              <p className="mb-1 text-xs font-bold uppercase tracking-wide text-muted">
+                Bench ({benchSquad.length})
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {benchSquad.map((player) => (
+                  <span
+                    key={player.id}
+                    className="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-xs font-medium text-muted"
+                  >
+                    {nameOf(player)}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <p className="mt-2 text-xs text-muted">
+          Selected: {selected.length} player{selected.length === 1 ? "" : "s"}.
+        </p>
+      )}
     </div>
   );
 }

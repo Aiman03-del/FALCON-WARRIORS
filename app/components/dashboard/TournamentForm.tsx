@@ -18,6 +18,8 @@ import FillButton from "../FillButton";
 
 import SelectField from "@/app/components/SelectField";
 
+import MaxParticipantsPicker from "@/app/components/dashboard/MaxParticipantsPicker";
+
 import SquadSelector from "@/app/components/dashboard/SquadSelector";
 
 import { createClient } from "../../lib/supabase/client";
@@ -189,11 +191,20 @@ export default function TournamentForm({
 
         .from("tournament_squad")
 
-        .select("player_id")
+        .select("player_id, is_benched")
 
         .eq("tournament_id", tournamentId)
 
-        .then(({ data }) => setSquadIds((data ?? []).map((row) => row.player_id)));
+        .then(({ data }) => {
+          const rows = data ?? [];
+          // Main-squad players first, benched players after, so the
+          // selection-order-based cutoff still lines up when re-editing.
+          const ordered = [
+            ...rows.filter((row) => !row.is_benched),
+            ...rows.filter((row) => row.is_benched),
+          ];
+          setSquadIds(ordered.map((row) => row.player_id));
+        });
 
     }
 
@@ -235,7 +246,7 @@ export default function TournamentForm({
 
           end_date: endDate || null,
 
-          max_participants: null,
+          max_participants: maxParticipants ? Number(maxParticipants) : null,
 
           registration_deadline: null,
 
@@ -363,9 +374,16 @@ export default function TournamentForm({
 
       if (squadIds.length > 0) {
 
+        const limit = maxParticipants ? Number(maxParticipants) : null;
+        // First `limit` players picked (in selection order) are the main
+        // squad; anyone picked after that starts out on the bench.
         await supabase.from("tournament_squad").insert(
 
-          squadIds.map((playerId) => ({ tournament_id: savedId, player_id: playerId }))
+          squadIds.map((playerId, index) => ({
+            tournament_id: savedId,
+            player_id: playerId,
+            is_benched: limit != null && limit > 0 ? index >= limit : false,
+          }))
 
         );
 
@@ -752,57 +770,31 @@ export default function TournamentForm({
 
         {isOfficial ? (
 
-          <SquadSelector
+          <div className="grid gap-4 md:grid-cols-2">
 
-            players={players}
+            <MaxParticipantsPicker value={maxParticipants} onChange={setMaxParticipants} />
 
-            selected={squadIds}
+            <SquadSelector
 
-            onChange={setSquadIds}
+              players={players}
 
-            label="Participants"
+              selected={squadIds}
 
-          />
+              onChange={setSquadIds}
+
+              label="Participants"
+
+              maxParticipants={maxParticipants ? Number(maxParticipants) : null}
+
+            />
+
+          </div>
 
         ) : (
 
           <div className="grid gap-4 md:grid-cols-2">
 
-            <div className="flex-1">
-
-              <label className="mb-1 block text-xs font-medium text-muted">
-
-                Max Participants (optional)
-
-              </label>
-
-              <input
-
-                type="number"
-
-                min="1"
-
-                step="1"
-
-                inputMode="numeric"
-
-                value={maxParticipants}
-
-                onChange={(e) => {
-
-                  const next = e.target.value.replace(/\D/g, "");
-
-                  setMaxParticipants(next);
-
-                }}
-
-                className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none focus:border-white/30"
-
-                placeholder="16"
-
-              />
-
-            </div>
+            <MaxParticipantsPicker value={maxParticipants} onChange={setMaxParticipants} />
 
             <DatePicker
 

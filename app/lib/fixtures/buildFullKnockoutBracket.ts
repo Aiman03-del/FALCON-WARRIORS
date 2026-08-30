@@ -1,5 +1,5 @@
 import { countTeamsInRound } from "@/app/lib/utils/roundNames";
-import { groupIntoTies, tieWinnerId, type Tie } from "./twoLegKnockout";
+import { groupIntoTies, tieWinnerId, tieIsDone, type Tie } from "./twoLegKnockout";
 export type BracketMatchRow = {
   id: string;
   round: number;
@@ -68,6 +68,10 @@ export function buildFullKnockoutBracket(matches: BracketMatchRow[]): BracketMat
     const matchCount = Math.ceil(prevTies.length / 2);
     const roundTies: Tie[] = [];
 
+    // আগের রাউন্ডের সব ম্যাচ (বায় বাদে) শেষ না হওয়া পর্যন্ত এই রাউন্ডে কারো নাম
+    // দেখানো হবে না — যতক্ষণ না পুরো রাউন্ড কমপ্লিট হচ্ছে ততক্ষণ সব স্লট TBD থাকবে।
+    const prevRoundFullyDone = prevTies.every((t) => tieIsDone(t));
+
     for (let order = 1; order <= matchCount; order++) {
       const existing = existingTies.find((t) => t.match_order === order);
       if (existing) {
@@ -77,8 +81,12 @@ export function buildFullKnockoutBracket(matches: BracketMatchRow[]): BracketMat
 
       const feeder1 = prevTies[(order - 1) * 2];
       const feeder2 = prevTies[(order - 1) * 2 + 1];
-      const p1Id = feeder1 ? tieWinnerId(feeder1) : null;
-      const p2Id = feeder2 ? tieWinnerId(feeder2) : null;
+      const p1Id = prevRoundFullyDone && feeder1 ? tieWinnerId(feeder1) : null;
+      const p2Id = prevRoundFullyDone && feeder2 ? tieWinnerId(feeder2) : null;
+
+      // "bye" স্ট্যাটাস শুধু তখনই বসবে যখন প্রতিপক্ষের কোনো ফিডার ম্যাচই কাঠামোগতভাবে
+      // নেই (আসল বায়) — প্রতিপক্ষ এখনো "অনির্ধারিত" থাকলে সেটা bye নয়, TBD।
+      const isGenuineBye = !!p1Id && !p2Id && !feeder2;
 
       roundTies.push({
         round,
@@ -92,7 +100,7 @@ export function buildFullKnockoutBracket(matches: BracketMatchRow[]): BracketMat
             player2_id: p2Id,
             player1_score: null,
             player2_score: null,
-            status: p1Id && !p2Id ? "bye" : "scheduled",
+            status: isGenuineBye ? "bye" : "scheduled",
             leg: 1,
           },
         ],

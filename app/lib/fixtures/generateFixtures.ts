@@ -332,29 +332,56 @@ export function generateGroupStageFixtures(
 }
 
 // Knockout Stage seeded from group-stage results. `groupStandings` must
-// already be ranked (1st place first) per group. We take the top
-// `qualifiersPerGroup` from each group, tier by tier (all 1st-place finishers,
-// then all 2nd-place, ...), and rotate every tier below the winners by one
-// group-position so a group's runner-up doesn't get dropped right next to
-// that same group's winner in the seed list.
+// already be ranked (1st place first) per group.
 export function generateKnockoutFromGroups(
   groupStandings: { groupName: string; ranked: ParticipantForDraw[] }[],
-  qualifiersPerGroup: number,
-  twoLeg: boolean = false
+  qualifiersPerGroup: number
 ): MatchDraft[] {
-  const tiers: ParticipantForDraw[][] = [];
+  const tiers: { participant: ParticipantForDraw; groupName: string }[][] = [];
 
   for (let pos = 0; pos < qualifiersPerGroup; pos++) {
     const tier = groupStandings
-      .map((g) => g.ranked[pos])
-      .filter((p): p is ParticipantForDraw => !!p);
-
-    const shift = tier.length > 0 ? pos % tier.length : 0;
-    tiers.push([...tier.slice(shift), ...tier.slice(0, shift)]);
+      .map((g) => (g.ranked[pos] ? { participant: g.ranked[pos], groupName: g.groupName } : null))
+      .filter((x): x is { participant: ParticipantForDraw; groupName: string } => !!x);
+    tiers.push(tier);
   }
 
   const seededOrder = tiers.flat();
-  const withSeeds: ParticipantForDraw[] = seededOrder.map((p, i) => ({ ...p, seed: i + 1 }));
+  const groupById = new Map(seededOrder.map((x) => [x.participant.id, x.groupName]));
+  const withSeeds: ParticipantForDraw[] = seededOrder.map((x, i) => ({ ...x.participant, seed: i + 1 }));
 
-  return generateSeededKnockoutRound1(withSeeds, twoLeg);
+  const round1 = generateSeededKnockoutRound1(withSeeds);
+  return resolveGroupCollisions(round1, groupById);
+}
+
+/**
+ * Repair first-round same-group pairings caused by byes or odd group counts.
+ */
+function resolveGroupCollisions(
+  matches: MatchDraft[],
+  groupById: Map<string, string>
+): MatchDraft[] {
+  const result = matches.map((m) => ({ ...m }));
+
+  const isCollision = (m: MatchDraft) =>
+    !!m.player1_id && !!m.player2_id && groupById.get(m.player1_id) === groupById.get(m.player2_id);
+
+  for (let i = 0; i < result.length; i++) {
+    if (!isCollision(result[i])) continue;
+
+    for (let j = 0; j < result.length; j++) {
+      if (i === j || !result[j].player2_id) continue;
+
+      const swappedA = { ...result[i], player2_id: result[j].player2_id };
+      const swappedB = { ...result[j], player2_id: result[i].player2_id };
+
+      if (!isCollision(swappedA) && !isCollision(swappedB)) {
+        result[i] = swappedA;
+        result[j] = swappedB;
+        break;
+      }
+    }
+  }
+
+  return result;
 }
