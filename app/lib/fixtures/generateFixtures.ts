@@ -11,8 +11,9 @@ export type MatchDraft = {
   player2_id: string | null;
   status: "scheduled" | "bye";
   group_name?: string | null;
+  leg?: number;
+  tie_id?: string | null; // নতুন
 };
-
 export type GroupAssignment = {
   group_name: string;
   participant: ParticipantForDraw;
@@ -54,38 +55,14 @@ function pickByeAvoidingRepeat<T extends { id: string }>(list: T[], alreadyByed:
 // later rounds — see generateKnockoutNextRound below).
 export function generateKnockoutRound1(
   participants: ParticipantForDraw[],
-  alreadyByedIds: Set<string> = new Set()
+  alreadyByedIds: Set<string> = new Set(),
+  twoLeg: boolean = false
 ): MatchDraft[] {
-  const shuffled = pickByeAvoidingRepeat(shuffle(participants), alreadyByedIds);
-  const matches: MatchDraft[] = [];
-  let order = 1;
-
-  for (let i = 0; i < shuffled.length; i += 2) {
-    const p1 = shuffled[i];
-    const p2 = shuffled[i + 1];
-
-    if (!p2) {
-      matches.push({
-        round: 1,
-        match_order: order++,
-        player1_id: p1.id,
-        player2_id: null,
-        status: "bye",
-      });
-    } else {
-      matches.push({
-        round: 1,
-        match_order: order++,
-        player1_id: p1.id,
-        player2_id: p2.id,
-        status: "scheduled",
-      });
-    }
-  }
-
-  return matches;
+  return generateKnockoutNextRound(participants, 1, alreadyByedIds, twoLeg);
 }
-
+function makeTieId(round: number, order: number): string {
+  return `tie-r${round}-o${order}-${Math.random().toString(36).slice(2, 8)}`;
+}
 function nextPowerOfTwo(n: number): number {
   let p = 1;
   while (p < n) p *= 2;
@@ -114,7 +91,7 @@ function standardSeedOrder(size: number): number[] {
 // any byes (when the field isn't a power of 2) land on the *top* seeds —
 // exactly like a professional single-elimination draw. Participants without a
 // seed are shuffled randomly and slotted in after the seeded ones.
-export function generateSeededKnockoutRound1(participants: ParticipantForDraw[]): MatchDraft[] {
+export function generateSeededKnockoutRound1(participants: ParticipantForDraw[], twoLeg: boolean = false): MatchDraft[] {
   const seeded = participants
     .filter((p) => p.seed != null)
     .sort((a, b) => (a.seed as number) - (b.seed as number));
@@ -135,13 +112,38 @@ export function generateSeededKnockoutRound1(participants: ParticipantForDraw[])
     const pB = seedB <= n ? ordered[seedB - 1] : null;
 
     if (pA && pB) {
+      if (!twoLeg) {
+        matches.push({
+          round: 1,
+          match_order: matchOrder++,
+          player1_id: pA.id,
+          player2_id: pB.id,
+          status: "scheduled",
+          leg: 1,
+        });
+        continue;
+      }
+
+      const tieId = makeTieId(1, matchOrder);
       matches.push({
         round: 1,
-        match_order: matchOrder++,
+        match_order: matchOrder,
         player1_id: pA.id,
         player2_id: pB.id,
         status: "scheduled",
+        leg: 1,
+        tie_id: tieId,
       });
+      matches.push({
+        round: 1,
+        match_order: matchOrder,
+        player1_id: pB.id,
+        player2_id: pA.id,
+        status: "scheduled",
+        leg: 2,
+        tie_id: tieId,
+      });
+      matchOrder++;
     } else {
       const survivor = pA ?? pB;
       if (survivor) {
@@ -151,6 +153,7 @@ export function generateSeededKnockoutRound1(participants: ParticipantForDraw[])
           player1_id: survivor.id,
           player2_id: null,
           status: "bye",
+          leg: 1,
         });
       }
     }
@@ -172,7 +175,8 @@ export function generateSeededKnockoutRound1(participants: ParticipantForDraw[])
 export function generateKnockoutNextRound(
   winners: ParticipantForDraw[],
   nextRound: number,
-  alreadyByedIds: Set<string> = new Set()
+  alreadyByedIds: Set<string> = new Set(),
+  twoLeg: boolean = false
 ): MatchDraft[] {
   const ordered = pickByeAvoidingRepeat(winners, alreadyByedIds);
   const matches: MatchDraft[] = [];
@@ -183,22 +187,19 @@ export function generateKnockoutNextRound(
     const p2 = ordered[i + 1];
 
     if (!p2) {
-      matches.push({
-        round: nextRound,
-        match_order: order++,
-        player1_id: p1.id,
-        player2_id: null,
-        status: "bye",
-      });
-    } else {
-      matches.push({
-        round: nextRound,
-        match_order: order++,
-        player1_id: p1.id,
-        player2_id: p2.id,
-        status: "scheduled",
-      });
+      matches.push({ round: nextRound, match_order: order++, player1_id: p1.id, player2_id: null, status: "bye", leg: 1 });
+      continue;
     }
+
+    if (!twoLeg) {
+      matches.push({ round: nextRound, match_order: order++, player1_id: p1.id, player2_id: p2.id, status: "scheduled", leg: 1 });
+      continue;
+    }
+
+    const tieId = makeTieId(nextRound, order);
+    matches.push({ round: nextRound, match_order: order, player1_id: p1.id, player2_id: p2.id, status: "scheduled", leg: 1, tie_id: tieId });
+    matches.push({ round: nextRound, match_order: order, player1_id: p2.id, player2_id: p1.id, status: "scheduled", leg: 2, tie_id: tieId });
+    order++;
   }
 
   return matches;
@@ -338,7 +339,8 @@ export function generateGroupStageFixtures(
 // that same group's winner in the seed list.
 export function generateKnockoutFromGroups(
   groupStandings: { groupName: string; ranked: ParticipantForDraw[] }[],
-  qualifiersPerGroup: number
+  qualifiersPerGroup: number,
+  twoLeg: boolean = false
 ): MatchDraft[] {
   const tiers: ParticipantForDraw[][] = [];
 
@@ -354,5 +356,5 @@ export function generateKnockoutFromGroups(
   const seededOrder = tiers.flat();
   const withSeeds: ParticipantForDraw[] = seededOrder.map((p, i) => ({ ...p, seed: i + 1 }));
 
-  return generateSeededKnockoutRound1(withSeeds);
+  return generateSeededKnockoutRound1(withSeeds, twoLeg);
 }

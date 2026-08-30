@@ -15,6 +15,7 @@ type ConfirmActionButtonProps = {
   isDangerous?: boolean;
   ariaLabel?: string;
   buttonClassName?: string;
+  renderTrigger?: (onClick: () => void) => React.ReactNode;
   children: React.ReactNode;
 };
 
@@ -29,6 +30,7 @@ export default function ConfirmActionButton({
   isDangerous = false,
   ariaLabel,
   buttonClassName,
+  renderTrigger,
   children,
 }: ConfirmActionButtonProps) {
   const { addToast } = useToast();
@@ -51,14 +53,18 @@ export default function ConfirmActionButton({
 
   return (
     <>
-      <button
-        type="button"
-        aria-label={ariaLabel}
-        onClick={() => setIsOpen(true)}
-        className={buttonClassName}
-      >
-        {children}
-      </button>
+      {renderTrigger ? (
+        renderTrigger(() => setIsOpen(true))
+      ) : (
+        <button
+          type="button"
+          aria-label={ariaLabel}
+          onClick={() => setIsOpen(true)}
+          className={buttonClassName}
+        >
+          {children}
+        </button>
+      )}
       <ConfirmDialog
         isOpen={isOpen}
         title={confirmTitle}

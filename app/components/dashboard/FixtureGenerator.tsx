@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import { Shuffle } from "lucide-react";
 import { createClient } from "@/app/lib/supabase/client";
 import ConfirmActionButton from "@/app/components/ConfirmActionButton";
+import FillButton from "@/app/components/FillButton";
 import { recalcStandings } from "@/app/lib/fixtures/recalcStandings";
+import { generateWinnersRound1 } from "@/app/lib/fixtures/doubleElimination";
+import { generateSwissRound1 } from "@/app/lib/fixtures/swissSystem";
 import {
   generateGroups,
   generateGroupStageFixtures,
@@ -18,11 +21,13 @@ type Props = {
   tournamentId: string;
   format: string;
   doubleRound: boolean;
+  twoLegKnockout?: boolean; // নতুন
   participants: { id: string; username: string; seed?: number | null }[];
   alreadyGenerated: boolean;
   groupCount?: number | null;
   qualifiersPerGroup?: number | null;
   byeMethod?: "seed" | "random";
+  variant?: "full" | "icon";
 };
 
 const DEFAULT_GROUP_COUNT = 4;
@@ -31,11 +36,13 @@ export default function FixtureGenerator({
   tournamentId,
   format,
   doubleRound,
+  twoLegKnockout = false,
   participants,
   alreadyGenerated,
   groupCount,
   qualifiersPerGroup,
   byeMethod = "seed",
+  variant = "full",
 }: Props) {
   const supabase = createClient();
   const router = useRouter();
@@ -60,6 +67,10 @@ export default function FixtureGenerator({
       ? "Generate Seeded Bracket"
       : format === "group_knockout"
       ? "Draw Groups & Generate Fixtures"
+      : format === "double_elimination"
+      ? "Generate Winners Bracket (Round 1)"
+      : format === "swiss"
+      ? "Generate Round 1 (Random Pairing)"
       : "Generate Fixtures Randomly";
 
   async function runGeneration() {
@@ -76,7 +87,9 @@ export default function FixtureGenerator({
 
     if (format === "knockout") {
       const drafts =
-        byeMethod === "random" ? generateKnockoutRound1(drawPlayers) : generateSeededKnockoutRound1(drawPlayers);
+        byeMethod === "random"
+          ? generateKnockoutRound1(drawPlayers, new Set(), twoLegKnockout)
+          : generateSeededKnockoutRound1(drawPlayers, twoLegKnockout);
       const rows = drafts.map((d) => ({
         tournament_id: tournamentId,
         round: d.round,
@@ -85,6 +98,8 @@ export default function FixtureGenerator({
         player2_id: d.player2_id,
         status: d.status,
         stage: "knockout",
+        leg: d.leg ?? 1,
+        tie_id: d.tie_id ?? null,
       }));
       const { error: insertError } = await supabase.from("tournament_matches").insert(rows);
       if (insertError) throw new Error(insertError.message);
@@ -112,6 +127,33 @@ export default function FixtureGenerator({
         status: d.status,
         stage: "group",
         group_name: d.group_name,
+      }));
+      const { error: insertError } = await supabase.from("tournament_matches").insert(rows);
+      if (insertError) throw new Error(insertError.message);
+    } else if (format === "double_elimination") {
+      const drafts = generateWinnersRound1(drawPlayers);
+      const rows = drafts.map((d) => ({
+        tournament_id: tournamentId,
+        round: d.round,
+        match_order: d.match_order,
+        player1_id: d.player1_id,
+        player2_id: d.player2_id,
+        status: d.status,
+        stage: "knockout",
+        bracket_side: d.bracket_side,
+      }));
+      const { error: insertError } = await supabase.from("tournament_matches").insert(rows);
+      if (insertError) throw new Error(insertError.message);
+    } else if (format === "swiss") {
+      const drafts = generateSwissRound1(drawPlayers);
+      const rows = drafts.map((d) => ({
+        tournament_id: tournamentId,
+        round: d.round,
+        match_order: d.match_order,
+        player1_id: d.player1_id,
+        player2_id: d.player2_id,
+        status: d.status,
+        stage: "swiss",
       }));
       const { error: insertError } = await supabase.from("tournament_matches").insert(rows);
       if (insertError) throw new Error(insertError.message);
@@ -148,6 +190,28 @@ export default function FixtureGenerator({
       ? `At least ${minRequired} approved participants are required to generate fixtures (${effectiveGroupCount} groups × minimum ${minPerGroup} per group) — currently ${participants.length} are available.`
       : `At least 2 approved participants are required to generate fixtures — currently ${participants.length} are available.`;
 
+  if (variant === "icon" && !alreadyGenerated) {
+    return (
+      <div className="inline-flex flex-col items-center gap-2">
+        <div className="group/gen relative inline-flex">
+          <button
+            onClick={handleClick}
+            disabled={notEnoughPlayers}
+            aria-label={label}
+            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-border bg-surface-2 text-gold transition hover:border-gold/60 hover:bg-surface disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Shuffle size={17} />
+          </button>
+          <span className="pointer-events-none absolute -top-9 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-md border border-border bg-bg px-2.5 py-1.5 text-[11px] font-medium text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover/gen:opacity-100">
+            {label}
+          </span>
+        </div>
+        {notEnoughPlayers && <p className="text-center text-xs text-gold">{requirementHint}</p>}
+        {error && <p className="text-center text-xs text-gold">{error}</p>}
+      </div>
+    );
+  }
+
   return (
     <div>
       {alreadyGenerated ? (
@@ -160,16 +224,20 @@ export default function FixtureGenerator({
           successMessage="Fixtures have been regenerated."
           errorMessage="Failed to regenerate fixtures."
           isDangerous
-          buttonClassName="btn-primary flex items-center gap-2 text-sm disabled:opacity-50"
+          renderTrigger={(onClick) => (
+            <FillButton onClick={onClick} className="cursor-pointer text-sm">
+              <Shuffle size={16} />
+              Re-generate Fixtures
+            </FillButton>
+          )}
         >
-          <Shuffle size={16} />
           Re-generate Fixtures
         </ConfirmActionButton>
       ) : (
         <button
           onClick={handleClick}
           disabled={notEnoughPlayers}
-          className="btn-primary flex items-center gap-2 text-sm disabled:opacity-50"
+          className="btn-primary flex cursor-pointer items-center gap-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Shuffle size={16} />
           {label}

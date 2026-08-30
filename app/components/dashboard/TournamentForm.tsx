@@ -42,6 +42,12 @@ type TournamentFormProps = {
 
     double_round: boolean;
 
+    two_leg_knockout: boolean;
+
+    grand_final_reset: boolean;
+
+    swiss_rounds: number | null;
+
     slug?: string | null;
 
     start_date: string | null;
@@ -114,6 +120,12 @@ export default function TournamentForm({
   const [format, setFormat] = useState(initial?.format ?? "league");
 
   const [doubleRound, setDoubleRound] = useState(initial?.double_round ?? false);
+
+  const [twoLegKnockout, setTwoLegKnockout] = useState(initial?.two_leg_knockout ?? false);
+
+  const [grandFinalReset, setGrandFinalReset] = useState(initial?.grand_final_reset ?? true);
+
+  const [swissRounds, setSwissRounds] = useState(initial?.swiss_rounds?.toString() ?? "5");
 
   const [groupCount, setGroupCount] = useState(initial?.group_count?.toString() ?? "4");
 
@@ -213,6 +225,12 @@ export default function TournamentForm({
 
           double_round: false,
 
+          two_leg_knockout: false,
+
+          grand_final_reset: true,
+
+          swiss_rounds: null,
+
           start_date: startDate || null,
 
           end_date: endDate || null,
@@ -242,6 +260,12 @@ export default function TournamentForm({
           format,
 
           double_round: doubleRound,
+
+          two_leg_knockout: twoLegKnockout,
+
+          grand_final_reset: grandFinalReset,
+
+          swiss_rounds: format === "swiss" ? Number(swissRounds) : null,
 
           start_date: startDate || null,
 
@@ -459,6 +483,8 @@ export default function TournamentForm({
 
               { value: "league_playoff", label: "League + Knockout (Playoff)" },
 
+              { value: "double_elimination", label: "Double Elimination" },
+
             ]}
 
           />
@@ -497,7 +523,17 @@ export default function TournamentForm({
 
         )}
 
-
+        {!isOfficial && (format === "knockout" || format === "group_knockout" || format === "league_playoff") && (
+          <label className="flex items-center gap-2 text-sm text-white">
+            <input
+              type="checkbox"
+              checked={twoLegKnockout}
+              onChange={(e) => setTwoLegKnockout(e.target.checked)}
+              className="h-4 w-4 rounded border-border"
+            />
+            Two-Leg Knockout (Home & Away, aggregate score)
+          </label>
+        )}
 
         {!isOfficial && (format === "knockout" || format === "group_knockout" || format === "league_playoff") && (
 
@@ -519,6 +555,21 @@ export default function TournamentForm({
 
           />
 
+        )}
+
+        {!isOfficial && format === "double_elimination" && (
+          <label className="flex items-center gap-2.5 rounded-lg border border-border bg-surface-2 px-4 py-3 text-sm">
+            <input
+              type="checkbox"
+              checked={grandFinalReset}
+              onChange={(e) => setGrandFinalReset(e.target.checked)}
+              className="h-4 w-4 rounded border-border accent-gold"
+            />
+            <span>
+              Grand Final Reset (if the Losers Bracket champion wins Game 1, play a decisive Game 2 —
+              standard double-elimination rule)
+            </span>
+          </label>
         )}
 
 

@@ -4,8 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Shuffle } from "lucide-react";
 import { createClient } from "@/app/lib/supabase/client";
-import { recalcStandings } from "@/app/lib/fixtures/recalcStandings";
-import { recalcAllPlayerStats } from "@/app/lib/matches/recalcPlayerStats";
+import { saveMatchResult } from "@/app/lib/matches/saveMatchResult";
 
 type PlayerOption = {
   id: string;
@@ -23,7 +22,9 @@ type Match = {
   player1_score: number | null;
   player2_score: number | null;
   status: string;
-  is_third_place?: boolean; // new
+  is_third_place?: boolean;
+  leg?: number | null;        // নতুন
+  aggregateLabel?: string | null; // নতুন — parent থেকে গণনা করে পাঠাবেন
 };
 
 export default function FixtureRow({
@@ -81,27 +82,6 @@ export default function FixtureRow({
     router.refresh();
   }
 
-  // In league/round-robin, no next round needs to be generated, so once all matches
-  // (completed/bye) finish the tournament can safely be marked "completed".
-  // Knockout is handled separately by NextRoundGenerator.
-  async function maybeAutoCompleteLeague() {
-    if (format !== "league") return;
-
-    const { count } = await supabase
-      .from("tournament_matches")
-      .select("id", { count: "exact", head: true })
-      .eq("tournament_id", tournamentId)
-      .not("status", "in", "(completed,bye)");
-
-    if (count === 0) {
-      await supabase
-        .from("tournaments")
-        .update({ status: "completed" })
-        .eq("id", tournamentId)
-        .neq("status", "completed");
-    }
-  }
-
   async function handleSaveResult() {
     if (s1 === "" || s2 === "") return;
 
@@ -111,21 +91,16 @@ export default function FixtureRow({
     try {
       const score1 = Number(s1);
       const score2 = Number(s2);
-      const winnerId =
-        score1 > score2 ? match.player1_id : score2 > score1 ? match.player2_id : null;
 
-      const { error: matchError } = await supabase
-        .from("tournament_matches")
-        .update({
-          player1_score: score1,
-          player2_score: score2,
-          winner_id: winnerId,
-          status: "completed",
-          completed_at: new Date().toISOString(),
-        })
-        .eq("id", match.id);
-
-      if (matchError) throw new Error(matchError.message);
+      await saveMatchResult(supabase, {
+        matchId: match.id,
+        tournamentId,
+        player1Id: match.player1_id,
+        player2Id: match.player2_id,
+        score1,
+        score2,
+        format,
+      });
 
       await supabase.from("match_ratings").delete().eq("tournament_match_id", match.id);
       const ratingsToInsert = [] as Array<{ tournament_match_id: string; player_id: string; rating: number }>;
@@ -138,10 +113,6 @@ export default function FixtureRow({
       if (ratingsToInsert.length > 0) {
         await supabase.from("match_ratings").insert(ratingsToInsert);
       }
-
-      await recalcStandings(supabase, tournamentId);
-      await recalcAllPlayerStats(supabase);
-      await maybeAutoCompleteLeague();
 
       router.refresh();
     } catch (e) {
@@ -159,6 +130,16 @@ export default function FixtureRow({
             3rd Place Match
           </span>
         )}
+        {match.leg && (
+          <span className="mb-2 mr-2 inline-block rounded-full bg-gold/20 px-2.5 py-1 text-[10px] font-bold uppercase text-gold">
+            Leg {match.leg}
+          </span>
+        )}
+        {match.aggregateLabel && (
+          <span className="mb-2 inline-block rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold text-white">
+            {match.aggregateLabel}
+          </span>
+        )}
         <p className="text-sm font-medium">
           {nameOf(match.player1_id)} <span className="text-muted">— BYE (auto-advance)</span>
         </p>
@@ -171,6 +152,16 @@ export default function FixtureRow({
       {match.is_third_place && (
         <span className="mb-2 inline-block rounded-full bg-indigo/20 px-2.5 py-1 text-[10px] font-bold uppercase text-indigo-light">
           3rd Place Match
+        </span>
+      )}
+      {match.leg && (
+        <span className="mb-2 mr-2 inline-block rounded-full bg-gold/20 px-2.5 py-1 text-[10px] font-bold uppercase text-gold">
+          Leg {match.leg}
+        </span>
+      )}
+      {match.aggregateLabel && (
+        <span className="mb-2 inline-block rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold text-white">
+          {match.aggregateLabel}
         </span>
       )}
       {editingOpponents ? (

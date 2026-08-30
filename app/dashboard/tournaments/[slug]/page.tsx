@@ -22,7 +22,7 @@ import TournamentStatusControl from "@/app/dashboard/TournamentStatusControl";
 
 function parseInternalTab(tabParam: string | undefined): InternalTournamentTab {
 
-  if (tabParam === "fixtures") return "fixtures";
+  if (tabParam === "fixtures") return "bracket";
 
   if (tabParam === "bracket") return "bracket";
 

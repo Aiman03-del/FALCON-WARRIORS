@@ -4,7 +4,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 export type InternalTournamentTab =
   | "standings"
-  | "fixtures"
   | "bracket"
   | "participants"
   | "edit";
@@ -15,8 +14,6 @@ export default function InternalTournamentTabs({
   activeTab,
   showStandings,
   standingsContent,
-  fixturesContent,
-  fixtureGenerator,
   bracketContent,
   participantsContent,
   editContent,
@@ -26,8 +23,6 @@ export default function InternalTournamentTabs({
   activeTab: InternalTournamentTab;
   showStandings: boolean;
   standingsContent: React.ReactNode;
-  fixturesContent: React.ReactNode;
-  fixtureGenerator: React.ReactNode;
   bracketContent: React.ReactNode;
   participantsContent: React.ReactNode;
   editContent: React.ReactNode;
@@ -63,9 +58,6 @@ export default function InternalTournamentTabs({
             Standings
           </button>
         )}
-        <button type="button" onClick={() => setTab("fixtures")} className={tabClass("fixtures")}>
-          Fixtures
-        </button>
         <button type="button" onClick={() => setTab("bracket")} className={tabClass("bracket")}>
           Bracket
         </button>
@@ -79,12 +71,6 @@ export default function InternalTournamentTabs({
 
       <div className="mt-6">
         {activeTab === "standings" && showStandings && standingsContent}
-        {activeTab === "fixtures" && (
-          <>
-            <div className="mb-6">{fixtureGenerator}</div>
-            {fixturesContent}
-          </>
-        )}
         {activeTab === "bracket" && bracketContent}
         {activeTab === "participants" && participantsContent}
         {activeTab === "edit" && editContent}

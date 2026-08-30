@@ -1,5 +1,5 @@
 import { countTeamsInRound } from "@/app/lib/utils/roundNames";
-
+import { groupIntoTies, tieWinnerId, type Tie } from "./twoLegKnockout";
 export type BracketMatchRow = {
   id: string;
   round: number;
@@ -14,6 +14,8 @@ export type BracketMatchRow = {
   is_third_place?: boolean | null;
   player1?: unknown;
   player2?: unknown;
+  leg?: number | null;      // নতুন
+  tie_id?: string | null;   // নতুন
 };
 
 function winnerIdOf(m: BracketMatchRow): string | null {
@@ -41,7 +43,7 @@ export function buildFullKnockoutBracket(matches: BracketMatchRow[]): BracketMat
   const real = matches
     .filter((m) => !m.is_third_place)
     .slice()
-    .sort((a, b) => a.round - b.round || a.match_order - b.match_order);
+    .sort((a, b) => a.round - b.round || a.match_order - b.match_order || (a.leg ?? 1) - (b.leg ?? 1));
 
   if (real.length === 0) return [];
 
@@ -51,54 +53,58 @@ export function buildFullKnockoutBracket(matches: BracketMatchRow[]): BracketMat
     list.push(m);
     byRound.set(m.round, list);
   }
-  for (const list of byRound.values()) {
-    list.sort((a, b) => a.match_order - b.match_order);
-  }
 
   const firstRoundNum = Math.min(...byRound.keys());
-  const round1 = byRound.get(firstRoundNum)!;
-  const totalRoundCount = roundsNeeded(round1.length);
+  const round1Ties = groupIntoTies(byRound.get(firstRoundNum)!).sort((a, b) => a.match_order - b.match_order);
+  const totalRoundCount = roundsNeeded(round1Ties.length);
   const lastRoundNum = firstRoundNum + totalRoundCount - 1;
 
-  const filledByRound = new Map<number, BracketMatchRow[]>();
-  filledByRound.set(firstRoundNum, round1);
+  const filledTiesByRound = new Map<number, Tie[]>();
+  filledTiesByRound.set(firstRoundNum, round1Ties);
 
   for (let round = firstRoundNum + 1; round <= lastRoundNum; round++) {
-    const prev = filledByRound.get(round - 1) ?? [];
-    const existing = byRound.get(round) ?? [];
-    const matchCount = Math.ceil(prev.length / 2);
-    const roundMatches: BracketMatchRow[] = [];
+    const prevTies = filledTiesByRound.get(round - 1) ?? [];
+    const existingTies = groupIntoTies(byRound.get(round) ?? []);
+    const matchCount = Math.ceil(prevTies.length / 2);
+    const roundTies: Tie[] = [];
 
     for (let order = 1; order <= matchCount; order++) {
-      const dbMatch = existing.find((m) => m.match_order === order);
-      if (dbMatch) {
-        roundMatches.push(dbMatch);
+      const existing = existingTies.find((t) => t.match_order === order);
+      if (existing) {
+        roundTies.push(existing);
         continue;
       }
 
-      const feeder1 = prev[(order - 1) * 2];
-      const feeder2 = prev[(order - 1) * 2 + 1];
-      const p1Id = feeder1 ? winnerIdOf(feeder1) : null;
-      const p2Id = feeder2 ? winnerIdOf(feeder2) : null;
+      const feeder1 = prevTies[(order - 1) * 2];
+      const feeder2 = prevTies[(order - 1) * 2 + 1];
+      const p1Id = feeder1 ? tieWinnerId(feeder1) : null;
+      const p2Id = feeder2 ? tieWinnerId(feeder2) : null;
 
-      roundMatches.push({
-        id: `preview-${round}-${order}`,
+      roundTies.push({
         round,
         match_order: order,
-        player1_id: p1Id,
-        player2_id: p2Id,
-        player1_score: null,
-        player2_score: null,
-        status: p1Id && !p2Id ? "bye" : "scheduled",
+        legs: [
+          {
+            id: `preview-${round}-${order}`,
+            round,
+            match_order: order,
+            player1_id: p1Id,
+            player2_id: p2Id,
+            player1_score: null,
+            player2_score: null,
+            status: p1Id && !p2Id ? "bye" : "scheduled",
+            leg: 1,
+          },
+        ],
       });
     }
 
-    filledByRound.set(round, roundMatches);
+    filledTiesByRound.set(round, roundTies);
   }
 
-  return Array.from(filledByRound.entries())
+  return Array.from(filledTiesByRound.entries())
     .sort(([a], [b]) => a - b)
-    .flatMap(([, rows]) => rows);
+    .flatMap(([, ties]) => ties.flatMap((t) => t.legs));
 }
 
 /** League / group-stage matches shown as round columns in the bracket UI. */

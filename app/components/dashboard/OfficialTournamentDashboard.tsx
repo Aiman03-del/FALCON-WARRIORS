@@ -59,7 +59,7 @@ export default async function OfficialTournamentDashboard({
   const { data: tournament } = await supabase
     .from("tournaments")
     .select(
-      "id, slug, name, type, format, double_round, status, start_date, end_date, max_participants, registration_deadline, group_count, qualifiers_per_group, playoff_size, bye_method, third_place_match"
+      "id, slug, name, type, format, double_round, two_leg_knockout, grand_final_reset, swiss_rounds, status, start_date, end_date, max_participants, registration_deadline, group_count, qualifiers_per_group, playoff_size, bye_method, third_place_match"
     )
     .eq("id", tournamentId)
     .single();

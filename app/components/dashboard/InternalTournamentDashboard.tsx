@@ -3,16 +3,14 @@ import {
   buildLeagueBracketMatches,
   buildProjectedKnockoutBracket,
 } from "@/app/lib/fixtures/buildFullKnockoutBracket";
-import BracketView from "@/app/components/BracketView";
+import BracketPanel from "@/app/components/dashboard/BracketPanel";
 import FixtureGenerator from "@/app/components/dashboard/FixtureGenerator";
-import FixturesStepper from "@/app/components/dashboard/FixturesStepper";
 import InternalTournamentTabs, {
   type InternalTournamentTab,
 } from "@/app/components/dashboard/InternalTournamentTabs";
 import ParticipantsManager from "@/app/components/dashboard/ParticipantsManager";
 import StandingsTable from "@/app/components/dashboard/StandingsTable";
 import TournamentForm from "@/app/components/dashboard/TournamentForm";
-import { getGroupStandings, getTournamentStandings } from "@/app/lib/queries/tournaments";
 import { createClient } from "@/app/lib/supabase/client";
 
 export default async function InternalTournamentDashboard({
@@ -29,7 +27,7 @@ export default async function InternalTournamentDashboard({
   const { data: tournament } = await supabase
     .from("tournaments")
     .select(
-      "id, slug, name, type, format, double_round, status, start_date, end_date, max_participants, registration_deadline, bye_method, group_count, qualifiers_per_group, playoff_size, third_place_match"
+      "id, slug, name, type, format, double_round, two_leg_knockout, grand_final_reset, swiss_rounds, status, start_date, end_date, max_participants, registration_deadline, bye_method, group_count, qualifiers_per_group, playoff_size, third_place_match"
     )
     .eq("id", tournamentId)
     .single();
@@ -79,14 +77,6 @@ export default async function InternalTournamentDashboard({
     .eq("tournament_id", tournamentId)
     .order("round")
     .order("match_order");
-
-  const groupStandings =
-    tournament.format === "group_knockout" ? await getGroupStandings(tournament.id) : [];
-
-  const leagueStandings =
-    tournament.format === "league_playoff" || tournament.format === "league"
-      ? await getTournamentStandings(tournament.id)
-      : [];
 
   const groupNames =
     tournament.format === "group_knockout"
@@ -203,31 +193,22 @@ export default async function InternalTournamentDashboard({
     </>
   );
 
-  const fixturesContent = hasFixtures ? (
-    <FixturesStepper
-      tournamentId={tournament.id}
-      tournamentStatus={tournament.status}
-      format={tournament.format}
-      matches={(matches ?? []) as any}
-      participants={participants}
-      byeMethod={(tournament.bye_method as "seed" | "random") ?? "seed"}
-      thirdPlaceMatch={tournament.third_place_match ?? false}
-      groupStandings={groupStandings.map((g) => ({ groupName: g.groupName, standings: g.standings }))}
-      qualifiersPerGroup={tournament.qualifiers_per_group ?? 2}
-      leagueStandings={leagueStandings as any}
-      playoffSize={tournament.playoff_size ?? 4}
-    />
-  ) : (
-    <p className="text-center text-sm text-muted">
-      No fixtures generated yet. Use the button above to generate matchups.
-    </p>
-  );
-
   const bracketContent = (
     <>
       {!hasFixtures ? (
-        <div className="card p-8 text-center text-sm text-muted">
-          No bracket yet — generate fixtures first.
+        <div className="card flex flex-col items-center justify-center gap-3 p-8 text-center text-sm text-muted">
+          <span>No bracket yet — generate fixtures first.</span>
+          <FixtureGenerator
+            tournamentId={tournament.id}
+            format={tournament.format}
+            doubleRound={tournament.double_round}
+            participants={participants}
+            alreadyGenerated={hasFixtures}
+            byeMethod={tournament.bye_method ?? "seed"}
+            groupCount={tournament.group_count}
+            qualifiersPerGroup={tournament.qualifiers_per_group}
+            variant="icon"
+          />
         </div>
       ) : (
         <>
@@ -236,10 +217,33 @@ export default async function InternalTournamentDashboard({
               tournament.format === "league_playoff" ||
               tournament.format === "league") && (
               <div className="mb-8">
-                <h2 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-gold">
-                  {tournament.format === "group_knockout" ? "Group Stage" : "League Stage"}
-                </h2>
-                <BracketView matches={leagueViewMatches} mode="league" />
+                {tournament.format !== "league" && (
+                  <h2 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-gold">
+                    {tournament.format === "group_knockout" ? "Group Stage" : "League Stage"}
+                  </h2>
+                )}
+                <BracketPanel
+                  tournamentName={tournament.name}
+                  matches={leagueViewMatches}
+                  mode="league"
+                  editable
+                  tournamentId={tournament.id}
+                  format={tournament.format}
+                  fixtureGenerator={
+                    tournament.format === "league" ? (
+                      <FixtureGenerator
+                        tournamentId={tournament.id}
+                        format={tournament.format}
+                        doubleRound={tournament.double_round}
+                        participants={participants}
+                        alreadyGenerated={hasFixtures}
+                        byeMethod={tournament.bye_method ?? "seed"}
+                        groupCount={tournament.group_count}
+                        qualifiersPerGroup={tournament.qualifiers_per_group}
+                      />
+                    ) : null
+                  }
+                />
               </div>
             )}
 
@@ -250,7 +254,28 @@ export default async function InternalTournamentDashboard({
                   ? "Knockout Bracket (Preview)"
                   : "Knockout Bracket"}
               </h2>
-              <BracketView matches={bracketViewMatches} mode="knockout" />
+              <BracketPanel
+                tournamentName={tournament.name}
+                matches={bracketViewMatches}
+                mode="knockout"
+                editable
+                tournamentId={tournament.id}
+                format={tournament.format}
+                fixtureGenerator={
+                  tournament.format !== "league" ? (
+                    <FixtureGenerator
+                      tournamentId={tournament.id}
+                      format={tournament.format}
+                      doubleRound={tournament.double_round}
+                      participants={participants}
+                      alreadyGenerated={hasFixtures}
+                      byeMethod={tournament.bye_method ?? "seed"}
+                      groupCount={tournament.group_count}
+                      qualifiersPerGroup={tournament.qualifiers_per_group}
+                    />
+                  ) : null
+                }
+              />
             </div>
           )}
 
@@ -289,7 +314,7 @@ export default async function InternalTournamentDashboard({
 
   const resolvedTab =
     activeTab === "standings" && !showStandings
-      ? "fixtures"
+      ? "bracket"
       : activeTab;
 
   return (
@@ -299,19 +324,6 @@ export default async function InternalTournamentDashboard({
       activeTab={resolvedTab}
       showStandings={showStandings}
       standingsContent={standingsContent}
-      fixturesContent={fixturesContent}
-      fixtureGenerator={
-        <FixtureGenerator
-          tournamentId={tournament.id}
-          format={tournament.format}
-          doubleRound={tournament.double_round}
-          participants={participants}
-          alreadyGenerated={hasFixtures}
-          byeMethod={tournament.bye_method ?? "seed"}
-          groupCount={tournament.group_count}
-          qualifiersPerGroup={tournament.qualifiers_per_group}
-        />
-      }
       bracketContent={bracketContent}
       participantsContent={
         <ParticipantsManager

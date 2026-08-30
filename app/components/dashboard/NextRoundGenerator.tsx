@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Trophy } from "lucide-react";
 import { createClient } from "@/app/lib/supabase/client";
 import { generateKnockoutNextRound } from "@/app/lib/fixtures/generateFixtures";
+import { groupIntoTies, tieWinnerId, tieIsDone } from "@/app/lib/fixtures/twoLegKnockout";
 
 type Match = {
   round: number;
@@ -12,8 +13,11 @@ type Match = {
   status: string;
   player1_id: string | null;
   player2_id: string | null;
+  player1_score?: number | null;
+  player2_score?: number | null;
   winner_id: string | null;
   stage?: string | null;
+  leg?: number | null;
 };
 
 export default function NextRoundGenerator({
@@ -22,7 +26,8 @@ export default function NextRoundGenerator({
   allParticipants,
   tournamentStatus,
   byeMethod = "seed",
-  thirdPlaceMatch = false, // new prop
+  thirdPlaceMatch = false,
+  twoLegKnockout = false, // নতুন
 }: {
   tournamentId: string;
   matches: Match[];
@@ -30,6 +35,7 @@ export default function NextRoundGenerator({
   tournamentStatus: string;
   byeMethod?: "seed" | "random";
   thirdPlaceMatch?: boolean;
+  twoLegKnockout?: boolean;
 }) {
   const supabase = createClient();
   const router = useRouter();
@@ -38,13 +44,13 @@ export default function NextRoundGenerator({
 
   const knockoutMatches = matches.filter((m) => m.stage === "knockout" || m.stage == null);
   const currentRound = knockoutMatches.length > 0 ? Math.max(...knockoutMatches.map((m) => m.round)) : 0;
-  const roundMatches = knockoutMatches.filter((m) => m.round === currentRound);
-  const allDone =
-    roundMatches.length > 0 &&
-    roundMatches.every((m) => m.status === "completed" || m.status === "bye");
-  const winners = roundMatches
-    .map((m) => (m.status === "bye" ? m.player1_id : m.winner_id))
-    .filter((id): id is string => !!id);
+  const roundRows = knockoutMatches.filter((m) => m.round === currentRound && !("is_third_place" in m && (m as any).is_third_place));
+  const roundTies = groupIntoTies(
+    roundRows.map((m) => ({ ...m, id: `${m.round}-${m.match_order}-${m.leg ?? 1}` })) as any
+  ).sort((a, b) => a.match_order - b.match_order);
+
+  const allDone = roundTies.length > 0 && roundTies.every(tieIsDone);
+  const winners = roundTies.map(tieWinnerId).filter((id): id is string => !!id);
 
   const championId = allDone && winners.length === 1 ? winners[0] : null;
   const championName = championId
@@ -53,11 +59,8 @@ export default function NextRoundGenerator({
       "Unknown"
     : null;
 
-  // When a final round winner emerges, the tournament can automatically move to "completed" —
-  // staff do not need to manually change the status dropdown.
   useEffect(() => {
     if (!championId || tournamentStatus === "completed") return;
-
     supabase
       .from("tournaments")
       .update({ status: "completed" })
@@ -82,8 +85,6 @@ export default function NextRoundGenerator({
 
   if (!allDone || winners.length < 2) return null;
 
- // ... after counting winners, inside handleGenerateNext ...
-
   async function handleGenerateNext() {
     setError(null);
     setLoading(true);
@@ -96,7 +97,7 @@ export default function NextRoundGenerator({
       matches.filter((m) => m.status === "bye" && m.player1_id).map((m) => m.player1_id as string)
     );
 
-    const drafts = generateKnockoutNextRound(winnerPlayers, currentRound + 1, alreadyByedIds);
+    const drafts = generateKnockoutNextRound(winnerPlayers, currentRound + 1, alreadyByedIds, twoLegKnockout);
 
     const rows = drafts.map((d) => ({
       tournament_id: tournamentId,
@@ -107,15 +108,20 @@ export default function NextRoundGenerator({
       status: d.status,
       stage: "knockout",
       is_third_place: false,
+      leg: d.leg ?? 1,
+      tie_id: d.tie_id ?? null,
     }));
 
-    // Third-place match: only when generating the final just now (2 winners -> 1 match),
-    // meaning the current round was the semifinal (exactly 2 matches).
-    // Both semifinals must be real matches, not byes, to determine the real losers.
-    if (thirdPlaceMatch && winners.length === 2 && roundMatches.length === 2) {
-      const losers = roundMatches
-        .filter((m) => m.status === "completed" && m.player1_id && m.player2_id && m.winner_id)
-        .map((m) => (m.winner_id === m.player1_id ? m.player2_id : m.player1_id))
+    // থার্ড প্লেস ম্যাচ — সবসময় সিঙ্গেল-লেগ (২-লেগ চালু থাকলেও)
+    if (thirdPlaceMatch && winners.length === 2 && roundTies.length === 2) {
+      const losers = roundTies
+        .filter((t) => tieIsDone(t))
+        .map((t) => {
+          const w = tieWinnerId(t);
+          const allIds = new Set(t.legs.flatMap((l) => [l.player1_id, l.player2_id]).filter(Boolean));
+          allIds.delete(w as string);
+          return Array.from(allIds)[0] as string | undefined;
+        })
         .filter((id): id is string => !!id);
 
       if (losers.length === 2) {
@@ -128,6 +134,8 @@ export default function NextRoundGenerator({
           status: "scheduled",
           stage: "knockout",
           is_third_place: true,
+          leg: 1,
+          tie_id: null,
         });
       }
     }
@@ -145,11 +153,7 @@ export default function NextRoundGenerator({
 
   return (
     <div className="mt-4">
-      <button
-        onClick={handleGenerateNext}
-        disabled={loading}
-        className="btn-primary text-sm disabled:opacity-50"
-      >
+      <button onClick={handleGenerateNext} disabled={loading} className="btn-primary text-sm disabled:opacity-50">
         {loading ? "Generating..." : `Generate Round ${currentRound + 1}`}
       </button>
       {error && <p className="mt-2 text-xs text-gold">{error}</p>}

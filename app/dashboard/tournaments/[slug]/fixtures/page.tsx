@@ -17,5 +17,5 @@ export default async function FixturesPage({
     redirect(`/dashboard/tournaments/${slug}?tab=bracket`);
   }
 
-  redirect(`/dashboard/tournaments/${slug}?tab=fixtures`);
+  redirect(`/dashboard/tournaments/${slug}?tab=bracket`);
 }
