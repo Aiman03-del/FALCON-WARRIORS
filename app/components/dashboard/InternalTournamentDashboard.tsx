@@ -3,6 +3,8 @@ import {
   buildLeagueBracketMatches,
   buildProjectedKnockoutBracket,
 } from "@/app/lib/fixtures/buildFullKnockoutBracket";
+import { computeStandingsFromMatches } from "@/app/lib/fixtures/computeStandings";
+import { rankStandings } from "@/app/lib/fixtures/tiebreakers";
 import BracketPanel from "@/app/components/dashboard/BracketPanel";
 import FixtureGenerator from "@/app/components/dashboard/FixtureGenerator";
 import InternalTournamentTabs, {
@@ -144,6 +146,29 @@ export default async function InternalTournamentDashboard({
     (m) => m.status === "completed" && m.stage !== "knockout"
   );
 
+  const leagueChampion = (() => {
+    if (tournament.format !== "league") return null;
+    const allMatches = matches ?? [];
+    if (allMatches.length === 0 || participants.length === 0) return null;
+    const allComplete = allMatches.every((m) => m.status === "completed" || m.status === "bye");
+    if (!allComplete) return null;
+
+    const statsMap = computeStandingsFromMatches(
+      participants.map((p) => p.id),
+      allMatches as any
+    );
+    const withStats = participants.map((p) => ({
+      player_id: p.id,
+      points: statsMap[p.id]?.points ?? 0,
+      goals_for: statsMap[p.id]?.goals_for ?? 0,
+      goals_against: statsMap[p.id]?.goals_against ?? 0,
+    }));
+    const ranked = rankStandings(withStats, allMatches as any);
+    const winner = participants.find((p) => p.id === ranked[0]?.player_id);
+    if (!winner) return null;
+    return { name: winner.real_name?.trim() || winner.username, avatarUrl: winner.avatar_url };
+  })();
+
   const hasFixtures = (matches ?? []).length > 0;
 
   const standingsContent = (
@@ -229,6 +254,7 @@ export default async function InternalTournamentDashboard({
                   editable
                   tournamentId={tournament.id}
                   format={tournament.format}
+                  leagueChampion={leagueChampion}
                   fixtureGenerator={
                     tournament.format === "league" ? (
                       <FixtureGenerator

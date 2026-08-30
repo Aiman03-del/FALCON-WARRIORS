@@ -1,15 +1,13 @@
 "use client";
 
-import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
+import { useState, useRef, useEffect, useTransition, forwardRef, useImperativeHandle } from "react";
 import { useRouter } from "next/navigation";
-import { Trophy, Download, Share2, X } from "lucide-react";
+import { Trophy } from "lucide-react";
 import { toPng } from "html-to-image";
 import { knockoutRoundName, countTeamsInRound } from "@/app/lib/utils/roundNames";
 import { createClient } from "@/app/lib/supabase/client";
 import { saveMatchResult } from "@/app/lib/matches/saveMatchResult";
-import { getSiteSettings } from "@/app/lib/queries/siteSettings";
-import FillButton from "@/app/components/FillButton";
-import { FaFacebook } from "react-icons/fa6";
+import ChampionModal from "@/app/components/ChampionModal";
 
 type PlayerRef = {
   efootball_username: string;
@@ -125,6 +123,7 @@ function MatchBox({
   const [s1, setS1] = useState(m.player1_score?.toString() ?? "");
   const [s2, setS2] = useState(m.player2_score?.toString() ?? "");
   const [saving, setSaving] = useState(false);
+  const [, startTransition] = useTransition();
   const boxRef = useRef<HTMLDivElement>(null);
 
   const p1 = infoOf(m.player1);
@@ -151,7 +150,9 @@ function MatchBox({
         score1: Number(score1), score2: Number(score2), format,
       });
       setEditing(false);
-      router.refresh();
+      startTransition(() => {
+        router.refresh();
+      });
     } finally {
       setSaving(false);
     }
@@ -217,157 +218,6 @@ function MatchBox({
   );
 }
 
-/** চ্যাম্পিয়ন কনগ্র্যাচুলেশন কার্ড — ডাউনলোড / শেয়ার / ফেসবুক */
-function ChampionModal({
-  champion,
-  tournamentName,
-  onClose,
-}: {
-  champion: NonNullable<PlayerInfo>;
-  tournamentName?: string;
-  onClose: () => void;
-}) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [logoUrl, setLogoUrl] = useState("/logo.jpg");
-  const [busy, setBusy] = useState<"download" | "share" | null>(null);
-
-  useEffect(() => {
-    getSiteSettings().then((s) => setLogoUrl(s.logoUrl));
-  }, []);
-
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, []);
-
-  async function generateImage() {
-    if (!cardRef.current) return null;
-    await waitForImages(cardRef.current);
-    return toPng(cardRef.current, { backgroundColor: "#0a0a0f", pixelRatio: 3, cacheBust: true });
-  }
-
-  async function handleDownload() {
-    setBusy("download");
-    try {
-      const dataUrl = await generateImage();
-      if (!dataUrl) return;
-      const link = document.createElement("a");
-      link.download = `${sanitizeFilename(champion.name)}-champion.png`;
-      link.href = dataUrl;
-      link.click();
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function handleShare() {
-    setBusy("share");
-    try {
-      const dataUrl = await generateImage();
-      if (!dataUrl) return;
-      const shareText = `🏆 ${champion.name} is the Champion of ${tournamentName || "the tournament"}! #FalconWarriors`;
-
-      try {
-        const res = await fetch(dataUrl);
-        const blob = await res.blob();
-        const file = new File([blob], `${sanitizeFilename(champion.name)}-champion.png`, { type: "image/png" });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: "FALCON WARRIORS Champion", text: shareText });
-          return;
-        }
-      } catch {
-        // ফাইল-শেয়ার সাপোর্ট না থাকলে নিচের ফলব্যাকে যাবে
-      }
-
-      if (navigator.share) {
-        await navigator.share({ title: "FALCON WARRIORS Champion", text: shareText, url: window.location.href });
-        return;
-      }
-
-      // কোনো শেয়ার API সাপোর্ট না থাকলে ছবি ডাউনলোড করে দেওয়া হবে, ম্যানুয়ালি শেয়ার করার জন্য
-      const link = document.createElement("a");
-      link.download = `${sanitizeFilename(champion.name)}-champion.png`;
-      link.href = dataUrl;
-      link.click();
-    } catch {
-      // ইউজার শেয়ার শীট ক্যান্সেল করলে কিছু করার নেই
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  function handleFacebookShare() {
-    // ব্রাউজার থেকে সরাসরি ছবি Facebook-এ আপলোড করা যায় না (এর জন্য পাবলিক হোস্টিং লাগে) —
-    // তাই এখানে Facebook-এর শেয়ার ডায়ালগ ওপেন হয় পেজ লিংক + ক্যাপশন সহ। মোবাইলে "Share" বাটন থেকে
-    // native শেয়ার-শীট ব্যবহার করলে সরাসরি ছবিসহ Facebook অ্যাপে শেয়ার করা যায়।
-    const shareText = `🏆 ${champion.name} is the Champion of ${tournamentName || "the tournament"}! #FalconWarriors`;
-    const url = encodeURIComponent(typeof window !== "undefined" ? window.location.href : "https://falcon-warriors.vercel.app");
-    const quote = encodeURIComponent(shareText);
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${quote}`, "_blank", "noopener,noreferrer,width=600,height=600");
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={onClose}>
-      <div className="relative w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-        <button onClick={onClose} className="absolute -top-10 right-0 text-white/70 transition hover:text-white" aria-label="Close">
-          <X size={22} />
-        </button>
-
-        <div ref={cardRef} className="relative overflow-hidden rounded-2xl border border-gold/40 bg-gradient-to-b from-[#15151d] to-[#0a0a0f] p-6 text-center shadow-2xl">
-          <div
-            className="pointer-events-none absolute inset-0 opacity-[0.08]"
-            style={{ backgroundImage: "radial-gradient(circle at 50% 0%, #d4af37, transparent 60%)" }}
-          />
-
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={logoUrl} alt="Falcon Warriors" crossOrigin="anonymous" className="relative mx-auto mb-3 h-14 w-14 rounded-full object-cover ring-2 ring-gold/50" />
-
-          <p className="relative text-[10px] font-bold uppercase tracking-[0.25em] text-gold/80">Falcon Warriors</p>
-
-          <Trophy className="relative mx-auto my-3 text-gold" size={40} strokeWidth={1.5} />
-
-          <p className="relative text-xs font-semibold uppercase tracking-[0.3em] text-gold">Champion</p>
-
-          <div className="relative mx-auto my-4 flex flex-col items-center gap-2">
-            <div className="h-20 w-20 overflow-hidden rounded-full ring-4 ring-gold/40">
-              {champion.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={champion.avatarUrl} alt={champion.name} crossOrigin="anonymous" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-surface-2 text-xl font-bold text-gold">
-                  {champion.name.slice(0, 2).toUpperCase()}
-                </div>
-              )}
-            </div>
-            <h2 className="text-xl font-bold text-white">{champion.name}</h2>
-          </div>
-
-          {tournamentName && <p className="relative text-xs text-white/60">{tournamentName}</p>}
-
-          <p className="relative mt-3 text-[11px] text-white/40">Congratulations! 🎉</p>
-        </div>
-
-        <div className="mt-4 flex gap-2">
-          <FillButton onClick={handleDownload} disabled={busy !== null} className="flex-1">
-            <Download size={15} /> {busy === "download" ? "..." : "Download"}
-          </FillButton>
-          <FillButton onClick={handleShare} disabled={busy !== null} className="flex-1">
-            <Share2 size={15} /> {busy === "share" ? "..." : "Share"}
-          </FillButton>
-          <button
-            onClick={handleFacebookShare}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded bg-[#1877F2] px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-[#1877F2]/90 sm:text-sm"
-          >
-            <FaFacebook size={15} /> Facebook
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export type BracketViewHandle = {
   downloadImage: (tournamentName: string) => Promise<void>;
 };
@@ -379,14 +229,37 @@ type Props = {
   tournamentId?: string;
   format?: string;
   tournamentName?: string;
+  onChampionChange?: (champion: { name: string; avatarUrl: string | null } | null, openModal: () => void) => void;
 };
 
 const BracketView = forwardRef<BracketViewHandle, Props>(function BracketView(
-  { matches, mode, editable = false, tournamentId, format, tournamentName },
+  { matches, mode, editable = false, tournamentId, format, tournamentName, onChampionChange },
   ref
 ) {
   const captureRef = useRef<HTMLDivElement>(null);
   const [showChampionModal, setShowChampionModal] = useState(false);
+
+  const knockoutChampion: PlayerInfo = (() => {
+    if (mode === "league" || matches.length === 0) return null;
+    const roundsAll = Array.from(new Set(matches.map((m) => m.round))).sort((a, b) => a - b);
+    const lastRound = roundsAll[roundsAll.length - 1];
+    const finalMatch = matches
+      .filter((m) => m.round === lastRound)
+      .sort((a, b) => a.match_order - b.match_order)[0];
+    if (!finalMatch) return null;
+    if (finalMatch.status === "bye") return infoOf(finalMatch.player1);
+    const s1 = finalMatch.player1_score;
+    const s2 = finalMatch.player2_score;
+    if (s1 !== null && s2 !== null && s1 !== s2) {
+      return s1 > s2 ? infoOf(finalMatch.player1) : infoOf(finalMatch.player2);
+    }
+    return null;
+  })();
+
+  useEffect(() => {
+    onChampionChange?.(knockoutChampion, () => setShowChampionModal(true));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [knockoutChampion?.name, knockoutChampion?.avatarUrl]);
 
   async function exportBracketImage(filename: string) {
     if (!captureRef.current) return;
@@ -466,34 +339,11 @@ const BracketView = forwardRef<BracketViewHandle, Props>(function BracketView(
 
   const finalRoundMatches = byRound[totalRounds - 1];
   const finalMatch = finalRoundMatches?.[0];
-  let champion: PlayerInfo = null;
-  if (finalMatch) {
-    if (finalMatch.status === "bye") {
-      champion = infoOf(finalMatch.player1);
-    } else {
-      // status স্ট্রিং-এর বদলে স্কোরের উপর ভিত্তি করে champion নির্ণয় — এতে status ভিন্ন কিছু (যেমন "finished") হলেও কাজ করবে
-      const s1 = finalMatch.player1_score, s2 = finalMatch.player2_score;
-      if (s1 !== null && s2 !== null && s1 !== s2) {
-        champion = s1 > s2 ? infoOf(finalMatch.player1) : infoOf(finalMatch.player2);
-      }
-    }
-  }
+  const champion = knockoutChampion;
   const championY = finalMatch ? centers[totalRounds - 1][0] : 0;
 
   return (
     <div className="card overflow-x-auto p-4 sm:p-6">
-      {champion && (
-        <div className="mb-3 flex items-center justify-end">
-          <button
-            onClick={() => setShowChampionModal(true)}
-            className="flex items-center gap-1.5 rounded bg-gold px-3 py-1.5 text-xs font-semibold text-bg transition hover:bg-gold/90"
-            title="Declare champion"
-          >
-            <Trophy size={14} /> Submit
-          </button>
-        </div>
-      )}
-
       <div ref={captureRef} className="min-w-max" style={{ width: chartWidth }}>
         {TitleHeading}
         <div style={{ width: chartWidth, position: "relative" }}>
