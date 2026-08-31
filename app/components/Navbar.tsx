@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -101,12 +102,17 @@ export default function Navbar() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const headerRef = useRef<HTMLElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const mobileOverlayRef = useRef<HTMLDivElement>(null);
   const searchPanelRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     getSiteSettings().then((s) => setLogoUrl(s.logoUrl));
@@ -215,6 +221,9 @@ export default function Navbar() {
         opacity: 0,
         duration: 0.6, // fw-animation-reveal
         ease: "power3.out",
+        onComplete: () => {
+          gsap.set(headerRef.current, { clearProps: "transform" });
+        },
       });
     },
     { scope: headerRef }
@@ -505,8 +514,11 @@ export default function Navbar() {
           </div>
         </div>
       )}
+      </header>
 
-      {menuOpen && (
+      {/* Mobile menu is portaled to <body> so header's backdrop-filter
+          doesn't turn it into a containing block for our fixed elements */}
+      {menuOpen && mounted && createPortal(
         <>
           {/* Mobile overlay */}
           <div
@@ -631,9 +643,9 @@ export default function Navbar() {
               </div>
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
-      </header>
     </>
   );
 }
