@@ -1,89 +1,56 @@
-import { createClient } from "../supabase/client";import { getTopByPoints } from "./leaderboards";
-
-const MOCK_RECENT_RESULTS = [
-  {
-    id: "ext-3",
-    competition: "International League",
-    isOfficial: true,
-    opponent: "Tiger Squad",
-    opponentTag: "TGR",
-    opponentLogoUrl: null as string | null,
-    scoreHome: 3,
-    scoreAway: 1,
-    matchDate: new Date().toISOString(),
-    result: "WIN" as const,
-  },
-  {
-    id: "ext-1",
-    competition: "Champions Cup",
-    isOfficial: true,
-    opponent: "Silver Strikers",
-    opponentTag: "SLS",
-    opponentLogoUrl: null as string | null,
-    scoreHome: 2,
-    scoreAway: 2,
-    matchDate: new Date().toISOString(),
-    result: "DRAW" as const,
-  },
-  {
-    id: "ext-2",
-    competition: "International League",
-    isOfficial: true,
-    opponent: "Golden Hawks",
-    opponentTag: "GHA",
-    opponentLogoUrl: null as string | null,
-    scoreHome: 4,
-    scoreAway: 2,
-    matchDate: new Date().toISOString(),
-    result: "WIN" as const,
-  },
-];
+import { createClient } from "../supabase/client";
+import { getTopByPoints } from "./leaderboards";
 
 export async function getStats() {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
 
-  const [
-    { count: members },
-    { count: officialCompletedCount },
-    { count: trophies },
-    { data: officialCompleted },
-    { data: internalCompleted },
-  ] = await Promise.all([
-    supabase.from("player_details").select("*", { count: "exact", head: true }),
-    supabase.from("matches").select("*", { count: "exact", head: true }).eq("status", "completed"),
-    supabase.from("achievements").select("*", { count: "exact", head: true }),
-    supabase.from("matches").select("score_home, score_away").eq("status", "completed"),
-    supabase
+    const [
+      { count: members },
+      { count: officialCompletedCount },
+      { count: trophies },
+      { data: officialCompleted },
+      { data: internalCompleted },
+    ] = await Promise.all([
+      supabase.from("player_details").select("*", { count: "exact", head: true }),
+      supabase.from("matches").select("*", { count: "exact", head: true }).eq("status", "completed"),
+      supabase.from("achievements").select("*", { count: "exact", head: true }),
+      supabase.from("matches").select("score_home, score_away").eq("status", "completed"),
+      supabase
+        .from("tournament_matches")
+        .select("player1_score, player2_score")
+        .eq("status", "completed"),
+    ]);
+
+    const { count: internalCompletedCount } = await supabase
       .from("tournament_matches")
-      .select("player1_score, player2_score")
-      .eq("status", "completed"),
-  ]);
+      .select("*", { count: "exact", head: true })
+      .eq("status", "completed");
 
-  const { count: internalCompletedCount } = await supabase
-    .from("tournament_matches")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "completed");
+    const officialWins = (officialCompleted ?? []).filter(
+      (m) => (m.score_home ?? 0) > (m.score_away ?? 0)
+    ).length;
 
-  const officialWins = (officialCompleted ?? []).filter(
-    (m) => (m.score_home ?? 0) > (m.score_away ?? 0)
-  ).length;
+    // Internal matches: প্রতিটা ম্যাচে দুইজন প্লেয়ার, তাই একটা "win" ধারণা প্রযোজ্য না —
+    // শুধু non-draw ম্যাচ গণনা করে ধারণাগত win rate হিসেবে রাখা হলো (bye বাদে)
+    const internalDecisive = (internalCompleted ?? []).filter(
+      (m) => m.player1_score !== null && m.player2_score !== null && m.player1_score !== m.player2_score
+    ).length;
 
-  // Internal matches: প্রতিটা ম্যাচে দুইজন প্লেয়ার, তাই একটা "win" ধারণা প্রযোজ্য না —
-  // শুধু non-draw ম্যাচ গণনা করে ধারণাগত win rate হিসেবে রাখা হলো (bye বাদে)
-  const internalDecisive = (internalCompleted ?? []).filter(
-    (m) => m.player1_score !== null && m.player2_score !== null && m.player1_score !== m.player2_score
-  ).length;
+    const totalCompleted = (officialCompleted?.length ?? 0) + (internalCompleted?.length ?? 0);
+    const totalWins = officialWins + internalDecisive; // approximate combined metric
+    const winRate = totalCompleted > 0 ? Math.round((totalWins / totalCompleted) * 100) : 0;
 
-  const totalCompleted = (officialCompleted?.length ?? 0) + (internalCompleted?.length ?? 0);
-  const totalWins = officialWins + internalDecisive; // approximate combined metric
-  const winRate = totalCompleted > 0 ? Math.round((totalWins / totalCompleted) * 100) : 0;
-
-  return {
-    members: members ?? 0,
-    matches: (officialCompletedCount ?? 0) + (internalCompletedCount ?? 0),
-    trophies: trophies ?? 0,
-    winRate,
-  };
+    return {
+      members: members ?? 0,
+      matches: (officialCompletedCount ?? 0) + (internalCompletedCount ?? 0),
+      trophies: trophies ?? 0,
+      winRate,
+    };
+  } catch (error) {
+    console.error("[getStats] failed:", error);
+    return { members: 0, matches: 0, trophies: 0, winRate: 0 };
+  }
 }
 
 export async function getRecentResults() {
@@ -108,6 +75,9 @@ export async function getRecentResults() {
         .order("created_at", { ascending: false })
         .limit(3),
     ]);
+
+    if (matchesError) console.error("[getRecentResults] matches query failed:", matchesError);
+    if (tournamentError) console.error("[getRecentResults] tournament_matches query failed:", tournamentError);
 
     const tournamentIds = [...new Set((matchesData ?? []).map((m) => m.tournament_id).filter(Boolean))];
     const tournamentNames = new Map<string, string>();
@@ -181,9 +151,9 @@ export async function getRecentResults() {
       .sort((a, b) => new Date(b.matchDate ?? 0).getTime() - new Date(a.matchDate ?? 0).getTime())
       .slice(0, 3);
 
-    if (matchesError && tournamentError) return [];
     return recentMatches;
   } catch (error) {
+    console.error("[getRecentResults] failed:", error);
     return [];
   }
 }
@@ -219,7 +189,10 @@ export async function getRunningTournaments() {
       .order("start_date", { ascending: false })
       .limit(3);
 
-    if (error || !data) return MOCK_RUNNING_TOURNAMENTS;
+    if (error || !data) {
+      if (error) console.error("[getRunningTournaments] failed:", error);
+      return MOCK_RUNNING_TOURNAMENTS;
+    }
 
     return data.map((t) => ({
       id: t.id,
@@ -232,6 +205,7 @@ export async function getRunningTournaments() {
       endDate: t.end_date,
     }));
   } catch (error) {
+    console.error("[getRunningTournaments] failed:", error);
     return MOCK_RUNNING_TOURNAMENTS;
   }
 }
@@ -250,61 +224,86 @@ export async function getTopPerformers() {
       record: `${s.wins}W ${s.draws}D ${s.losses}L · ${s.value} goals`,
     }));
   } catch (error) {
+    console.error("[getTopPerformers] failed:", error);
     return [];
   }
 }
 
 export async function getAchievements() {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("achievements")
-    .select("id, title, season")
-    .order("created_at", { ascending: false })
-    .limit(6);
+    const { data, error } = await supabase
+      .from("achievements")
+      .select("id, title, season")
+      .order("created_at", { ascending: false })
+      .limit(6);
 
-  if (error || !data) return [];
+    if (error || !data) {
+      if (error) console.error("[getAchievements] failed:", error);
+      return [];
+    }
 
-  return data.map((a) => ({
-    id: a.id,
-    label: a.season ? `${a.title.toUpperCase()} ${a.season}` : a.title.toUpperCase(),
-  }));
+    return data.map((a) => ({
+      id: a.id,
+      label: a.season ? `${a.title.toUpperCase()} ${a.season}` : a.title.toUpperCase(),
+    }));
+  } catch (error) {
+    console.error("[getAchievements] failed:", error);
+    return [];
+  }
 }
 
 export async function getLatestNews() {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("news")
-    .select("id, title, category, cover_image_url, published_at")
-    .order("published_at", { ascending: false })
-    .limit(3);
+    const { data, error } = await supabase
+      .from("news")
+      .select("id, title, category, cover_image_url, published_at")
+      .order("published_at", { ascending: false })
+      .limit(3);
 
-  if (error || !data) return [];
+    if (error || !data) {
+      if (error) console.error("[getLatestNews] failed:", error);
+      return [];
+    }
 
-  return data.map((n) => ({
-    id: n.id,
-    category: (n.category ?? "club_news").replace("_", " ").toUpperCase(),
-    title: n.title,
-    date: new Date(n.published_at).toLocaleDateString("en-US", {
-      month: "short",
-      day: "2-digit",
-      year: "numeric",
-    }),
-    imageUrl: n.cover_image_url as string | null,
-  }));
+    return data.map((n) => ({
+      id: n.id,
+      category: (n.category ?? "club_news").replace("_", " ").toUpperCase(),
+      title: n.title,
+      date: new Date(n.published_at).toLocaleDateString("en-US", {
+        month: "short",
+        day: "2-digit",
+        year: "numeric",
+      }),
+      imageUrl: n.cover_image_url as string | null,
+    }));
+  } catch (error) {
+    console.error("[getLatestNews] failed:", error);
+    return [];
+  }
 }
 
 export async function getGallery() {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("gallery")
-    .select("id, image_url, caption")
-    .order("created_at", { ascending: false })
-    .limit(6);
+    const { data, error } = await supabase
+      .from("gallery")
+      .select("id, image_url, caption")
+      .order("created_at", { ascending: false })
+      .limit(6);
 
-  if (error || !data) return [];
+    if (error || !data) {
+      if (error) console.error("[getGallery] failed:", error);
+      return [];
+    }
 
-  return data;
+    return data;
+  } catch (error) {
+    console.error("[getGallery] failed:", error);
+    return [];
+  }
 }
