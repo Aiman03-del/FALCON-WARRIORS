@@ -242,7 +242,7 @@ export default function RegisterPage() {
            * Both login and register Google buttons now
            * go through the same callback.
            */
-          redirectTo: `${window.location.origin}/auth/callback?next=/`,
+          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin}/auth/callback?next=/`,
         },
       });
 
@@ -445,7 +445,7 @@ export default function RegisterPage() {
 
         options: {
           emailRedirectTo:
-            "https://falcon-warriors.vercel.app/",
+            `${process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin}/`,
 
           data: {
             efootball_username:

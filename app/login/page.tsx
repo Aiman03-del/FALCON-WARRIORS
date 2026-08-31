@@ -67,7 +67,7 @@ export default function LoginPage() {
          * The callback route will check whether the user already
          * has a player_details record.
          */
-        redirectTo: `${window.location.origin}/auth/callback?next=/`,
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin}/auth/callback?next=/`,
       },
     });
 
