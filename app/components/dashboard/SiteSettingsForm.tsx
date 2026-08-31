@@ -8,12 +8,13 @@ import { useToast } from "@/app/providers/ToastProvider";
 import FillButton from "@/app/components/FillButton";
 import ImageUploadInput from "./ImageUploadInput";
 import { SiteSettings } from "@/app/lib/queries/siteSettings";
-
+import { Palette } from "lucide-react";
+import { THEME_PALETTES } from "@/app/lib/theme-palettes";
 export default function SiteSettingsForm({ initial }: { initial: SiteSettings }) {
   const supabase = createClient();
   const router = useRouter();
   const { addToast } = useToast();
-
+const [themeKey, setThemeKey] = useState(initial.themeKey);
   const [logoUrl, setLogoUrl] = useState(initial.logoUrl);
   const [faviconUrl, setFaviconUrl] = useState(initial.faviconUrl);
   const [foundedYear, setFoundedYear] = useState(initial.foundedYear);
@@ -39,7 +40,7 @@ export default function SiteSettingsForm({ initial }: { initial: SiteSettings })
         location,
         president_name: presidentName,
         manager_name: managerName,
-        updated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),        theme_key: themeKey,
       })
       .eq("id", 1);
 
@@ -123,7 +124,44 @@ export default function SiteSettingsForm({ initial }: { initial: SiteSettings })
           ))}
         </div>
       </div>
+      {/* Theme */}
+      <div className="card p-5 sm:p-6">
+        <div className="mb-5 flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold/10 text-gold">
+            <Palette size={16} />
+          </div>
+          <div>
+            <h2 className="font-display text-sm font-bold uppercase tracking-wide text-white">Theme</h2>
+            <p className="text-xs text-muted">Pick an accent color for the whole site.</p>
+          </div>
+        </div>
 
+        <div className="flex flex-wrap gap-3">
+          {THEME_PALETTES.map((palette) => {
+            const active = themeKey === palette.key;
+            return (
+              <button
+                key={palette.key}
+                type="button"
+                onClick={() => setThemeKey(palette.key)}
+                className="flex flex-col items-center gap-1.5"
+              >
+                <span
+                  className="flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all"
+                  style={{
+                    backgroundColor: palette.swatch,
+                    borderColor: active ? "#fff" : "transparent",
+                    boxShadow: active ? `0 0 0 3px ${palette.swatch}55` : "none",
+                  }}
+                >
+                  {active && <CheckCircle2 size={16} className="text-white" />}
+                </span>
+                <span className="text-[11px] text-muted">{palette.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
       {/* Save bar */}
       <div className="card flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <div className="min-h-5">

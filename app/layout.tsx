@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata, Viewport } from "next";import { getThemePalette } from "@/app/lib/theme-palettes";    
 import { Rajdhani, Inter } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "./providers/ToastProvider";
@@ -75,12 +75,17 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { faviconUrl } = await getSiteSettings();
+  const { faviconUrl, themeKey } = await getSiteSettings();
+  const palette = getThemePalette(themeKey);
+  const themeVars = Object.entries(palette.vars)
+    .map(([k, v]) => `${k}: ${v};`)
+    .join(" ");
 
   return (
     <html className="bg-background" lang="en" data-scroll-behavior="smooth">
       <head>
         <link rel="icon" href={faviconUrl} type="image/png" />
+        <style>{`:root { ${themeVars} }`}</style>
       </head>
       <body className={`${display.variable} ${body.variable} ${body.className} bg-background text-foreground antialiased`}>
         <ToastProvider>

@@ -7,10 +7,9 @@ export type SiteSettings = {
   location: string;
   presidentName: string;
   managerName: string;
+  themeKey: string; // 👈 নতুন
 };
 
-// লোগো/ফেভিকন কাস্টমাইজ না করা থাকলে এই ডিফল্টগুলো ব্যবহার হবে —
-// public/logo.jpg ও public/favicon.png কখনো ডিলিট করবেন না, এগুলো ফলব্যাক।
 const DEFAULTS: SiteSettings = {
   logoUrl: "/logo.jpg",
   faviconUrl: "/favicon.png",
@@ -18,6 +17,7 @@ const DEFAULTS: SiteSettings = {
   location: "Global",
   presidentName: "TBA",
   managerName: "TBA",
+  themeKey: "indigo", // 👈 নতুন
 };
 
 // এই ফাংশন ইচ্ছাকৃতভাবে ব্রাউজার ক্লায়েন্ট দিয়ে বানানো (anon key) — কারণ
@@ -26,9 +26,9 @@ const DEFAULTS: SiteSettings = {
 export async function getSiteSettings(): Promise<SiteSettings> {
   try {
     const supabase = createClient();
-    const { data, error } = await supabase
+        const { data, error } = await supabase
       .from("site_settings")
-      .select("logo_url, favicon_url, founded_year, location, president_name, manager_name")
+      .select("logo_url, favicon_url, founded_year, location, president_name, manager_name, theme_key")
       .eq("id", 1)
       .single();
 
@@ -41,6 +41,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       location: data.location || DEFAULTS.location,
       presidentName: data.president_name || DEFAULTS.presidentName,
       managerName: data.manager_name || DEFAULTS.managerName,
+      themeKey: data.theme_key || DEFAULTS.themeKey, // 👈 নতুন
     };
   } catch {
     return DEFAULTS;
