@@ -40,7 +40,7 @@ export default function FooterClient({ logoUrl, navigationGroups }: FooterClient
     if (prefersReduced) {
       // Clear any GSAP transforms for reduced-motion users
       gsap.set([crestRef.current, headingRef.current, descriptionRef.current], { clearProps: 'all' });
-    if (linksRef.current) {
+   if (linksRef.current) {
   gsap.set(linksRef.current.querySelectorAll('[data-footer-link]'), { clearProps: 'all' });
 }
       return;

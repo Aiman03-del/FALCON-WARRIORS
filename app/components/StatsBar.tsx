@@ -53,23 +53,26 @@ export default function StatsBar({ stats }: StatsBarProps) {
         },
       });
 
-      tl.from(panel, {
-        opacity: 0,
-        y: 20,
-        duration: 0.6, // fw-animation-reveal
-        ease: "power3.out",
-      })
-        .from(
-          cards,
-          {
-            opacity: 0,
-            y: 18,
-            duration: 0.6, // fw-animation-reveal
-            stagger: 0.1, // standardized stagger
-            ease: "power3.out",
-          },
-          "-=0.35"
-        );
+      if (panel) {
+        tl.from(panel, {
+          opacity: 0,
+          y: 20,
+          duration: 0.6, // fw-animation-reveal
+          ease: "power3.out",
+        });
+      }
+
+      tl.from(
+        cards,
+        {
+          opacity: 0,
+          y: 18,
+          duration: 0.6, // fw-animation-reveal
+          stagger: 0.1, // standardized stagger
+          ease: "power3.out",
+        },
+        "-=0.35"
+      );
 
       items.forEach((item, i) => {
         const el = valueRefs.current[i];

@@ -13,11 +13,10 @@ import Link from "next/link";
 import { createClient } from "@/app/lib/supabase/server";
 
 
-function normalizeStats(stats: Record<string, unknown>) {
-  if (Array.isArray(stats)) return stats[0] ?? null;
-  return stats ?? null;
+function normalizeStats(stats: unknown): Record<string, unknown> | null {
+  if (Array.isArray(stats)) return (stats[0] as Record<string, unknown>) ?? null;
+  return (stats as Record<string, unknown>) ?? null;
 }
-
 export default async function PlayerProfilePage({
   params,
 }: {
