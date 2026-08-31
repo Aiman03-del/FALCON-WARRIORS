@@ -2,14 +2,14 @@ import Link from "next/link";
 import { FormEntry } from "../lib/queries/playerForm";
 
 const styles: Record<"W" | "D" | "L", string> = {
-  W: "bg-indigo/25 text-indigo-light border-indigo/40",
-  D: "bg-white/10 text-muted border-white/20",
-  L: "bg-gold/20 text-gold border-gold/30",
+  W: "bg-[var(--fw-brand)]/25 text-[var(--fw-brand)] border-[var(--fw-brand)]/40",
+  D: "bg-[var(--fw-border)] text-[var(--fw-text-secondary)] border-[var(--fw-border)]",
+  L: "bg-[var(--fw-brand)]/20 text-[var(--fw-brand)] border-[var(--fw-brand)]/30",
 };
 
 export default function RecentFormStrip({ form }: { form: FormEntry[] }) {
   if (form.length === 0) {
-    return <p className="text-sm text-muted">No completed matches yet.</p>;
+    return <p className="text-sm text-[var(--fw-text-secondary)]">No completed matches yet.</p>;
   }
 
   return (
@@ -26,7 +26,7 @@ export default function RecentFormStrip({ form }: { form: FormEntry[] }) {
         ))}
       </div>
 
-      <div className="card overflow-hidden">
+      <div className="card overflow-hidden rounded-[var(--fw-radius-lg)] border border-[var(--fw-border)] bg-[var(--fw-bg-surface)]">
         {form.slice(0, 5).map((f, i) => {
           const content = (
             <div className="flex items-center justify-between px-4 py-2.5 text-sm">
@@ -36,16 +36,16 @@ export default function RecentFormStrip({ form }: { form: FormEntry[] }) {
                 >
                   {f.result}
                 </span>
-                <span className="text-white/80">vs {f.opponentLabel}</span>
+                <span className="text-[var(--fw-text-secondary)]">vs {f.opponentLabel}</span>
               </div>
-              <span className="font-display font-semibold text-gold">{f.scoreLabel}</span>
+              <span className="font-display font-semibold text-[var(--fw-brand)]">{f.scoreLabel}</span>
             </div>
           );
 
           return (
-            <div key={i} className="border-b border-border last:border-0">
+            <div key={i} className="border-b border-[var(--fw-border)] last:border-0">
               {f.matchId ? (
-                <Link href={`/matches/${f.matchId}`} className="block hover:bg-surface-2">
+                <Link href={`/matches/${f.matchId}`} className="block hover:bg-[var(--fw-bg-surface)]/80">
                   {content}
                 </Link>
               ) : (

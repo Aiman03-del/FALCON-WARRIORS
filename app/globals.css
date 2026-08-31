@@ -1,31 +1,115 @@
 @import "tailwindcss";
 
+:root {
+  --fw-brand: #5b75ff;
+  --fw-brand-hover: #7d8dff;
+  --fw-brand-soft: rgba(91, 117, 255, 0.16);
+
+  --fw-bg-primary: #05070b;
+  --fw-bg-secondary: #07111c;
+  --fw-bg-surface: rgba(11, 18, 28, 0.72);
+  --fw-bg-surface-hover: rgba(17, 25, 38, 0.92);
+
+  --fw-text-primary: #f8fafc;
+  --fw-text-secondary: rgba(248, 250, 252, 0.8);
+  --fw-text-muted: rgba(148, 163, 184, 0.9);
+
+  --fw-border: rgba(148, 163, 184, 0.2);
+  --fw-border-hover: rgba(148, 163, 184, 0.34);
+
+  --fw-success: #24c77b;
+  --fw-success-soft: rgba(36, 199, 123, 0.12);
+  --fw-danger: #f45b69;
+  --fw-danger-soft: rgba(244, 91, 105, 0.12);
+  --fw-warning: #f7c948;
+  --fw-warning-soft: rgba(247, 201, 72, 0.12);
+
+  --fw-button-primary: #4b6bff;
+  --fw-button-primary-hover: #6177ff;
+  --fw-button-secondary: rgba(255, 255, 255, 0.05);
+  --fw-button-secondary-hover: rgba(255, 255, 255, 0.08);
+
+  --fw-glow: rgba(91, 117, 255, 0.22);
+  --fw-glow-soft: rgba(125, 211, 252, 0.12);
+  --fw-overlay: rgba(5, 7, 11, 0.72);
+
+  /* Spacing and Layout */
+  --fw-container: 1280px;
+  --fw-container-padding-mobile: 16px;
+  --fw-container-padding-tablet: 24px;
+  --fw-container-padding-desktop: 32px;
+
+  /* Border Radius System */
+  --fw-radius-sm: 10px;
+  --fw-radius-md: 14px;
+  --fw-radius-lg: 20px;
+
+  /* Section Spacing */
+  --fw-section-spacing-mobile: 64px;
+  --fw-section-spacing-tablet: 80px;
+  --fw-section-spacing-desktop: 100px;
+
+  /* Animation Timings */
+  --fw-animation-fast: 180ms;
+  --fw-animation-normal: 300ms;
+  --fw-animation-reveal: 600ms;
+  --fw-animation-stagger: 80ms;
+
+  --color-brand: var(--fw-brand);
+  --color-brand-hover: var(--fw-brand-hover);
+  --color-brand-soft: var(--fw-brand-soft);
+
+  --color-bg-primary: var(--fw-bg-primary);
+  --color-bg-secondary: var(--fw-bg-secondary);
+  --color-bg-surface: var(--fw-bg-surface);
+  --color-bg-surface-hover: var(--fw-bg-surface-hover);
+
+  --color-text-primary: var(--fw-text-primary);
+  --color-text-secondary: var(--fw-text-secondary);
+  --color-text-muted: var(--fw-text-muted);
+
+  --color-border: var(--fw-border);
+  --color-border-hover: var(--fw-border-hover);
+
+  --color-button-primary: var(--fw-button-primary);
+  --color-button-primary-hover: var(--fw-button-primary-hover);
+  --color-button-secondary: var(--fw-button-secondary);
+  --color-button-secondary-hover: var(--fw-button-secondary-hover);
+
+  --color-glow: var(--fw-glow);
+  --color-glow-soft: var(--fw-glow-soft);
+}
+
 @theme {
-  --color-bg: #0A0B0F;
-  --color-background: var(--color-bg);
-  --color-surface: #14161C;
-  --color-surface-2: #1B1E26;
-  --color-border: #262A33;
+  --color-bg: var(--fw-bg-primary);
+  --color-background: var(--fw-bg-primary);
+  --color-surface: var(--fw-bg-surface);
+  --color-surface-2: var(--fw-bg-secondary);
+  --color-border: var(--fw-border);
 
-  --color-gold: #E9B949;
-  --color-gold-light: #F4D27E;
-  --color-gold-dark: #B98F2E;
+  --color-gold: var(--fw-brand);
+  --color-gold-light: var(--fw-brand-hover);
+  --color-gold-dark: var(--fw-brand);
 
-  --color-indigo: #6C7CF7;
-  --color-indigo-light: #8D9BFA;
+  --color-indigo: var(--fw-button-primary);
+  --color-indigo-light: var(--fw-button-primary-hover);
 
-  --color-muted: #98A0AE;
-  --color-foreground: #ffffff;
+  --color-muted: var(--fw-text-muted);
+  --color-foreground: var(--fw-text-primary);
 
   --color-danger: #EF4444;
   --color-danger-light: #F87171;
   --color-success: #34D399;
 
   --background-image-hero-grid: linear-gradient(
-    rgba(233, 185, 73, 0.06) 1px,
+    rgba(91, 117, 255, 0.08) 1px,
     transparent 1px
   ),
-  linear-gradient(90deg, rgba(233, 185, 73, 0.06) 1px, transparent 1px);
+  linear-gradient(90deg, rgba(91, 117, 255, 0.08) 1px, transparent 1px);
+
+  --radius-sm: var(--fw-radius-sm);
+  --radius-base: var(--fw-radius-md);
+  --radius-lg: var(--fw-radius-lg);
 }
 
 html {
@@ -39,6 +123,36 @@ body {
   font-family: var(--font-body), Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+}
+
+@keyframes hero-scroll {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110%);
+    opacity: 0;
+  }
+}
+
+@keyframes fw-fade-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fw-hero-reveal {
+  opacity: 0;
+  animation: fw-fade-rise 0.6s ease-out forwards;
 }
 
 button, a, input, select, textarea {
@@ -56,6 +170,67 @@ textarea:focus-visible {
 }
 
 @layer utilities {
+  /* Container utilities */
+  .fw-container {
+    width: min(100%, var(--fw-container));
+    margin-inline: auto;
+    padding-inline: var(--fw-container-padding-mobile);
+  }
+
+  @media (min-width: 768px) {
+    .fw-container {
+      padding-inline: var(--fw-container-padding-tablet);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .fw-container {
+      padding-inline: var(--fw-container-padding-desktop);
+    }
+  }
+
+  /* Section spacing */
+  .fw-section {
+    padding-block: var(--fw-section-spacing-mobile);
+  }
+
+  @media (min-width: 768px) {
+    .fw-section {
+      padding-block: var(--fw-section-spacing-tablet);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .fw-section {
+      padding-block: var(--fw-section-spacing-desktop);
+    }
+  }
+
+  /* Radius utilities */
+  .rounded-fw-sm {
+    border-radius: var(--fw-radius-sm);
+  }
+
+  .rounded-fw-md {
+    border-radius: var(--fw-radius-md);
+  }
+
+  .rounded-fw-lg {
+    border-radius: var(--fw-radius-lg);
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
   .section-divider {
     width: 3rem;
     height: 0.25rem;
@@ -170,5 +345,30 @@ textarea:focus-visible {
   }
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Hero stagger animations */
+  .fw-hero-stagger-1 {
+    opacity: 0;
+    animation: fw-fade-rise 0.5s ease-out forwards;
+    animation-delay: 0ms;
+  }
+
+  .fw-hero-stagger-2 {
+    opacity: 0;
+    animation: fw-fade-rise 0.5s ease-out forwards;
+    animation-delay: 80ms;
+  }
+
+  .fw-hero-stagger-3 {
+    opacity: 0;
+    animation: fw-fade-rise 0.5s ease-out forwards;
+    animation-delay: 160ms;
+  }
+
+  .fw-hero-stagger-4 {
+    opacity: 0;
+    animation: fw-fade-rise 0.5s ease-out forwards;
+    animation-delay: 240ms;
   }
 }

@@ -25,15 +25,19 @@ type Result = {
   result: "WIN" | "DRAW" | "LOSS";
 };
 
-const resultStyles: Record<Result["result"], string> = {
-  WIN: "bg-indigo/20 text-indigo-light border-indigo/40",
-  DRAW: "bg-white/10 text-muted border-white/20",
-  LOSS: "bg-red-500/15 text-red-400 border-red-500/30",
-};
-
 function formatDate(dateStr?: string) {
   if (!dateStr) return null;
-  return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "2-digit" });
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+  });
+}
+
+function getResultAccent(result: Result["result"]) {
+  if (result === "WIN") return { accent: "var(--fw-success)", soft: "var(--fw-success-soft)" };
+  if (result === "LOSS") return { accent: "var(--fw-danger)", soft: "var(--fw-danger-soft)" };
+  return { accent: "var(--fw-warning)", soft: "var(--fw-warning-soft)" };
 }
 
 export default function RecentResultsGrid({
@@ -48,12 +52,17 @@ export default function RecentResultsGrid({
   useGSAP(
     () => {
       if (!gridRef.current) return;
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (reduceMotion) {
+        gsap.set(".result-card", { opacity: 1, y: 0 });
+        return;
+      }
 
       const cards = gsap.utils.toArray<HTMLElement>(".result-card", gridRef.current);
       if (cards.length === 0) return;
 
-      gsap.set(cards, { opacity: 0, y: 28 });
+      gsap.set(cards, { opacity: 0, y: 24 });
 
       ScrollTrigger.create({
         trigger: gridRef.current,
@@ -63,9 +72,9 @@ export default function RecentResultsGrid({
           gsap.to(cards, {
             opacity: 1,
             y: 0,
-            duration: 0.5,
+            duration: 0.6,
             ease: "power2.out",
-            stagger: 0.08,
+            stagger: 0.09,
             clearProps: "transform,opacity",
           });
         },
@@ -75,70 +84,101 @@ export default function RecentResultsGrid({
   );
 
   if (results.length === 0) {
-    return <p className="text-sm text-muted">No completed matches yet.</p>;
+    return <p className="text-sm text-[var(--fw-text-secondary)]">No completed matches yet.</p>;
   }
 
   return (
-    <div ref={gridRef} className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
-      {results.map((r) => (
-        <Link
-          key={r.id}
-          href={`/matches/${r.slug ?? r.id}`}
-          className="result-card card group relative overflow-hidden p-4 transition hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-lg hover:shadow-gold/10 sm:p-5"
-        >
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5">
-              <p className="truncate text-xs uppercase tracking-wide text-muted">
-                {r.competition}
-              </p>
-              {r.isOfficial && (
-                <span className="shrink-0 rounded-full bg-gold/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-gold">
-                  Official
+    <div ref={gridRef} className="grid gap-4 md:grid-cols-2">
+      {results.map((r) => {
+        const accent = getResultAccent(r.result);
+        const badgeStyle = {
+          backgroundColor: accent.soft,
+          borderColor: accent.accent,
+          color: accent.accent,
+        };
+
+        return (
+          <Link
+            key={r.id}
+            href={`/matches/${r.slug ?? r.id}`}
+            className="result-card group relative flex min-h-[220px] flex-col rounded-xl border border-[var(--fw-border)] bg-[var(--fw-bg-surface)] p-4 text-left transition-all duration-200 ease-out hover:-translate-y-1 hover:border-[var(--fw-brand)] hover:bg-[var(--fw-bg-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fw-brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--fw-bg-primary)] sm:p-5"
+            style={{ boxShadow: `inset 2px 0 0 ${accent.accent}` }}
+          >
+            <div className="mb-5 flex items-center justify-between gap-2 border-b border-[var(--fw-border)] pb-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <p className="truncate text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--fw-text-muted)]">
+                  {r.competition}
+                </p>
+                {r.isOfficial && (
+                  <span className="shrink-0 rounded-full border border-[var(--fw-border)] bg-[var(--fw-bg-primary)] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.12em] text-[var(--fw-text-secondary)]">
+                    Official
+                  </span>
+                )}
+              </div>
+
+              {formatDate(r.matchDate) && (
+                <span className="shrink-0 text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--fw-text-muted)]">
+                  {formatDate(r.matchDate)}
                 </span>
               )}
             </div>
-            {formatDate(r.matchDate) && (
-              <span className="shrink-0 text-[10px] text-muted">{formatDate(r.matchDate)}</span>
-            )}
-          </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col items-center gap-2">
-              <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gold/30 bg-black sm:h-12 sm:w-12">
-                <Image src={logoUrl} alt="Falcon Warriors" fill sizes="(min-width: 640px) 48px, 40px" className="object-cover" />
-              </div>
-              <span
-                className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${resultStyles[r.result]}`}
-              >
-                {r.result}
-              </span>
-            </div>
-
-            <div className="font-display text-2xl font-bold transition group-hover:text-gold sm:text-3xl">
-              {r.scoreHome} - {r.scoreAway}
-            </div>
-
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10 text-xs font-bold text-white/70 sm:h-12 sm:w-12">
-                {r.opponentLogoUrl ? (
+            <div className="grid flex-1 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
+              <div className="flex min-w-0 flex-col items-center gap-2 text-center">
+                <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-[var(--fw-border)] bg-[var(--fw-bg-primary)] sm:h-14 sm:w-14">
                   <Image
-                    src={r.opponentLogoUrl}
-                    alt={r.opponent}
+                    src={logoUrl}
+                    alt="Falcon Warriors"
                     fill
-                    sizes="48px"
+                    sizes="56px"
                     className="object-cover"
                   />
-                ) : (
-                  r.opponentTag.slice(0, 2)
-                )}
+                </div>
+                <span className="max-w-[120px] truncate text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--fw-text-primary)] sm:text-[11px]">
+                  Falcon Warriors
+                </span>
               </div>
-              <span className="max-w-18 truncate text-center text-[10px] text-muted">
-                {r.opponent}
+
+              <div className="font-display text-[clamp(2rem,4vw,3.4rem)] font-black leading-none tracking-[-0.06em] text-[var(--fw-text-primary)]">
+                {r.scoreHome} <span className="text-[var(--fw-text-muted)]">—</span> {r.scoreAway}
+              </div>
+
+              <div className="flex min-w-0 flex-col items-center gap-2 text-center">
+                <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-[var(--fw-border)] bg-[var(--fw-bg-primary)] text-[10px] font-black uppercase tracking-[0.12em] text-[var(--fw-text-secondary)] sm:h-14 sm:w-14">
+                  {r.opponentLogoUrl ? (
+                    <Image
+                      src={r.opponentLogoUrl}
+                      alt={r.opponent}
+                      fill
+                      sizes="56px"
+                      className="object-cover"
+                    />
+                  ) : (
+                    r.opponentTag.slice(0, 2)
+                  )}
+                </div>
+                <span className="max-w-[120px] truncate text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--fw-text-primary)] sm:text-[11px]">
+                  {r.opponent}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-5 flex items-center justify-between gap-3 border-t border-[var(--fw-border)] pt-3">
+              <span
+                className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em]"
+                style={badgeStyle}
+              >
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
+                {r.result}
+              </span>
+
+              <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-[var(--fw-text-muted)]">
+                Full time
               </span>
             </div>
-          </div>
-        </Link>
-      ))}
+          </Link>
+        );
+      })}
     </div>
   );
 }

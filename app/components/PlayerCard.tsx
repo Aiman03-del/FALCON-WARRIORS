@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Shield } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 type Player = {
   id: string;
@@ -12,8 +12,6 @@ type Player = {
   rank_division?: string | null;
 };
 
-// ইউজারনেম শুধু URL স্লাগের জন্য ব্যবহৃত হয় — কার্ডে সবসময় Real Name দেখানো হয়
-// (Real Name না থাকলে তবেই ফলব্যাক হিসেবে ইউজারনেম দেখাবে)
 function displayNameOf(player: Player) {
   return player.real_name?.trim() || player.efootball_username;
 }
@@ -21,44 +19,73 @@ function displayNameOf(player: Player) {
 function CardContent({ player }: { player: Player }) {
   const displayName = displayNameOf(player);
   const initials = displayName.slice(0, 2).toUpperCase();
+  const detailPairs = [
+    player.platform ? { label: "Platform", value: player.platform } : null,
+    player.rank_division ? { label: "Rank", value: player.rank_division } : null,
+  ].filter(Boolean) as Array<{ label: string; value: string }>;
 
   return (
-    <div className="flex w-full flex-col items-center text-center">
-      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-gold/25 bg-surface-2 shadow-lg transition group-hover:border-gold/50 sm:h-24 sm:w-24">
+    <>
+      <div className="relative aspect-[4/5] overflow-hidden border-b border-[var(--fw-border)] bg-[var(--fw-bg-secondary)]">
         {player.avatar_url ? (
           <Image
             src={player.avatar_url}
             alt={displayName}
             fill
-            sizes="(max-width: 640px) 80px, 96px"
-            className="object-cover"
+            sizes="(max-width: 1280px) 100vw, 33vw"
+            className="object-cover transition duration-500 group-hover:scale-[1.03]"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center font-display text-2xl font-bold text-gold">
+          <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_top,rgba(91,117,255,0.2),transparent_55%)] text-[clamp(2rem,4vw,3rem)] font-black uppercase tracking-[-0.08em] text-[var(--fw-brand)]">
             {initials}
           </div>
         )}
+
+        <div className="absolute inset-0 bg-gradient-to-t from-[rgba(5,7,11,0.94)] via-[rgba(5,7,11,0.22)] to-transparent" />
+
+        <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+          {player.rank_division && (
+            <span className="mb-2 inline-flex rounded-full border border-[var(--fw-border)] bg-[rgba(5,7,11,0.45)] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--fw-text-secondary)] backdrop-blur-sm">
+              {player.rank_division}
+            </span>
+          )}
+
+          <h3 className="text-[clamp(1.35rem,2vw,2rem)] font-black uppercase leading-[0.96] tracking-[-0.06em] text-[var(--fw-text-primary)]">
+            {displayName}
+          </h3>
+
+          {player.efootball_username && (
+            <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--fw-text-muted)]">
+              @{player.efootball_username}
+            </p>
+          )}
+        </div>
       </div>
 
-      <h3 className="mt-3 w-full truncate font-display text-sm font-bold uppercase tracking-wide text-white transition group-hover:text-gold sm:text-base">
-        {displayName}
-      </h3>
+      <div className="p-4 sm:p-5">
+        {detailPairs.length > 0 && (
+          <div className="grid grid-cols-2 gap-2.5">
+            {detailPairs.map((detail) => (
+              <div key={detail.label} className="rounded-[var(--fw-radius-sm)] border border-[var(--fw-border)] bg-[rgba(255,255,255,0.02)] px-3 py-2 text-left">
+                <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--fw-text-muted)]">
+                  {detail.label}
+                </p>
+                <p className="mt-1 text-sm font-semibold uppercase tracking-[-0.04em] text-[var(--fw-text-primary)]">
+                  {detail.value}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
 
-      {player.rank_division && (
-        <p className="mt-1 flex items-center gap-1 text-[11px] text-muted">
-          <Shield size={11} className="text-indigo" />
-          {player.rank_division}
-        </p>
-      )}
-
-      {player.platform && (
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
-          <span className="rounded-full bg-white/8 px-2.5 py-1 text-[10px] font-medium uppercase text-muted">
-            {player.platform}
+        <div className="mt-4 flex items-center justify-between border-t border-[var(--fw-border)] pt-3">
+          <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--fw-text-muted)] group-hover:text-[var(--fw-text-secondary)] transition-colors">Profile</span>
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--fw-brand)] group-hover:gap-2 transition-all duration-300">
+            View <ArrowRight size={13} className="transition-transform group-hover:translate-x-0.5" />
           </span>
         </div>
-      )}
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -70,15 +97,12 @@ export default function PlayerCard({
   canViewDetails?: boolean;
 }) {
   const baseClass =
-    "card group relative flex flex-col items-center p-4 transition-all duration-200 hover:-translate-y-1 hover:border-gold/40 hover:shadow-lg hover:shadow-gold/10 sm:p-6";
+    "group block overflow-hidden rounded-[var(--fw-radius-lg)] border border-[var(--fw-border)] bg-[var(--fw-bg-surface)] text-left transition-all duration-300 ease-out hover:-translate-y-1 hover:border-[var(--fw-brand)] hover:bg-[var(--fw-bg-surface-hover)]";
 
   if (canViewDetails) {
     return (
       <Link href={`/players/${player.slug ?? player.id}`} className={baseClass}>
         <CardContent player={player} />
-        <span className="mt-3 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-gold opacity-0 transition-opacity group-hover:opacity-100">
-          View Profile <ArrowRight size={11} />
-        </span>
       </Link>
     );
   }

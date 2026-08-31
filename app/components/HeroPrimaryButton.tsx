@@ -15,7 +15,7 @@ export default function HeroPrimaryButton({
   return (
     <Link
       href={href}
-      className={`inline-flex items-center justify-center bg-gold px-3 sm:px-4 md:px-6 py-3 text-sm font-semibold text-bg transition hover:bg-gold/90 ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--fw-brand)] bg-[var(--fw-button-primary)] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--fw-text-primary)] shadow-[0_12px_28px_var(--fw-glow)] transition duration-200 hover:border-[var(--fw-button-primary-hover)] hover:bg-[var(--fw-button-primary-hover)] ${className}`}
     >
       {children}
     </Link>

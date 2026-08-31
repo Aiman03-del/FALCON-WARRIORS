@@ -35,33 +35,42 @@ export default function StatsBar({ stats }: StatsBarProps) {
       const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
       if (reduceMotion) {
-        // Reduced motion: just show final numbers, no animation
         valueRefs.current.forEach((el, i) => {
           if (el) el.textContent = `${items[i].value}${items[i].suffix}`;
         });
+        gsap.set(".stat-card", { opacity: 1, y: 0 });
         return;
       }
 
       const cards = gsap.utils.toArray<HTMLElement>(".stat-card");
+      const panel = sectionRef.current?.querySelector<HTMLElement>(".stats-panel");
 
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top 85%",
-          once: true, // fires once — no repeated re-trigger lag on scroll up/down
+          once: true,
         },
       });
 
-      // Card entrance
-      tl.from(cards, {
+      tl.from(panel, {
         opacity: 0,
-        y: 24,
-        duration: 0.5,
-        stagger: 0.1,
-        ease: "power2.out",
-      });
+        y: 20,
+        duration: 0.6, // fw-animation-reveal
+        ease: "power3.out",
+      })
+        .from(
+          cards,
+          {
+            opacity: 0,
+            y: 18,
+            duration: 0.6, // fw-animation-reveal
+            stagger: 0.1, // standardized stagger
+            ease: "power3.out",
+          },
+          "-=0.35"
+        );
 
-      // Number count-up, runs alongside card entrance
       items.forEach((item, i) => {
         const el = valueRefs.current[i];
         if (!el) return;
@@ -71,13 +80,13 @@ export default function StatsBar({ stats }: StatsBarProps) {
           counter,
           {
             val: item.value,
-            duration: 1,
+            duration: 1.1, // extended for number counting
             ease: "power1.out",
             onUpdate: () => {
               el.textContent = `${Math.round(counter.val)}${item.suffix}`;
             },
           },
-          "<0.1" // starts slightly after its card fades in
+          `-=${i === 0 ? 0.2 : 0.1}`
         );
       });
 
@@ -89,27 +98,35 @@ export default function StatsBar({ stats }: StatsBarProps) {
   );
 
   return (
-    <section ref={sectionRef} className="border-b border-border">
-      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-3 px-4 py-8 sm:gap-4 sm:px-6 sm:py-10 sm:grid-cols-4">
-        {items.map((stat, i) => (
-          <div
-            key={stat.label}
-            className="stat-card card flex flex-col items-center justify-center gap-1.5 py-5 text-center sm:gap-2 sm:py-6"
-          >
-            <stat.icon className="text-gold" size={20} />
-            <span
-              ref={(el) => {
-                valueRefs.current[i] = el;
-              }}
-              className="font-display text-2xl font-bold text-gold sm:text-3xl"
-            >
-              0{stat.suffix}
-            </span>
-            <span className="text-[10px] uppercase tracking-wide text-muted sm:text-xs">
-              {stat.label}
-            </span>
+    <section ref={sectionRef} className="border-b bg-[var(--fw-bg-primary)]" style={{ borderColor: 'var(--fw-border)' }}>
+      <div className="fw-container fw-section">
+        <div className="stats-panel overflow-hidden rounded-xl border border-[var(--fw-border)] bg-[var(--fw-bg-secondary)]/40">
+          <div className="grid grid-cols-2 md:grid-cols-4">
+            {items.map((stat, i) => (
+              <div
+                key={stat.label}
+                className={`stat-card relative flex flex-col items-center justify-center gap-2 border-b border-[var(--fw-border)] py-5 text-center sm:py-6 ${
+                  i % 2 === 1 ? "border-l border-[var(--fw-border)] md:border-l-0" : ""
+                } ${i < items.length - 2 ? "md:border-b-0" : ""} ${
+                  i !== items.length - 1 ? "md:border-r md:border-[var(--fw-border)]" : ""
+                }`}
+              >
+                <stat.icon className="text-[var(--fw-brand)]" size={18} />
+                <span
+                  ref={(el) => {
+                    valueRefs.current[i] = el;
+                  }}
+                  className="font-display text-[clamp(1.75rem,3vw,3rem)] font-black leading-none text-[var(--fw-text-primary)]"
+                >
+                  0{stat.suffix}
+                </span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--fw-text-muted)] sm:text-[11px]">
+                  {stat.label}
+                </span>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
       </div>
     </section>
   );

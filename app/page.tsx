@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import AchievementsTicker from "./components/AchievementsTicker";
 import AssociatedCommunities from "./components/AssociatedCommunities";
+import ClubCTA from "./components/ClubCTA";
 import FixturesAndPerformers from "./components/FixturesAndPerformers";
 import Footer from "./components/Footer";
 import Gallery from "./components/Gallery";
@@ -45,6 +46,7 @@ export default async function Home() {
       <AchievementsTicker achievements={achievements} />
       <LatestNews news={news} />
       <Gallery items={gallery} />
+      <ClubCTA />
       <Footer />
     </main>
   );

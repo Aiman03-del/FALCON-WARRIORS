@@ -1,12 +1,11 @@
-import { UserCircle, Users } from 'lucide-react';
 import { getSiteSettings } from "@/app/lib/queries/siteSettings";
 import { createClient } from "@/app/lib/supabase/server";
+import HeroBackground from "./HeroBackground";
 import HeroContent from "./HeroContent";
 
 export default async function Hero() {
   const { foundedYear, location, presidentName, managerName } = await getSiteSettings();
 
-  // লগইন করা থাকলে "Join the Club"-এর বদলে "My Profile" দেখাবে
   const supabase = await createClient();
   const {
     data: { user },
@@ -22,15 +21,11 @@ export default async function Hero() {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url('/hero.png')" }}
       />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,12,18,0.25),rgba(6,12,18,0.72)_58%,rgba(6,12,18,0.9))]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(7,17,28,0.26),rgba(5,7,11,0.62)_52%,rgba(5,7,11,0.88))]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,var(--fw-glow),transparent_42%)]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[var(--fw-overlay)] via-[var(--fw-bg-primary)]/40 to-[var(--fw-bg-primary)]/80" />
 
-      {/* Pitch markings — center circle + halfway line */}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/2 top-1/2 h-px w-full -translate-x-1/2 -translate-y-1/2 bg-gold/10" />
-        <div className="absolute left-1/2 top-1/2 h-55 w-55 -translate-x-1/2 -translate-y-1/2 rounded-full border border-gold/10 sm:h-90 sm:w-90" />
-        <div className="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gold/20" />
-      </div>
-      <div className="absolute left-1/2 top-0 h-75 w-125 -translate-x-1/2 rounded-full bg-gold/10 blur-[120px]" />
+      <HeroBackground />
 
       <HeroContent
         foundedYear={foundedYear}
