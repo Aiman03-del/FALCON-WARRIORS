@@ -1,3 +1,9 @@
+// এই ফাইলের queries গুলো ইচ্ছাকৃতভাবে browser client (anon key) দিয়ে বানানো —
+// কারণ হোমপেইজের এই সব ডেটা (stats, results, tournaments, news, gallery) সম্পূর্ণ
+// পাবলিক এবং কোনো cookie/session লাগে না, তাই সার্ভার/ক্লায়েন্ট দুই জায়গাতেই
+// একইভাবে কল করা যায় (দেখুন siteSettings.ts-এর একই প্যাটার্ন)। এটা bug না —
+// user-নির্ভর কোনো query (auth.getUser() ইত্যাদি) এখানে যোগ করার দরকার হলে
+// অবশ্যই server client (../supabase/server) ব্যবহার করবেন।
 import { createClient } from "../supabase/client";
 import { getTopByPoints } from "./leaderboards";
 
@@ -12,7 +18,12 @@ export async function getStats() {
       { data: officialCompleted },
       { count: internalCompletedCount },
     ] = await Promise.all([
-      supabase.from("player_details").select("*", { count: "exact", head: true }),
+      // শুধু active মেম্বারদেরই "Members" হিসেবে গোনা হচ্ছে —
+      // pending/suspended ইউজাররা বাদ (membership_status pattern অন্য জায়গায়ও ব্যবহৃত, যেমন PeriodPerformerCard.tsx)
+      supabase
+        .from("player_details")
+        .select("*", { count: "exact", head: true })
+        .eq("membership_status", "active"),
       supabase.from("matches").select("*", { count: "exact", head: true }).eq("status", "completed"),
       supabase.from("achievements").select("*", { count: "exact", head: true }),
       supabase.from("matches").select("score_home, score_away").eq("status", "completed"),

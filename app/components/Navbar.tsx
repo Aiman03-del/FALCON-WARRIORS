@@ -145,12 +145,20 @@ export default function Navbar() {
       const target = event.target as Node | null;
       if (!(target instanceof Element)) return;
 
-      const clickedInsideMenu =
+      const clickedInsideUserMenu =
         target.closest("[data-user-menu-trigger]") ||
         target.closest("[data-user-menu-panel]");
 
-      if (!clickedInsideMenu) {
+      if (!clickedInsideUserMenu) {
         setUserMenuOpen(false);
+      }
+
+      const clickedInsideSearch =
+        target.closest("[data-search-trigger]") ||
+        target.closest("[data-search-panel]");
+
+      if (!clickedInsideSearch) {
+        setSearchOpen(false);
       }
     }
 
@@ -325,6 +333,9 @@ export default function Navbar() {
           <button
             type="button"
             aria-label="Search"
+            aria-expanded={searchOpen}
+            aria-haspopup="true"
+            data-search-trigger
             onClick={() => setSearchOpen((open) => !open)}
             className="hidden lg:flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200"
             style={{
@@ -350,6 +361,8 @@ export default function Navbar() {
                 type="button"
                 onClick={() => setUserMenuOpen((open) => !open)}
                 aria-label="Open user menu"
+                aria-expanded={userMenuOpen}
+                aria-haspopup="true"
                 data-user-menu-trigger
                 data-suspension-allowed
                 className="flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200"
@@ -490,6 +503,7 @@ export default function Navbar() {
           <button
             type="button"
             aria-label="Toggle menu"
+            aria-expanded={menuOpen}
             onClick={() => setMenuOpen((open) => !open)}
             className="flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 lg:hidden"
             style={{
@@ -504,6 +518,7 @@ export default function Navbar() {
       {searchOpen && (
         <div
           ref={searchPanelRef}
+          data-search-panel
           className="hidden border-t px-3 sm:px-4 md:px-6 py-3 lg:block"
           style={{
             borderTopColor: 'var(--fw-border)',
