@@ -3,13 +3,24 @@ import { createClient } from "@/app/lib/supabase/server";
 import HeroBackground from "./HeroBackground";
 import HeroContent from "./HeroContent";
 
-async function getCurrentUser() {
+async function getCurrentUserProfileHref() {
   try {
     const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    return user;
+
+    if (!user) return null;
+
+    // Navbar-এর profileHref লজিকের সাথে সামঞ্জস্যপূর্ণ রাখতে player slug থাকলে
+    // /players/[slug]-এ পাঠানো হচ্ছে, না থাকলে fallback হিসেবে /profile
+    const { data: playerRow } = await supabase
+      .from("player_details")
+      .select("slug")
+      .eq("profile_id", user.id)
+      .single();
+
+    return playerRow?.slug ? `/players/${playerRow.slug}` : "/profile";
   } catch (error) {
     console.error("[Hero] failed to check auth session:", error);
     return null; // fail-safe: ধরে নেওয়া হবে ইউজার লগইন করেনি, guest CTA দেখাবে
@@ -18,10 +29,10 @@ async function getCurrentUser() {
 
 export default async function Hero() {
   const { foundedYear, location, presidentName, managerName } = await getSiteSettings();
-  const user = await getCurrentUser();
+  const profileHref = await getCurrentUserProfileHref();
 
-  const primaryCta = user
-    ? { href: "/profile", label: "My Profile", iconName: "userCircle" as const }
+  const primaryCta = profileHref
+    ? { href: profileHref, label: "My Profile", iconName: "userCircle" as const }
     : { href: "/register", label: "Join the Club", iconName: "users" as const };
 
   return (
