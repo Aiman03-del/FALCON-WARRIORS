@@ -13,9 +13,31 @@ import Link from "next/link";
 import { createClient } from "@/app/lib/supabase/server";
 
 
-function normalizeStats(stats: unknown): Record<string, unknown> | null {
-  if (Array.isArray(stats)) return (stats[0] as Record<string, unknown>) ?? null;
-  return (stats as Record<string, unknown>) ?? null;
+type Stats = {
+  goals: number;
+  assists: number;
+  matches: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  motm_count: number;
+};
+
+function normalizeStats(stats: unknown): Stats | null {
+  const raw = Array.isArray(stats) ? stats[0] : stats;
+  if (!raw || typeof raw !== "object") return null;
+
+  const r = raw as Record<string, unknown>;
+
+  return {
+    goals: Number(r.goals) || 0,
+    assists: Number(r.assists) || 0,
+    matches: Number(r.matches) || 0,
+    wins: Number(r.wins) || 0,
+    draws: Number(r.draws) || 0,
+    losses: Number(r.losses) || 0,
+    motm_count: Number(r.motm_count) || 0,
+  };
 }
 export default async function PlayerProfilePage({
   params,
