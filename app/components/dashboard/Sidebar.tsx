@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { getSiteSettings } from "@/app/lib/queries/siteSettings";
+import { createClient } from "@/app/lib/supabase/client";
 import {
   LayoutDashboard,
   Users,
@@ -18,9 +19,18 @@ import {
   ChevronLeft,
   ChevronRight,
   Settings,
+  UserCheck,
+  type LucideIcon,
 } from "lucide-react";
 
-export const navItems = [
+type SidebarNavItem = {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+  badge?: number;
+};
+
+export const navItems: SidebarNavItem[] = [
   { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { label: "Users", href: "/dashboard/users", icon: Users },
   { label: "Matches", href: "/dashboard/matches", icon: Swords },
@@ -59,10 +69,30 @@ export default function DashboardSidebar({
 }: DashboardSidebarProps) {
   const pathname = usePathname();
   const [logoUrl, setLogoUrl] = useState("/logo.jpg");
+  const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
     getSiteSettings().then((s) => setLogoUrl(s.logoUrl));
   }, []);
+
+  useEffect(() => {
+    if (role !== "admin" && role !== "moderator") return;
+    const supabase = createClient();
+    supabase
+      .from("player_details")
+      .select("id", { count: "exact", head: true })
+      .eq("membership_status", "pending")
+      .then(({ count }) => setPendingCount(count ?? 0));
+  }, [role]);
+
+  const items: SidebarNavItem[] =
+    role === "admin" || role === "moderator"
+      ? [
+          { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
+          { label: "Pending", href: "/dashboard/pending", icon: UserCheck, badge: pendingCount },
+          ...navItems.slice(1),
+        ]
+      : navItems;
 
   const defaultClasses = className
     ? `${className} shrink-0 border-r border-border bg-surface flex flex-col`
@@ -97,7 +127,7 @@ export default function DashboardSidebar({
       </div>
 
       <nav className="flex flex-col gap-1 p-3 overflow-y-auto flex-1 hide-scrollbar">
-        {navItems.map((item) => {
+        {items.map((item) => {
           const active = isActiveRoute(pathname, item.href);
           const Icon = item.icon;
 
@@ -117,7 +147,15 @@ export default function DashboardSidebar({
               }`}
             >
               <Icon size={17} />
+              {item.badge !== undefined && item.badge > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-2 w-2 rounded-full bg-red-500" />
+              )}
               {!collapsed && <span>{item.label}</span>}
+              {!collapsed && item.badge !== undefined && item.badge > 0 && (
+                <span className="ml-auto rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  {item.badge}
+                </span>
+              )}
 
               {collapsed && (
                 <span className="pointer-events-none absolute left-full top-1/2 ml-2 -translate-y-1/2 rounded-md border border-border bg-bg px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition group-hover:opacity-100">

@@ -3,11 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Pencil, MapPin, Briefcase, GraduationCap, Star, ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Pencil, MapPin, Briefcase, GraduationCap, Star, ArrowLeft, Check, X } from "lucide-react";
 import FillButton from "@/app/components/FillButton";
 import ProfileEditForm from "@/app/components/ProfileEditForm";
 import PlayerStatsGrid from "@/app/components/PlayerStatsGrid";
 import RecentFormStrip from "@/app/components/RecentFormStrip";
+import { createClient } from "@/app/lib/supabase/client";
 import type { FormEntry } from "@/app/lib/queries/playerForm";
 
 type PlayerStats = {
@@ -19,6 +21,8 @@ type PlayerStats = {
   losses: number;
   motm_count: number;
 } | null;
+
+type PlayerStatsSource = PlayerStats | PlayerStats[] | null | undefined;
 
 type Player = {
   id: string;
@@ -42,7 +46,7 @@ type Player = {
   role: string;
 };
 
-function normalizeStats(stats: any): PlayerStats {
+function normalizeStats(stats: PlayerStatsSource): PlayerStats {
   if (Array.isArray(stats)) return stats[0] ?? null;
   return stats ?? null;
 }
@@ -57,7 +61,19 @@ export default function UserProfileView({
   isAdmin: boolean;
 }) {
   const [isEditing, setIsEditing] = useState(false);
-  const stats = normalizeStats((player as any).player_stats);
+  const [statusBusy, setStatusBusy] = useState(false);
+  const supabase = createClient();
+  const router = useRouter();
+  const stats = normalizeStats(
+    (player as Player & { player_stats?: PlayerStatsSource }).player_stats ?? null
+  );
+
+  async function setStatus(status: "active" | "rejected") {
+    setStatusBusy(true);
+    await supabase.from("player_details").update({ membership_status: status }).eq("id", player.id);
+    setStatusBusy(false);
+    router.refresh();
+  }
 
   const infoRows = [
     { icon: MapPin, label: "Location", value: [player.city, player.country].filter(Boolean).join(", ") || "—" },
@@ -118,7 +134,9 @@ export default function UserProfileView({
                 className={`rounded-full px-3 py-1 text-xs font-bold uppercase ${
                   player.membership_status === "active"
                     ? "bg-indigo/20 text-indigo-light"
-                    : "bg-red-500/15 text-gold"
+                    : player.membership_status === "pending"
+                    ? "bg-gold/15 text-gold"
+                    : "bg-red-500/15 text-red-400"
                 }`}
               >
                 {player.membership_status ?? "unknown"}
@@ -131,6 +149,25 @@ export default function UserProfileView({
             </div>
           </div>
         </div>
+
+        {isAdmin && player.membership_status === "pending" && (
+          <div className="flex gap-2">
+            <button
+              disabled={statusBusy}
+              onClick={() => setStatus("active")}
+              className="flex items-center gap-1.5 rounded-lg border border-gold/50 bg-gold/10 px-3 py-2 text-sm font-medium text-gold hover:bg-gold/20 disabled:opacity-50"
+            >
+              <Check size={15} /> Approve
+            </button>
+            <button
+              disabled={statusBusy}
+              onClick={() => setStatus("rejected")}
+              className="flex items-center gap-1.5 rounded-lg border border-red-500/40 px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10 disabled:opacity-50"
+            >
+              <X size={15} /> Reject
+            </button>
+          </div>
+        )}
 
         {isAdmin && (
           <FillButton

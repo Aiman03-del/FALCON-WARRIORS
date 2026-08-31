@@ -84,6 +84,10 @@ export async function GET(request: Request) {
    * Send them directly to the requested destination.
    */
   if (player) {
+    if (player.membership_status === "pending") {
+      await supabase.auth.signOut();
+      return NextResponse.redirect(`${origin}/login?error=pending_approval`);
+    }
     return NextResponse.redirect(`${origin}${next}`);
   }
 

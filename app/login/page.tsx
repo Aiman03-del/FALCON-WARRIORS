@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { getSiteSettings } from "@/app/lib/queries/siteSettings";
 import { createClient } from "../lib/supabase/client";
@@ -10,6 +10,7 @@ import { useToast } from "@/app/providers/ToastProvider";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
 
   const [logoUrl, setLogoUrl] = useState("/logo.jpg");
@@ -23,6 +24,16 @@ export default function LoginPage() {
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   const { addToast } = useToast();
+
+  useEffect(() => {
+    if (searchParams.get("error") === "pending_approval") {
+      addToast(
+        "Your account is pending admin approval. You'll be able to log in once it's approved.",
+        "error",
+        9000
+      );
+    }
+  }, [searchParams, addToast]);
 
   useEffect(() => {
     getSiteSettings().then((s) => setLogoUrl(s.logoUrl));
@@ -96,6 +107,19 @@ export default function LoginPage() {
         .select("membership_status")
         .eq("profile_id", user.id)
         .maybeSingle();
+
+      if (player?.membership_status === "pending") {
+        await supabase.auth.signOut();
+
+        setError("Your account is still pending admin approval.");
+        addToast(
+          "Your account is pending admin approval. You'll be able to log in once it's approved.",
+          "error",
+          9000
+        );
+
+        return;
+      }
 
       if (player?.membership_status === "suspended") {
         addToast(

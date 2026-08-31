@@ -95,7 +95,7 @@ export default function RegisterPage() {
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   const [mode, setMode] = useState<
-    "form" | "completeProfile"
+    "form" | "completeProfile" | "pendingApproval"
   >("form");
 
   const [googleUserId, setGoogleUserId] = useState<string | null>(
@@ -360,6 +360,7 @@ export default function RegisterPage() {
         city: city || null,
         platform: platform || null,
         avatar_url: finalGoogleAvatarUrl || null,
+        membership_status: "pending",
       };
 
       /*
@@ -388,11 +389,9 @@ export default function RegisterPage() {
       }
 
       /*
-       * Profile completed successfully.
+       * Profile completed — awaiting admin approval.
        */
-      router.replace("/");
-      router.refresh();
-
+      setMode("pendingApproval");
       return;
     }
 
@@ -489,12 +488,12 @@ export default function RegisterPage() {
     }
 
     /*
-     * Email confirmation disabled.
+     * Email confirmation disabled — but still needs admin approval.
+     * Sign the user back out immediately so they can't browse until approved.
      */
     if (data.session) {
-      router.replace("/");
-      router.refresh();
-
+      await supabase.auth.signOut();
+      setMode("pendingApproval");
       return;
     }
 
@@ -503,6 +502,39 @@ export default function RegisterPage() {
      */
     setSubmittedEmail(email);
     setNeedsConfirmation(true);
+  }
+
+  if (mode === "pendingApproval") {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-8 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gold/15">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" className="text-gold">
+              <path
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          <h1 className="font-display text-xl font-bold uppercase tracking-wide text-white">
+            Registration Submitted
+          </h1>
+          <p className="mt-3 text-sm text-muted">
+            Thanks for signing up! Your account is pending review by an admin. You&apos;ll be able to
+            log in once it&apos;s approved.
+          </p>
+          <Link
+            href="/login"
+            className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-gold px-4 py-3 text-sm font-bold uppercase tracking-wide text-black transition hover:bg-gold-light"
+          >
+            Back to Login
+          </Link>
+        </div>
+      </main>
+    );
   }
 
   if (checkingAuth) {
