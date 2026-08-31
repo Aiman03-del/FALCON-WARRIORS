@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useToast } from "@/app/providers/ToastProvider";
+import { getFriendlyErrorMessage } from "@/app/lib/utils/errors";
 
 type SubmitOptions = {
   onSuccess?: (data?: any) => void | Promise<void>;
@@ -30,7 +31,7 @@ export function useFormSubmit() {
       await onSuccess?.(result);
     } catch (error) {
       const err = error instanceof Error ? error : new Error(errorMessage);
-      addToast(err.message || errorMessage, "error");
+      addToast(getFriendlyErrorMessage(err, errorMessage), "error"); // exact error আর দেখাবে না
       onError?.(err);
     } finally {
       setIsLoading(false);

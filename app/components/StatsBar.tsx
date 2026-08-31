@@ -34,10 +34,8 @@ export default function StatsBar({ stats }: StatsBarProps) {
     () => {
       const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+      // reduceMotion হলে কিছুই animate করার দরকার নেই — SSR থেকেই সঠিক ভ্যালু দেখানো আছে
       if (reduceMotion) {
-        valueRefs.current.forEach((el, i) => {
-          if (el) el.textContent = `${items[i].value}${items[i].suffix}`;
-        });
         gsap.set(".stat-card", { opacity: 1, y: 0 });
         return;
       }
@@ -54,36 +52,24 @@ export default function StatsBar({ stats }: StatsBarProps) {
       });
 
       if (panel) {
-        tl.from(panel, {
-          opacity: 0,
-          y: 20,
-          duration: 0.6, // fw-animation-reveal
-          ease: "power3.out",
-        });
+        tl.from(panel, { opacity: 0, y: 20, duration: 0.6, ease: "power3.out" });
       }
 
-      tl.from(
-        cards,
-        {
-          opacity: 0,
-          y: 18,
-          duration: 0.6, // fw-animation-reveal
-          stagger: 0.1, // standardized stagger
-          ease: "power3.out",
-        },
-        "-=0.35"
-      );
+      tl.from(cards, { opacity: 0, y: 18, duration: 0.6, stagger: 0.1, ease: "power3.out" }, "-=0.35");
 
       items.forEach((item, i) => {
         const el = valueRefs.current[i];
         if (!el) return;
 
+        // fromTo ব্যবহার করা হচ্ছে যাতে SSR/no-JS এ দেখানো আসল ভ্যালু
+        // animation শুরুর আগ পর্যন্ত অক্ষত থাকে, শুধু animation চলাকালীন 0 থেকে গুনে ওঠে
         const counter = { val: 0 };
-        tl.to(
+        tl.fromTo(
           counter,
+          { val: 0 },
           {
             val: item.value,
-            duration: 1.1, // extended for number counting
+            duration: 1.1,
             ease: "power1.out",
             onUpdate: () => {
               el.textContent = `${Math.round(counter.val)}${item.suffix}`;
@@ -121,7 +107,7 @@ export default function StatsBar({ stats }: StatsBarProps) {
                   }}
                   className="font-display text-[clamp(1.75rem,3vw,3rem)] font-black leading-none text-[var(--fw-text-primary)]"
                 >
-                  0{stat.suffix}
+                  {stat.value}{stat.suffix}
                 </span>
                 <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--fw-text-muted)] sm:text-[11px]">
                   {stat.label}

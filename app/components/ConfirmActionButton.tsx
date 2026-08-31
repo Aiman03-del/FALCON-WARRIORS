@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useToast } from "@/app/providers/ToastProvider";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { getFriendlyErrorMessage } from "../lib/utils/errors";
 
 type ConfirmActionButtonProps = {
   onConfirm: () => Promise<void>;
@@ -44,8 +45,7 @@ export default function ConfirmActionButton({
       addToast(successMessage, "success");
       setIsOpen(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : errorMessage;
-      addToast(message, "error");
+     addToast(getFriendlyErrorMessage(error, errorMessage), "error");
     } finally {
       setIsLoading(false);
     }

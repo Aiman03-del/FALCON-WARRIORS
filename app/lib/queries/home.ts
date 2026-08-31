@@ -10,36 +10,22 @@ export async function getStats() {
       { count: officialCompletedCount },
       { count: trophies },
       { data: officialCompleted },
-      { data: internalCompleted },
+      { count: internalCompletedCount },
     ] = await Promise.all([
       supabase.from("player_details").select("*", { count: "exact", head: true }),
       supabase.from("matches").select("*", { count: "exact", head: true }).eq("status", "completed"),
       supabase.from("achievements").select("*", { count: "exact", head: true }),
       supabase.from("matches").select("score_home, score_away").eq("status", "completed"),
-      supabase
-        .from("tournament_matches")
-        .select("player1_score, player2_score")
-        .eq("status", "completed"),
+      supabase.from("tournament_matches").select("*", { count: "exact", head: true }).eq("status", "completed"),
     ]);
 
-    const { count: internalCompletedCount } = await supabase
-      .from("tournament_matches")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "completed");
-
+    // শুধু official club matches দিয়েই win rate হিসাব করা হচ্ছে,
+    // কারণ internal (player vs player) ম্যাচে ক্লাবের জয়-পরাজয়ের ধারণা প্রযোজ্য না।
     const officialWins = (officialCompleted ?? []).filter(
       (m) => (m.score_home ?? 0) > (m.score_away ?? 0)
     ).length;
-
-    // Internal matches: প্রতিটা ম্যাচে দুইজন প্লেয়ার, তাই একটা "win" ধারণা প্রযোজ্য না —
-    // শুধু non-draw ম্যাচ গণনা করে ধারণাগত win rate হিসেবে রাখা হলো (bye বাদে)
-    const internalDecisive = (internalCompleted ?? []).filter(
-      (m) => m.player1_score !== null && m.player2_score !== null && m.player1_score !== m.player2_score
-    ).length;
-
-    const totalCompleted = (officialCompleted?.length ?? 0) + (internalCompleted?.length ?? 0);
-    const totalWins = officialWins + internalDecisive; // approximate combined metric
-    const winRate = totalCompleted > 0 ? Math.round((totalWins / totalCompleted) * 100) : 0;
+    const officialTotal = officialCompleted?.length ?? 0;
+    const winRate = officialTotal > 0 ? Math.round((officialWins / officialTotal) * 100) : 0;
 
     return {
       members: members ?? 0,

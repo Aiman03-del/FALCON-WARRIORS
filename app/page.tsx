@@ -12,7 +12,7 @@ import RecentResults from "./components/RecentResults";
 import StatsBar from "./components/StatsBar";
 import { getAssociatedCommunities } from "./lib/queries/communities";
 import { getAchievements, getGallery, getLatestNews, getRecentResults, getRunningTournaments, getStats, getTopPerformers } from "./lib/queries/home";
-
+export const revalidate = 60;
 export const metadata: Metadata = {
   title: "Falcon Warriors | Home - Elite eFootball Club",
   description: "Welcome to Falcon Warriors. View our latest tournaments, match results, fixtures, and player achievements.",

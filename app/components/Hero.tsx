@@ -3,13 +3,22 @@ import { createClient } from "@/app/lib/supabase/server";
 import HeroBackground from "./HeroBackground";
 import HeroContent from "./HeroContent";
 
+async function getCurrentUser() {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    return user;
+  } catch (error) {
+    console.error("[Hero] failed to check auth session:", error);
+    return null; // fail-safe: ধরে নেওয়া হবে ইউজার লগইন করেনি, guest CTA দেখাবে
+  }
+}
+
 export default async function Hero() {
   const { foundedYear, location, presidentName, managerName } = await getSiteSettings();
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   const primaryCta = user
     ? { href: "/profile", label: "My Profile", iconName: "userCircle" as const }
