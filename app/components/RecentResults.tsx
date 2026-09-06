@@ -4,7 +4,7 @@ import RecentResultsGrid from "./RecentResultsGrid";
 
 type Result = {
   id: string;
-  slug?: string | null;
+  href: string;
   competition: string;
   isOfficial?: boolean;
   opponent: string;

@@ -66,7 +66,7 @@ export async function getRecentResults() {
       supabase
         .from("tournament_matches")
         .select(
-          "id, created_at, player1_id, player2_id, player1_score, player2_score, tournaments!inner(id, name, type)"
+          "id, created_at, player1_id, player2_id, player1_score, player2_score, tournaments!inner(id, name, type, slug)"
         )
         .eq("status", "completed")
         .order("created_at", { ascending: false })
@@ -110,7 +110,7 @@ export async function getRecentResults() {
 
         return {
           id: m.id,
-          slug: m.slug ?? m.id,
+          href: `/matches/${m.slug ?? m.id}`,
           competition: (m.tournament_id && tournamentNames.get(m.tournament_id)) || m.competition || "Friendly Match",
           isOfficial: m.match_type === "external",
           opponent: m.opponent_name,
@@ -123,7 +123,6 @@ export async function getRecentResults() {
         };
       }),
       ...(tournamentData ?? []).map((m: any) => {
-        const p1 = playerMap.get(m.player1_id);
         const p2 = playerMap.get(m.player2_id);
         const home = Number(m.player1_score ?? 0);
         const away = Number(m.player2_score ?? 0);
@@ -131,7 +130,7 @@ export async function getRecentResults() {
 
         return {
           id: `tournament-${m.id}`,
-          slug: p1?.slug ?? m.id,
+          href: `/tournaments/${m.tournaments?.slug ?? m.tournaments?.id}`,
           competition: m.tournaments?.name ?? "Tournament Match",
           isOfficial: m.tournaments?.type === "official",
           opponent: p2?.real_name || p2?.efootball_username || "Opponent",

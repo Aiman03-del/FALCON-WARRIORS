@@ -372,3 +372,12 @@ textarea:focus-visible {
     animation-delay: 240ms;
   }
 }
+
+.fw-carousel-track {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.fw-carousel-track::-webkit-scrollbar {
+  display: none;
+}
