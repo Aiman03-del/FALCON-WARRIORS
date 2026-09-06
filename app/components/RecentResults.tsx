@@ -2,14 +2,19 @@ import { getSiteSettings } from "@/app/lib/queries/siteSettings";
 import Link from "next/link";
 import RecentResultsGrid from "./RecentResultsGrid";
 
+type Side = {
+  name: string;
+  avatarUrl?: string | null;
+  isFalcon?: boolean;
+};
+
 type Result = {
   id: string;
   href: string;
   competition: string;
   isOfficial?: boolean;
-  opponent: string;
-  opponentTag: string;
-  opponentLogoUrl?: string | null;
+  home: Side;
+  away: Side;
   scoreHome: number;
   scoreAway: number;
   matchDate?: string;

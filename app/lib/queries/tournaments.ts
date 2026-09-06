@@ -559,3 +559,53 @@ export async function getPublicMatchDetail(
     motmList,
   };
 }
+
+export type InternalTournamentMatchDetail = {
+  id: string;
+  round: number | null;
+  match_order: number | null;
+  status: string;
+  stage: string | null;
+  group_name: string | null;
+  player1_score: number | null;
+  player2_score: number | null;
+  created_at: string | null;
+  tournament: { id: string; slug: string; name: string } | null;
+  player1: { id: string; efootball_username: string; real_name: string | null; avatar_url: string | null } | null;
+  player2: { id: string; efootball_username: string; real_name: string | null; avatar_url: string | null } | null;
+};
+
+export async function getInternalTournamentMatchDetail(
+  matchId: string
+): Promise<InternalTournamentMatchDetail | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("tournament_matches")
+    .select(
+      "id, round, match_order, status, stage, group_name, player1_score, player2_score, created_at, tournament:tournament_id(id, slug, name), player1:player1_id(id, efootball_username, real_name, avatar_url), player2:player2_id(id, efootball_username, real_name, avatar_url)"
+    )
+    .eq("id", matchId)
+    .single();
+
+  if (error || !data) return null;
+
+  const tournament = Array.isArray(data.tournament) ? data.tournament[0] ?? null : data.tournament ?? null;
+  const player1 = Array.isArray(data.player1) ? data.player1[0] ?? null : data.player1 ?? null;
+  const player2 = Array.isArray(data.player2) ? data.player2[0] ?? null : data.player2 ?? null;
+
+  return {
+    id: data.id,
+    round: data.round ?? null,
+    match_order: data.match_order ?? null,
+    status: data.status,
+    stage: data.stage ?? null,
+    group_name: data.group_name ?? null,
+    player1_score: data.player1_score ?? null,
+    player2_score: data.player2_score ?? null,
+    created_at: data.created_at ?? null,
+    tournament,
+    player1,
+    player2,
+  };
+}

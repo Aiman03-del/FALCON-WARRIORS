@@ -22,6 +22,7 @@ import {
 } from "@/app/lib/queries/tournaments";
 import { rankStandings } from "@/app/lib/fixtures/tiebreakers";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 
 type JoinedPlayer = {
   id: string;
@@ -140,6 +141,14 @@ export default async function TournamentDetailPage({
             )}
           </p>
 
+          <div className="mt-6">
+            <ExternalTournamentInfo
+              tournamentName={tournament.name}
+              status={tournament.status}
+              isPublicView={true}
+            />
+          </div>
+
           <div className="mt-8">
             <OfficialMatchList
               matches={officialMatches}
@@ -176,20 +185,106 @@ export default async function TournamentDetailPage({
   const showSquad = tournament.type === "official";
   const activeTab = parseTab(tabParam);
 
+  const matchesCompleted = matches.filter((m) => m.status === "completed").length;
+  const matchesTotal = matches.length;
+
+  const topStandings =
+    tournament.format === "league" || tournament.format === "league_playoff"
+      ? rankStandings(
+          participants.map((p) => ({
+            ...p,
+            player_id: getJoinedPlayer(p.player_details)?.id ?? p.id,
+          })),
+          matches.filter((m) => m.stage !== "knockout")
+        ).slice(0, 3)
+      : [];
+
   const overviewContent = (
     <>
-      {tournament.type === "external" && (
-        <ExternalTournamentInfo
-          tournamentName={tournament.name}
-          status={tournament.status}
-          isPublicView={true}
-        />
-      )}
       {champion && (
         <ChampionBanner name={champion.name} avatarUrl={champion.avatarUrl} subtitle={champion.subtitle} />
       )}
-      {!champion && tournament.type !== "external" && (
-        <p className="text-sm text-muted">
+
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="card p-4 text-center">
+          <p className="font-display text-2xl font-bold text-gold">{participants.length}</p>
+          <p className="mt-1 text-xs uppercase tracking-wide text-muted">Participants</p>
+        </div>
+        <div className="card p-4 text-center">
+          <p className="font-display text-2xl font-bold text-gold">
+            {matchesCompleted}/{matchesTotal}
+          </p>
+          <p className="mt-1 text-xs uppercase tracking-wide text-muted">Matches Played</p>
+        </div>
+        <div className="card p-4 text-center">
+          <p className="font-display text-2xl font-bold capitalize text-gold">
+            {tournament.format?.replace("_", " ") ?? "League"}
+          </p>
+          <p className="mt-1 text-xs uppercase tracking-wide text-muted">Format</p>
+        </div>
+        <div className="card p-4 text-center">
+          <p className="font-display text-2xl font-bold text-gold">
+            {tournament.format === "group_knockout"
+              ? tournament.group_count ?? groupNames.length ?? "—"
+              : hasBracket
+              ? "Knockout"
+              : "—"}
+          </p>
+          <p className="mt-1 text-xs uppercase tracking-wide text-muted">
+            {tournament.format === "group_knockout" ? "Groups" : "Stage"}
+          </p>
+        </div>
+      </div>
+
+      {tournament.format === "group_knockout" &&
+        (tournament.qualifiers_per_group || tournament.third_place_match) && (
+          <p className="mt-3 text-xs text-muted">
+            {tournament.qualifiers_per_group &&
+              `Top ${tournament.qualifiers_per_group} from each group qualify for the knockout stage. `}
+            {tournament.third_place_match && "A 3rd place match will be played."}
+          </p>
+        )}
+
+      {topStandings.length > 0 && (
+        <div className="mt-8">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-display text-lg font-bold uppercase tracking-wide text-gold">
+              Top of the Table
+            </h2>
+            <Link
+              href={`/tournaments/${tournament.slug ?? tournament.id}?tab=standings`}
+              className="text-xs font-semibold text-muted hover:text-white"
+            >
+              Full standings →
+            </Link>
+          </div>
+          <div className="flex flex-col gap-2">
+            {topStandings.map((p, idx) => {
+              const player = getJoinedPlayer(p.player_details);
+              return (
+                <div key={p.id} className="card flex items-center justify-between p-3 text-sm">
+                  <span className="flex items-center gap-2">
+                    <span className="w-5 text-center font-display font-bold text-muted">
+                      {idx + 1}
+                    </span>
+                    {player?.real_name?.trim() || player?.efootball_username || "Unknown"}
+                  </span>
+                  <span className="font-semibold text-gold">{p.points} pts</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {!champion && matchesCompleted === 0 && (
+        <p className="mt-6 text-sm text-muted">
+          This tournament hasn&apos;t kicked off yet — check back once matches begin.
+        </p>
+      )}
+
+      {!champion && matchesCompleted > 0 && (
+        <p className="mt-6 text-sm text-muted">
           Follow the tabs above for standings, fixtures, and the bracket.
         </p>
       )}

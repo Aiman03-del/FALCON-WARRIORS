@@ -58,7 +58,7 @@ export async function getRecentResults() {
       supabase
         .from("matches")
         .select(
-          "id, slug, opponent_name, opponent_tag, opponent_logo_url, competition, match_type, score_home, score_away, match_date, tournament_id"
+          "id, slug, opponent_name, opponent_tag, opponent_logo_url, competition, match_type, score_home, score_away, match_date, tournament_id, player1_id, player2_id"
         )
         .eq("status", "completed")
         .order("match_date", { ascending: false })
@@ -88,6 +88,10 @@ export async function getRecentResults() {
 
     const playerIds = Array.from(
       new Set([
+        ...((matchesData ?? [])
+          .filter((m) => m.match_type === "internal")
+          .flatMap((m) => [m.player1_id, m.player2_id])
+          .filter(Boolean) as string[]),
         ...((tournamentData ?? []).map((m) => m.player1_id).filter(Boolean) as string[]),
         ...((tournamentData ?? []).map((m) => m.player2_id).filter(Boolean) as string[]),
       ])
@@ -107,15 +111,33 @@ export async function getRecentResults() {
         const home = m.score_home ?? 0;
         const away = m.score_away ?? 0;
         const result = home > away ? "WIN" : home === away ? "DRAW" : "LOSS";
+        const isInternal = m.match_type === "internal";
 
         return {
           id: m.id,
           href: `/matches/${m.slug ?? m.id}`,
           competition: (m.tournament_id && tournamentNames.get(m.tournament_id)) || m.competition || "Friendly Match",
           isOfficial: m.match_type === "external",
-          opponent: m.opponent_name,
-          opponentTag: m.opponent_tag ?? m.opponent_name?.slice(0, 4).toUpperCase() ?? "OPP",
-          opponentLogoUrl: m.opponent_logo_url ?? null,
+          home: isInternal
+            ? (() => {
+                const player = playerMap.get(m.player1_id);
+                return {
+                  name: player?.real_name?.trim() || player?.efootball_username || "Player 1",
+                  avatarUrl: player?.avatar_url ?? null,
+                  isFalcon: false,
+                };
+              })()
+            : { name: "Falcon Warriors", avatarUrl: null, isFalcon: true },
+          away: isInternal
+            ? (() => {
+                const player = playerMap.get(m.player2_id);
+                return {
+                  name: player?.real_name?.trim() || player?.efootball_username || "Player 2",
+                  avatarUrl: player?.avatar_url ?? null,
+                  isFalcon: false,
+                };
+              })()
+            : { name: m.opponent_name, avatarUrl: m.opponent_logo_url ?? null, isFalcon: false },
           scoreHome: home,
           scoreAway: away,
           matchDate: m.match_date,
@@ -123,19 +145,28 @@ export async function getRecentResults() {
         };
       }),
       ...(tournamentData ?? []).map((m: any) => {
+        const p1 = playerMap.get(m.player1_id);
         const p2 = playerMap.get(m.player2_id);
         const home = Number(m.player1_score ?? 0);
         const away = Number(m.player2_score ?? 0);
         const result = home > away ? "WIN" : home === away ? "DRAW" : "LOSS";
+        const tournamentSlug = m.tournaments?.slug;
 
         return {
           id: `tournament-${m.id}`,
-          href: `/tournaments/${m.tournaments?.slug ?? m.tournaments?.id}`,
+          href: tournamentSlug ? `/tournaments/${tournamentSlug}/matches/${m.id}` : `/tournaments/${m.tournaments?.id}`,
           competition: m.tournaments?.name ?? "Tournament Match",
           isOfficial: m.tournaments?.type === "official",
-          opponent: p2?.real_name || p2?.efootball_username || "Opponent",
-          opponentTag: (p2?.efootball_username ?? "OPP").slice(0, 4).toUpperCase(),
-          opponentLogoUrl: p2?.avatar_url ?? null,
+          home: {
+            name: p1?.real_name?.trim() || p1?.efootball_username || "Player 1",
+            avatarUrl: p1?.avatar_url ?? null,
+            isFalcon: false,
+          },
+          away: {
+            name: p2?.real_name?.trim() || p2?.efootball_username || "Player 2",
+            avatarUrl: p2?.avatar_url ?? null,
+            isFalcon: false,
+          },
           scoreHome: home,
           scoreAway: away,
           matchDate: m.created_at,
