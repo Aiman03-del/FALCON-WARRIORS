@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { createClient } from "@/app/lib/supabase/client";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import MatchResultRow from "@/app/components/MatchResultRow";
 import { Swords, Calendar, CheckCircle2, Clock } from "lucide-react";
-import { getMatches } from "@/app/lib/queries/matches";
+import { getUnifiedMatches } from "@/app/lib/queries/unifiedMatches";
 
 export const metadata: Metadata = {
   title: "Matches | Falcon Warriors - Results & Fixtures",
@@ -44,15 +43,25 @@ export default async function MatchesPage({
 }) {
   const params = await searchParams;
   const currentType = params.type === "unofficial" ? "unofficial" : "official";
-  const matches = await getMatches({
-    status: params.status,
-    search: params.search,
-    type: params.type as any,
-  });
+  const all = await getUnifiedMatches({ status: params.status });
 
-  const all = matches ?? [];
-  const upcoming = all.filter((m) => m.status === "upcoming" || m.status === "live");
-  const completed = all.filter((m) => m.status === "completed");
+  let filtered = all.filter((m) =>
+    currentType === "official" ? m.matchType === "official" : m.matchType === "internal"
+  );
+
+  if (params.search) {
+    const q = params.search.trim().toLowerCase();
+    if (q) {
+      filtered = filtered.filter(
+        (m) =>
+          m.opponentName.toLowerCase().includes(q) ||
+          (m.competition ?? "").toLowerCase().includes(q)
+      );
+    }
+  }
+
+  const upcoming = filtered.filter((m) => m.status === "upcoming" || m.status === "live");
+  const completed = filtered.filter((m) => m.status === "completed");
 
   return (
     <main>
@@ -103,14 +112,14 @@ export default async function MatchesPage({
                       <div className="flex items-center gap-4">
                         <div className="flex w-12 shrink-0 flex-col items-center justify-center rounded-lg bg-surface-2 py-1.5">
                           <span className="font-display text-base font-bold leading-none">
-                            {new Date(m.match_date).toLocaleDateString("en-US", { day: "2-digit" })}
+                            {new Date(m.matchDate).toLocaleDateString("en-US", { day: "2-digit" })}
                           </span>
                           <span className="text-[9px] uppercase text-muted">
-                            {new Date(m.match_date).toLocaleDateString("en-US", { month: "short" })}
+                            {new Date(m.matchDate).toLocaleDateString("en-US", { month: "short" })}
                           </span>
                         </div>
                         <div>
-                          <p className="font-semibold">vs {m.opponent_name || "Opponent"}</p>
+                          <p className="font-semibold">vs {m.opponentName}</p>
                           <p className="text-xs text-muted">{m.competition ?? "Friendly"}</p>
                         </div>
                       </div>
@@ -122,7 +131,7 @@ export default async function MatchesPage({
                       ) : (
                         <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white/8 px-3 py-1 text-xs text-muted">
                           <Calendar size={11} />
-                          {formatDate(m.match_date)}
+                          {formatDate(m.matchDate)}
                         </span>
                       )}
                     </div>
@@ -148,25 +157,25 @@ export default async function MatchesPage({
           ) : (
             <div className="flex flex-col gap-3">
               {completed.map((m) => {
-                const home = m.score_home ?? 0;
-                const away = m.score_away ?? 0;
+                const home = m.scoreHome ?? 0;
+                const away = m.scoreAway ?? 0;
                 const result = getResult(home, away);
 
                 return (
                   <MatchResultRow
                     key={m.id}
                     href={m.href}
-                    date={m.match_date}
+                    date={m.matchDate}
                     competition={m.competition}
                     scoreHome={home}
                     scoreAway={away}
                     homeName={m.homeName}
                     homeAvatarUrl={m.homeAvatarUrl}
-                    opponentName={m.opponent_name ?? "Opponent"}
-                    opponentTag={m.opponent_tag}
-                    opponentLogoUrl={m.opponent_logo_url}
-                    matchType={m.match_type}
-                    tournamentId={m.tournament_id}
+                    opponentName={m.opponentName}
+                    opponentTag={m.opponentTag}
+                    opponentLogoUrl={m.opponentLogoUrl}
+                    matchType={m.matchType}
+                    tournamentId={m.tournamentId}
                     result={result}
                   />
                 );

@@ -8,9 +8,9 @@ type Props = {
   competition: string | null;
   scoreHome: number;
   scoreAway: number;
-  opponentName: string;
-  homeName?: string;
+  homeName: string;
   homeAvatarUrl?: string | null;
+  opponentName: string;
   opponentTag?: string | null;
   opponentLogoUrl?: string | null;
   matchType?: string | null;
@@ -88,6 +88,7 @@ export default async function MatchResultRow({
       : tournamentId
       ? { label: "Official", className: "bg-gold/15 text-gold" }
       : { label: "Friendly", className: "bg-white/10 text-muted" };
+
   return (
     <Link
       href={href}
@@ -96,7 +97,7 @@ export default async function MatchResultRow({
       {/* Teams + Score */}
       <TeamBlock
         tag="FW"
-        name={isInternal ? (homeName ?? "Player 1") : "Falcon Warriors"}
+        name={isInternal ? homeName : "Falcon Warriors"}
         logoUrl={isInternal ? homeAvatarUrl : logoUrl}
         align="left"
       />
