@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Download } from "lucide-react";
 import { toPng } from "html-to-image";
 import { LeaderboardData, LeaderboardScope } from "../lib/queries/leaderboards";
@@ -37,6 +37,7 @@ export default function LeaderboardTabs({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const [page, setPage] = useState(1);
   const [activeScope, setActiveScope] = useState<LeaderboardScope>(
     searchParams.get("tab") === "unofficial" ? "unofficial" : "official"
@@ -104,7 +105,7 @@ export default function LeaderboardTabs({
               onClick={() => {
                 const params = new URLSearchParams(searchParams.toString());
                 params.set("tab", tab.key);
-                router.replace(`/dashboard/leaderboard?${params.toString()}`);
+                router.replace(`${pathname}?${params.toString()}`);
                 setActiveScope(tab.key);
                 setPage(1);
               }}

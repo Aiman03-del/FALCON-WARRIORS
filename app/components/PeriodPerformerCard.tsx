@@ -42,20 +42,18 @@ const periodLabels: Record<Period, string> = {
 
 function getPeriodStart(period: Period): Date {
   const now = new Date();
+  const start = new Date(now);
 
   if (period === "weekly") {
-    const diffToMonday = now.getDay() === 0 ? 6 : now.getDay() - 1;
-    const start = new Date(now);
-    start.setDate(now.getDate() - diffToMonday);
-    start.setHours(0, 0, 0, 0);
-    return start;
+    start.setDate(now.getDate() - 7);
+  } else if (period === "monthly") {
+    start.setDate(now.getDate() - 30);
+  } else {
+    start.setDate(now.getDate() - 365);
   }
 
-  if (period === "monthly") {
-    return new Date(now.getFullYear(), now.getMonth(), 1);
-  }
-
-  return new Date(now.getFullYear(), 0, 1);
+  start.setHours(0, 0, 0, 0);
+  return start;
 }
 
 export default function PeriodPerformerCard() {

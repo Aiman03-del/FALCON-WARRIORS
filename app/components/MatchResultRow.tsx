@@ -3,12 +3,14 @@ import Link from "next/link";
 import { getSiteSettings } from "@/app/lib/queries/siteSettings";
 
 type Props = {
-  id: string;
+  href: string;
   date: string;
   competition: string | null;
   scoreHome: number;
   scoreAway: number;
   opponentName: string;
+  homeName?: string;
+  homeAvatarUrl?: string | null;
   opponentTag?: string | null;
   opponentLogoUrl?: string | null;
   matchType?: string | null;
@@ -63,11 +65,13 @@ function TeamBlock({
 }
 
 export default async function MatchResultRow({
-  id,
+  href,
   date,
   competition,
   scoreHome,
   scoreAway,
+  homeName,
+  homeAvatarUrl,
   opponentName,
   opponentTag,
   opponentLogoUrl,
@@ -76,6 +80,7 @@ export default async function MatchResultRow({
   result,
 }: Props) {
   const { logoUrl } = await getSiteSettings();
+  const isInternal = matchType === "internal";
 
   const typeBadge =
     matchType === "internal"
@@ -85,11 +90,16 @@ export default async function MatchResultRow({
       : { label: "Friendly", className: "bg-white/10 text-muted" };
   return (
     <Link
-      href={`/matches/${id}`}
+      href={href}
       className="card grid items-center gap-4 p-4 text-center hover:border-gold/30 sm:grid-cols-[minmax(140px,1fr)_auto_minmax(140px,1fr)]"
     >
       {/* Teams + Score */}
-      <TeamBlock tag="FW" name="Falcon Warriors" logoUrl={logoUrl} align="left" />
+      <TeamBlock
+        tag="FW"
+        name={isInternal ? (homeName ?? "Player 1") : "Falcon Warriors"}
+        logoUrl={isInternal ? homeAvatarUrl : logoUrl}
+        align="left"
+      />
 
       <div className="grid items-center justify-items-center gap-2">
         <span className="text-xs uppercase tracking-[0.15em] text-muted">

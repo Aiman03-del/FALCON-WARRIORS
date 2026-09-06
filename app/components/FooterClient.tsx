@@ -49,55 +49,21 @@ export default function FooterClient({ logoUrl, navigationGroups }: FooterClient
     const ctx = gsap.context(() => {
       if (!footerRef.current) return;
 
-      gsap.from(crestRef.current, {
+      const tl = gsap.timeline({
         scrollTrigger: {
           trigger: footerRef.current,
           start: 'top 80%',
           toggleActions: 'play none none none',
         },
-        opacity: 0,
-        y: 20,
-        duration: 0.6, // fw-animation-reveal
       });
 
-      gsap.from(headingRef.current, {
-        scrollTrigger: {
-          trigger: footerRef.current,
-          start: 'top 80%',
-          toggleActions: 'play none none none',
-        },
-        opacity: 0,
-        y: 20,
-        duration: 0.6, // fw-animation-reveal
-        delay: 0.1,
-      });
-
-      gsap.from(descriptionRef.current, {
-        scrollTrigger: {
-          trigger: footerRef.current,
-          start: 'top 80%',
-          toggleActions: 'play none none none',
-        },
-        opacity: 0,
-        y: 20,
-        duration: 0.6, // fw-animation-reveal
-        delay: 0.15,
-      });
+      tl.from(crestRef.current, { opacity: 0, y: 20, duration: 0.6 })
+        .from(headingRef.current, { opacity: 0, y: 20, duration: 0.6 }, 0.1)
+        .from(descriptionRef.current, { opacity: 0, y: 20, duration: 0.6 }, 0.15);
 
       const linkElements = linksRef.current?.querySelectorAll('[data-footer-link]');
       if (linkElements && linkElements.length > 0) {
-        gsap.from(linkElements, {
-          scrollTrigger: {
-            trigger: footerRef.current,
-            start: 'top 80%',
-            toggleActions: 'play none none none',
-          },
-          opacity: 0,
-          y: 20,
-          duration: 0.6, // fw-animation-reveal
-          stagger: 0.08, // standardized stagger
-          delay: 0.2,
-        });
+        tl.from(linkElements, { opacity: 0, y: 20, duration: 0.6, stagger: 0.08 }, 0.2);
       }
     }, footerRef);
 
@@ -120,7 +86,7 @@ export default function FooterClient({ logoUrl, navigationGroups }: FooterClient
   return (
     <footer
       ref={footerRef}
-      className="relative border-t overflow-hidden overscroll-none"
+      className="relative border-t overflow-hidden"
       style={{
         borderTopColor: 'var(--fw-border)',
         backgroundColor: 'var(--fw-bg-surface)',
