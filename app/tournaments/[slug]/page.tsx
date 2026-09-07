@@ -12,6 +12,7 @@ import TournamentSquadList from "@/app/components/TournamentSquadList";
 import ExternalTournamentInfo from "@/app/components/ExternalTournamentInfo";
 import TournamentMatchesDisplay from "@/app/components/TournamentMatchesDisplay";
 import OfficialMatchList from "@/app/components/OfficialMatchList";
+import TeamFormationManager from "@/app/components/TeamFormationManager";
 import {
   getMyJoinStatus,
   getTournamentDetail,
@@ -23,6 +24,7 @@ import {
 import { rankStandings } from "@/app/lib/fixtures/tiebreakers";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { getTournamentTeams } from "@/app/lib/queries/teams";
 
 type JoinedPlayer = {
   id: string;
@@ -163,6 +165,9 @@ export default async function TournamentDetailPage({
 
   // ── Internal tournament → original layout ──
   const joinStatus = await getMyJoinStatus(tournament.id);
+  const teams = tournament.is_team_tournament ? await getTournamentTeams(tournament.id) : [];
+  const myPlayerId = "playerId" in joinStatus ? joinStatus.playerId ?? null : null;
+  const isApprovedParticipant = "myRequestStatus" in joinStatus && joinStatus.myRequestStatus === "approved";
 
   const knockoutMatches = matches.filter((m) => m.stage === "knockout" || m.stage == null);
   const bracketMatches = knockoutMatches.filter((m) => !m.is_third_place);
@@ -394,6 +399,18 @@ export default async function TournamentDetailPage({
             tournamentType={tournament.type === "official" ? "external" : "internal"}
           />
         </div>
+
+        {tournament.is_team_tournament && (
+          <div className="mt-8 border-t border-border pt-8">
+            <TeamFormationManager
+              tournamentId={tournament.id}
+              teamSize={tournament.team_size ?? 2}
+              teams={teams}
+              myPlayerId={myPlayerId}
+              isApprovedParticipant={isApprovedParticipant}
+            />
+          </div>
+        )}
 
         <PublicTournamentTabs
           tournamentSlug={tournament.slug ?? tournament.id}

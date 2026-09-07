@@ -14,9 +14,11 @@ import InternalTournamentTabs, {
 } from "@/app/components/dashboard/InternalTournamentTabs";
 import LeaguePlayoffTransition from "@/app/components/dashboard/LeaguePlayoffTransition";
 import ParticipantsManager from "@/app/components/dashboard/ParticipantsManager";
+import AdminTeamManager from "@/app/components/dashboard/AdminTeamManager";
 import StandingsTable from "@/app/components/dashboard/StandingsTable";
 import TournamentForm from "@/app/components/dashboard/TournamentForm";
 import { createClient } from "@/app/lib/supabase/client";
+import { getTournamentTeams } from "@/app/lib/queries/teams";
 
 export default async function InternalTournamentDashboard({
   tournamentId,
@@ -32,12 +34,14 @@ export default async function InternalTournamentDashboard({
   const { data: tournament } = await supabase
     .from("tournaments")
     .select(
-      "id, slug, name, type, format, double_round, two_leg_knockout, grand_final_reset, swiss_rounds, status, start_date, end_date, max_participants, registration_deadline, bye_method, group_count, qualifiers_per_group, playoff_size, third_place_match"
+      "id, slug, name, type, format, double_round, two_leg_knockout, grand_final_reset, swiss_rounds, status, start_date, end_date, max_participants, registration_deadline, bye_method, group_count, qualifiers_per_group, playoff_size, third_place_match, is_team_tournament, team_size"
     )
     .eq("id", tournamentId)
     .single();
 
   if (!tournament) return null;
+
+  const teams = tournament.is_team_tournament ? await getTournamentTeams(tournamentId) : [];
 
   const { data: participantsRaw } = await supabase
     .from("tournament_participants")
@@ -387,12 +391,29 @@ export default async function InternalTournamentDashboard({
       standingsContent={standingsContent}
       bracketContent={bracketContent}
       participantsContent={
-        <ParticipantsManager
-          tournamentId={tournamentId}
-          participants={(participantsRaw ?? []) as any}
-          allPlayers={allPlayers ?? []}
-          maxParticipants={tournament.max_participants}
-        />
+        <>
+          <ParticipantsManager
+            tournamentId={tournamentId}
+            participants={(participantsRaw ?? []) as any}
+            allPlayers={allPlayers ?? []}
+            maxParticipants={tournament.max_participants}
+          />
+          {tournament.is_team_tournament && (
+            <div className="mt-8 border-t border-border pt-8">
+              <AdminTeamManager
+                tournamentId={tournamentId}
+                teamSize={tournament.team_size ?? 2}
+                teams={teams}
+                approvedParticipants={(approvedParticipantsRaw ?? []).map((participant: any) => ({
+                  player_id: participant.player_id,
+                  player: Array.isArray(participant.player_details)
+                    ? participant.player_details[0]
+                    : participant.player_details,
+                }))}
+              />
+            </div>
+          )}
+        </>
       }
       editContent={
         <TournamentForm mode="edit" tournamentId={tournament.id} initial={tournament} embedded />

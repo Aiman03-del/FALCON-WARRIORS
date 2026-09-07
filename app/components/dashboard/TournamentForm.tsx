@@ -70,6 +70,10 @@ type TournamentFormProps = {
 
     third_place_match: boolean | null;
 
+    is_team_tournament?: boolean | null;
+
+    team_size?: number | null;
+
   };
 
 };
@@ -136,6 +140,10 @@ export default function TournamentForm({
     initial?.qualifiers_per_group?.toString() ?? "2"
 
   );
+
+  const [isTeamTournament, setIsTeamTournament] = useState(initial?.is_team_tournament ?? false);
+
+  const [teamSize, setTeamSize] = useState(initial?.team_size?.toString() ?? "2");
 
   const [playoffSize, setPlayoffSize] = useState(initial?.playoff_size?.toString() ?? "4");
 
@@ -260,6 +268,10 @@ export default function TournamentForm({
 
           third_place_match: false,
 
+          is_team_tournament: false,
+
+          team_size: null,
+
         }
 
       : {
@@ -297,6 +309,10 @@ export default function TournamentForm({
           third_place_match:
 
             format === "group_knockout" || format === "league_playoff" ? thirdPlaceMatch : false,
+
+          is_team_tournament: isTeamTournament,
+
+          team_size: isTeamTournament ? Number(teamSize) : null,
 
         };
 
@@ -612,6 +628,34 @@ export default function TournamentForm({
 
           </p>
 
+        )}
+
+        {!isOfficial && (
+          <div className="rounded-lg border border-border bg-surface-2 px-4 py-3">
+            <label className="flex items-center gap-2.5 text-sm">
+              <input
+                type="checkbox"
+                checked={isTeamTournament}
+                onChange={(e) => setIsTeamTournament(e.target.checked)}
+                className="h-4 w-4 rounded border-border accent-gold"
+              />
+              <span className="font-semibold">Team tournament</span>
+            </label>
+            {isTeamTournament && (
+              <div className="mt-3 max-w-xs">
+                <label className="mb-1 block text-xs font-medium text-muted">Players per team</label>
+                <input
+                  type="number"
+                  min="2"
+                  step="1"
+                  inputMode="numeric"
+                  value={teamSize}
+                  onChange={(e) => setTeamSize(e.target.value.replace(/\D/g, ""))}
+                  className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm outline-none focus:border-white/30"
+                />
+              </div>
+            )}
+          </div>
         )}
 
 
