@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import MatchStatusBadge from "./MatchStatusBadge";
+import { opponentDisplayName } from "@/app/lib/utils/displayNames";
 
 type PlayerResult = {
   id: string;
@@ -54,7 +55,7 @@ export function MatchResultCard({ match }: { match: MatchResult }) {
   return (
     <Link href="/matches" className="card flex items-center justify-between p-4">
       <div>
-        <p className="text-sm font-semibold">vs {match.opponent_name}</p>
+        <p className="text-sm font-semibold">vs {opponentDisplayName(match.opponent_name)}</p>
         <p className="text-xs text-muted">{match.competition ?? "Friendly"}</p>
       </div>
       <div className="flex items-center gap-3">

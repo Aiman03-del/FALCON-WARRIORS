@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getSiteSettings } from "@/app/lib/queries/siteSettings";
 import type { OfficialTournamentMatch } from "@/app/lib/queries/tournaments";
+import { opponentDisplayName } from "@/app/lib/utils/displayNames";
 
 function TeamBlock({
   name,
@@ -116,7 +117,7 @@ export default async function OfficialMatchList({
                 )}
               </div>
 
-              <TeamBlock name={m.opponent_name} logoUrl={m.opponent_logo_url} />
+              <TeamBlock name={opponentDisplayName(m.opponent_name)} logoUrl={m.opponent_logo_url} />
             </div>
           </Link>
         );

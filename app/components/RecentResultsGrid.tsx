@@ -44,6 +44,21 @@ function getResultAccent(result: Result["result"]) {
   if (result === "LOSS") return { accent: "var(--fw-danger)", soft: "var(--fw-danger-soft)" };
   return { accent: "var(--fw-warning)", soft: "var(--fw-warning-soft)" };
 }
+const WIN_BADGE_STYLE = {
+  backgroundColor: "var(--fw-success-soft)",
+  borderColor: "var(--fw-success)",
+  color: "var(--fw-success)",
+};
+const LOSS_BADGE_STYLE = {
+  backgroundColor: "var(--fw-danger-soft)",
+  borderColor: "var(--fw-danger)",
+  color: "var(--fw-danger)",
+};
+const DRAW_BADGE_STYLE = {
+  backgroundColor: "var(--fw-warning-soft)",
+  borderColor: "var(--fw-warning)",
+  color: "var(--fw-warning)",
+};
 
 function initials(name: string) {
   return (
@@ -122,11 +137,6 @@ export default function RecentResultsGrid({
     <div ref={gridRef} className="grid gap-4 md:grid-cols-2">
       {results.map((r) => {
         const accent = getResultAccent(r.result);
-        const badgeStyle = {
-          backgroundColor: accent.soft,
-          borderColor: accent.accent,
-          color: accent.accent,
-        };
 
         return (
           <Link
@@ -160,10 +170,28 @@ export default function RecentResultsGrid({
                 <span className="max-w-[120px] truncate text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--fw-text-primary)] sm:text-[11px]">
                   {r.home.name}
                 </span>
+                {r.result !== "DRAW" && (
+                  <span
+                    className="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em]"
+                    style={r.result === "WIN" ? WIN_BADGE_STYLE : LOSS_BADGE_STYLE}
+                  >
+                    {r.result === "WIN" ? "WIN" : "LOSS"}
+                  </span>
+                )}
               </div>
 
-              <div className="font-display text-[clamp(2rem,4vw,3.4rem)] font-black leading-none tracking-[-0.06em] text-[var(--fw-text-primary)]">
-                {r.scoreHome} <span className="text-[var(--fw-text-muted)]">—</span> {r.scoreAway}
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="font-display text-[clamp(2rem,4vw,3.4rem)] font-black leading-none tracking-[-0.06em] text-[var(--fw-text-primary)]">
+                  {r.scoreHome} <span className="text-[var(--fw-text-muted)]">—</span> {r.scoreAway}
+                </div>
+                {r.result === "DRAW" && (
+                  <span
+                    className="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em]"
+                    style={DRAW_BADGE_STYLE}
+                  >
+                    DRAW
+                  </span>
+                )}
               </div>
 
               <div className="flex min-w-0 flex-col items-center gap-2 text-center">
@@ -171,18 +199,18 @@ export default function RecentResultsGrid({
                 <span className="max-w-[120px] truncate text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--fw-text-primary)] sm:text-[11px]">
                   {r.away.name}
                 </span>
+                {r.result !== "DRAW" && (
+                  <span
+                    className="inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em]"
+                    style={r.result === "WIN" ? LOSS_BADGE_STYLE : WIN_BADGE_STYLE}
+                  >
+                    {r.result === "WIN" ? "LOSS" : "WIN"}
+                  </span>
+                )}
               </div>
             </div>
 
-            <div className="mt-5 flex items-center justify-between gap-3 border-t border-[var(--fw-border)] pt-3">
-              <span
-                className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em]"
-                style={badgeStyle}
-              >
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
-                {r.result}
-              </span>
-
+            <div className="mt-5 flex items-center justify-center border-t border-[var(--fw-border)] pt-3">
               <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-[var(--fw-text-muted)]">
                 Full time
               </span>

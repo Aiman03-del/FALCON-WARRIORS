@@ -6,6 +6,7 @@
 // অবশ্যই server client (../supabase/server) ব্যবহার করবেন।
 import { createClient } from "../supabase/client";
 import { getTopByPoints } from "./leaderboards";
+import { opponentDisplayName } from "../utils/displayNames";
 
 export async function getStats() {
   try {
@@ -62,7 +63,7 @@ export async function getRecentResults() {
         )
         .eq("status", "completed")
         .order("match_date", { ascending: false })
-        .limit(3),
+        .limit(10),
       supabase
         .from("tournament_matches")
         .select(
@@ -70,7 +71,7 @@ export async function getRecentResults() {
         )
         .eq("status", "completed")
         .order("created_at", { ascending: false })
-        .limit(3),
+        .limit(10),
     ]);
 
     if (matchesError) console.error("[getRecentResults] matches query failed:", matchesError);
@@ -137,7 +138,7 @@ export async function getRecentResults() {
                   isFalcon: false,
                 };
               })()
-            : { name: m.opponent_name, avatarUrl: m.opponent_logo_url ?? null, isFalcon: false },
+            : { name: opponentDisplayName(m.opponent_name), avatarUrl: m.opponent_logo_url ?? null, isFalcon: false },
           scoreHome: home,
           scoreAway: away,
           matchDate: m.match_date,

@@ -1,4 +1,5 @@
 import { createClient } from "../supabase/client";
+import { opponentDisplayName } from "../utils/displayNames";
 
 export type UnifiedMatch = {
   id: string;
@@ -60,7 +61,7 @@ export async function getUnifiedMatches(params: { status?: string } = {}): Promi
       homeName: "Falcon Warriors",
       homeAvatarUrl: null,
       homeIsFalcon: true,
-      opponentName: m.opponent_name ?? "Opponent",
+      opponentName: opponentDisplayName(m.opponent_name),
       opponentTag: m.opponent_tag ?? null,
       opponentLogoUrl: m.opponent_logo_url ?? null,
       competition: m.competition ?? m.round_stage,

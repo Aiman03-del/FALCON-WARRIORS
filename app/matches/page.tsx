@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import MatchResultRow from "@/app/components/MatchResultRow";
@@ -13,12 +14,6 @@ export const metadata: Metadata = {
     title: "Matches | Falcon Warriors",
     description: "View all Falcon Warriors match results and upcoming fixtures.",
   },
-};
-
-const resultStyles = {
-  WIN: "bg-indigo/20 text-indigo-light border-indigo/40",
-  DRAW: "bg-white/10 text-muted border-white/20",
-  LOSS: "bg-gold/15 text-gold border-gold/30",
 };
 
 function getResult(home: number, away: number): "WIN" | "DRAW" | "LOSS" {
@@ -43,6 +38,7 @@ export default async function MatchesPage({
 }) {
   const params = await searchParams;
   const currentType = params.type === "unofficial" ? "unofficial" : "official";
+
   const all = await getUnifiedMatches({ status: params.status });
 
   let filtered = all.filter((m) =>
@@ -77,7 +73,7 @@ export default async function MatchesPage({
         </p>
 
         {/* Tabs */}
-        <div className="mt-6 flex flex-wrap gap-2">
+        <div className="mt-6 flex gap-1">
           {[
             { value: "official", label: "Official" },
             { value: "unofficial", label: "Unofficial" },
@@ -85,10 +81,11 @@ export default async function MatchesPage({
             <Link
               key={tab.value}
               href={`/matches?type=${tab.value}`}
-              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+              style={{ clipPath: "polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)" }}
+              className={`px-6 py-2.5 text-sm font-bold uppercase tracking-wide transition ${
                 currentType === tab.value
                   ? "bg-gold text-bg"
-                  : "bg-white/8 text-muted hover:bg-white/12"
+                  : "bg-white/6 text-muted hover:bg-white/10 hover:text-white"
               }`}
             >
               {tab.label}
@@ -98,39 +95,69 @@ export default async function MatchesPage({
 
         {/* Upcoming / Live */}
         {upcoming.length > 0 && (
-          <div className="mt-8">
-            <h2 className="mb-4 flex items-center gap-2 font-display text-sm font-bold uppercase tracking-widest text-gold">
-              <Clock size={14} />
-              Upcoming Fixtures
-            </h2>
+          <div className="mt-10">
+            <div className="mb-5 flex items-center gap-3">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gold/15 text-gold">
+                <Clock size={14} />
+              </span>
+              <h2 className="font-display text-base font-bold uppercase tracking-wide text-white">
+                Upcoming Fixtures
+              </h2>
+              <span className="h-px flex-1 bg-white/10" />
+            </div>
             <div className="flex flex-col gap-3">
               {upcoming.map((m) => {
                 const isLive = m.status === "live";
                 return (
-                  <Link key={m.id} href={m.href} className="card block p-4">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="flex w-12 shrink-0 flex-col items-center justify-center rounded-lg bg-surface-2 py-1.5">
-                          <span className="font-display text-base font-bold leading-none">
+                  <Link
+                    key={m.id}
+                    href={m.href}
+                    className="group flex overflow-hidden rounded-lg border border-white/10 bg-surface transition hover:border-white/25"
+                  >
+                    <span
+                      className={`w-1 shrink-0 ${isLive ? "animate-pulse bg-gold" : "bg-white/10"}`}
+                      aria-hidden="true"
+                    />
+                    <div className="flex flex-1 flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex min-w-0 items-center gap-4">
+                        <div className="flex w-14 shrink-0 flex-col items-center justify-center rounded-md bg-surface-2 py-2">
+                          <span className="font-display text-lg font-bold leading-none text-white">
                             {new Date(m.matchDate).toLocaleDateString("en-US", { day: "2-digit" })}
                           </span>
-                          <span className="text-[9px] uppercase text-muted">
+                          <span className="text-[9px] font-semibold uppercase tracking-wide text-muted">
                             {new Date(m.matchDate).toLocaleDateString("en-US", { month: "short" })}
                           </span>
                         </div>
-                        <div>
-                          <p className="font-semibold">vs {m.opponentName}</p>
-                          <p className="text-xs text-muted">{m.competition ?? "Friendly"}</p>
+                        <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/10 bg-surface-2 text-[10px] font-bold uppercase text-muted">
+                          {m.opponentLogoUrl ? (
+                            <Image
+                              src={m.opponentLogoUrl}
+                              alt={m.opponentName}
+                              fill
+                              sizes="40px"
+                              className="object-cover"
+                            />
+                          ) : (
+                            <span className="flex h-full w-full items-center justify-center">
+                              {(m.opponentName || "Opponent").slice(0, 2).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-white">
+                            vs {m.opponentName || "Opponent"}
+                          </p>
+                          <p className="truncate text-xs text-muted">{m.competition ?? "Friendly"}</p>
                         </div>
                       </div>
                       {isLive ? (
-                        <span className="inline-flex w-fit animate-pulse items-center gap-1.5 rounded-full bg-gold/15 px-3 py-1 text-xs font-bold text-gold">
-                          <span className="h-1.5 w-1.5 rounded-full bg-gold" />
-                          LIVE NOW
+                        <span className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded bg-gold/15 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-gold">
+                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-gold" />
+                          Live now
                         </span>
                       ) : (
-                        <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white/8 px-3 py-1 text-xs text-muted">
-                          <Calendar size={11} />
+                        <span className="inline-flex w-fit shrink-0 items-center gap-1.5 text-[11px] text-muted">
+                          <Calendar size={12} />
                           {formatDate(m.matchDate)}
                         </span>
                       )}
@@ -144,10 +171,15 @@ export default async function MatchesPage({
 
         {/* Results */}
         <div className="mt-10">
-          <h2 className="mb-4 flex items-center gap-2 font-display text-sm font-bold uppercase tracking-widest text-gold">
-            <CheckCircle2 size={14} />
-            Results
-          </h2>
+          <div className="mb-5 flex items-center gap-3">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo/15 text-indigo-light">
+              <CheckCircle2 size={14} />
+            </span>
+            <h2 className="font-display text-base font-bold uppercase tracking-wide text-white">
+              Results
+            </h2>
+            <span className="h-px flex-1 bg-white/10" />
+          </div>
 
           {completed.length === 0 ? (
             <div className="card flex flex-col items-center gap-3 py-12 text-center">
@@ -165,13 +197,13 @@ export default async function MatchesPage({
                   <MatchResultRow
                     key={m.id}
                     href={m.href}
+                    homeName={m.homeName}
+                    homeAvatarUrl={m.homeAvatarUrl}
                     date={m.matchDate}
                     competition={m.competition}
                     scoreHome={home}
                     scoreAway={away}
-                    homeName={m.homeName}
-                    homeAvatarUrl={m.homeAvatarUrl}
-                    opponentName={m.opponentName}
+                    opponentName={m.opponentName || "Opponent"}
                     opponentTag={m.opponentTag}
                     opponentLogoUrl={m.opponentLogoUrl}
                     matchType={m.matchType}
