@@ -6,6 +6,7 @@
 // the server client (../supabase/server) must be used instead.
 import { createClient } from "../supabase/client";
 import { getTopByPoints } from "./leaderboards";
+import { getUnifiedMatches } from "./unifiedMatches";
 import { opponentDisplayName } from "../utils/displayNames";
 
 export async function getStats() {
@@ -195,6 +196,10 @@ const MOCK_RUNNING_TOURNAMENTS = [
     status: "ongoing" as const,
     startDate: null as string | null,
     endDate: null as string | null,
+    homeName: "Player 1",
+    homeAvatarUrl: null as string | null,
+    awayName: "Player 2",
+    awayAvatarUrl: null as string | null,
   },
   {
     id: "tour-2",
@@ -204,6 +209,10 @@ const MOCK_RUNNING_TOURNAMENTS = [
     status: "upcoming" as const,
     startDate: null as string | null,
     endDate: null as string | null,
+    homeName: "Falcon",
+    homeAvatarUrl: null as string | null,
+    awayName: "Opponent",
+    awayAvatarUrl: null as string | null,
   },
 ];
 
@@ -222,7 +231,7 @@ export async function getRunningTournaments() {
       return MOCK_RUNNING_TOURNAMENTS;
     }
 
-    return data.map((t) => ({
+    const tournaments = data.map((t) => ({
       id: t.id,
       slug: t.slug,
       name: t.name,
@@ -232,6 +241,55 @@ export async function getRunningTournaments() {
       startDate: t.start_date,
       endDate: t.end_date,
     }));
+
+    const withNextMatch = await Promise.all(
+      tournaments.map(async (t) => {
+        if (t.type === "internal") {
+          const { data: matches } = await supabase
+            .from("tournament_matches")
+            .select(
+              "id, round, match_order, player1:player1_id(real_name, efootball_username, avatar_url), player2:player2_id(real_name, efootball_username, avatar_url)"
+            )
+            .eq("tournament_id", t.id)
+            .in("status", ["pending", "live"])
+            .order("round", { ascending: true })
+            .order("match_order", { ascending: true })
+            .limit(1);
+
+          const next = matches?.[0] as any;
+          const p1 = next?.player1;
+          const p2 = next?.player2;
+
+          return {
+            ...t,
+            homeName: p1?.real_name?.trim() || p1?.efootball_username || "Player 1",
+            homeAvatarUrl: (p1?.avatar_url as string | null) ?? null,
+            awayName: p2?.real_name?.trim() || p2?.efootball_username || "Player 2",
+            awayAvatarUrl: (p2?.avatar_url as string | null) ?? null,
+          };
+        }
+
+        const { data: matches } = await supabase
+          .from("matches")
+          .select("id, opponent_name, opponent_logo_url")
+          .eq("tournament_id", t.id)
+          .in("status", ["upcoming", "live"])
+          .order("match_date", { ascending: true })
+          .limit(1);
+
+        const next = matches?.[0];
+
+        return {
+          ...t,
+          homeName: "Falcon",
+          homeAvatarUrl: null as string | null,
+          awayName: next?.opponent_name?.trim() || "Opponent",
+          awayAvatarUrl: (next?.opponent_logo_url as string | null) ?? null,
+        };
+      })
+    );
+
+    return withNextMatch;
   } catch (error) {
     console.error("[getRunningTournaments] failed:", error);
     return MOCK_RUNNING_TOURNAMENTS;
@@ -332,6 +390,18 @@ export async function getGallery() {
     return data;
   } catch (error) {
     console.error("[getGallery] failed:", error);
+    return [];
+  }
+}
+
+export async function getNextBattles(limit = 3) {
+  try {
+    const pending = await getUnifiedMatches({ status: "pending" });
+    return pending
+      .sort((a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime())
+      .slice(0, limit);
+  } catch (error) {
+    console.error("[getNextBattles] failed:", error);
     return [];
   }
 }

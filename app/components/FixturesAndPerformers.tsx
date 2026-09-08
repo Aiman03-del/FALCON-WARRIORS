@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, Layers, Trophy } from "lucide-react";
+import { ArrowUpRight, Trophy } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -12,15 +12,17 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-type Tournament = {
+type Battle = {
   id: string;
-  slug?: string | null;
-  name: string;
-  type: "internal" | "official";
-  format: string | null;
-  status: "ongoing" | "upcoming" | "completed";
-  startDate: string | null;
-  endDate: string | null;
+  href: string;
+  matchType: "official" | "internal";
+  homeName: string;
+  homeAvatarUrl: string | null;
+  homeIsFalcon: boolean;
+  opponentName: string;
+  opponentLogoUrl: string | null;
+  competition: string | null;
+  matchDate: string;
 };
 
 type Performer = {
@@ -35,15 +37,8 @@ type Performer = {
 };
 
 type Props = {
-  tournaments: Tournament[];
+  battles: Battle[];
   performers: Performer[];
-};
-
-const formatLabels: Record<string, string> = {
-  league: "League",
-  knockout: "Knockout",
-  group_knockout: "Group + Knockout",
-  league_playoff: "League + Playoff",
 };
 
 function formatDate(d: string | null) {
@@ -51,19 +46,29 @@ function formatDate(d: string | null) {
   return new Date(d).toLocaleDateString("en-US", { day: "2-digit", month: "short" });
 }
 
-function getTournamentStatusLabel(status: Tournament["status"]) {
-  if (status === "ongoing") return "Live";
-  if (status === "completed") return "Ended";
-  return "Upcoming";
+function SideAvatar({ isFalcon, avatarUrl, name }: { isFalcon: boolean; avatarUrl: string | null; name: string }) {
+  if (isFalcon) {
+    return (
+      <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[var(--fw-border)] bg-[var(--fw-bg-surface)] text-[var(--fw-brand)] sm:h-14 sm:w-14">
+        <Trophy size={18} />
+      </div>
+    );
+  }
+  if (avatarUrl) {
+    return (
+      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-[var(--fw-border)] bg-[var(--fw-bg-surface)] sm:h-14 sm:w-14">
+        <Image src={avatarUrl} alt={name} fill sizes="56px" className="object-cover" />
+      </div>
+    );
+  }
+  return (
+    <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[var(--fw-border)] bg-[var(--fw-bg-surface)] text-[10px] font-black uppercase text-[var(--fw-brand)] sm:h-14 sm:w-14">
+      {name.slice(0, 2).toUpperCase()}
+    </div>
+  );
 }
 
-function getTournamentStatusClass(status: Tournament["status"]) {
-  if (status === "ongoing") return "border-[var(--fw-danger)] bg-[var(--fw-danger-soft)] text-[var(--fw-danger)]";
-  if (status === "completed") return "border-[var(--fw-brand)] bg-[var(--fw-brand-soft)] text-[var(--fw-brand)]";
-  return "border-[var(--fw-border)] bg-[var(--fw-bg-primary)] text-[var(--fw-text-secondary)]";
-}
-
-export default function FixturesAndPerformers({ tournaments, performers }: Props) {
+export default function FixturesAndPerformers({ battles, performers }: Props) {
   const tournamentsRef = useRef<HTMLDivElement>(null);
   const performersRef = useRef<HTMLDivElement>(null);
 
@@ -119,7 +124,7 @@ export default function FixturesAndPerformers({ tournaments, performers }: Props
         });
       }
     }
-  }, { dependencies: [tournaments, performers] });
+  }, { dependencies: [battles, performers] });
 
   return (
     <section className="relative border-b bg-[var(--fw-bg-primary)]" style={{ borderColor: 'var(--fw-border)' }}>
@@ -152,50 +157,38 @@ export default function FixturesAndPerformers({ tournaments, performers }: Props
               </Link>
             </div>
 
-            {tournaments.length === 0 ? (
-              <p className="text-sm text-[var(--fw-text-secondary)]">No tournaments available right now.</p>
+            {battles.length === 0 ? (
+              <p className="text-sm text-[var(--fw-text-secondary)]">No upcoming matches right now.</p>
             ) : (
               <div ref={tournamentsRef} className="flex flex-col gap-3">
-                {tournaments.map((t) => (
+                {battles.map((b) => (
                   <Link
-                    key={t.id}
-                    href={`/tournaments/${t.slug ?? t.id}`}
+                    key={b.id}
+                    href={b.href}
                     className="tournament-card group rounded-xl border border-[var(--fw-border)] bg-[var(--fw-bg-primary)] p-3 text-left transition-all duration-200 ease-out hover:-translate-y-1 hover:border-[var(--fw-brand)] hover:bg-[var(--fw-bg-surface-hover)] sm:p-4"
                     style={{ boxShadow: "inset 2px 0 0 var(--fw-brand)" }}
                   >
                     <div className="mb-4 flex items-center justify-between gap-2">
                       <span className="inline-flex rounded-full border border-[var(--fw-border)] bg-[var(--fw-brand-soft)] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--fw-brand)]">
-                        {t.type === "official" ? "Official" : "Internal"}
-                      </span>
-
-                      <span className={`rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.14em] ${getTournamentStatusClass(t.status)}`}>
-                        {getTournamentStatusLabel(t.status)}
+                        {b.matchType === "official" ? "Official" : "Internal"}
                       </span>
                     </div>
 
                     <div className="mb-4 space-y-2">
                       <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--fw-text-muted)]">
-                        {t.name}
+                        {b.competition ?? "Matchday"}
                       </p>
 
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] uppercase tracking-[0.1em] text-[var(--fw-text-secondary)]">
-                        {formatLabels[t.format ?? ""] && <span>{formatLabels[t.format ?? ""]}</span>}
-                        {formatDate(t.startDate) && (
-                          <>
-                            <span>•</span>
-                            <span>{formatDate(t.startDate)}</span>
-                          </>
-                        )}
+                        {formatDate(b.matchDate) && <span>{formatDate(b.matchDate)}</span>}
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex min-w-0 flex-1 items-center justify-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[var(--fw-border)] bg-[var(--fw-bg-surface)] text-[var(--fw-brand)] sm:h-14 sm:w-14">
-                          <Trophy size={18} />
-                        </div>
-                        <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--fw-text-muted)]">
-                          Falcon
+                        <SideAvatar isFalcon={b.homeIsFalcon} avatarUrl={b.homeAvatarUrl} name={b.homeName} />
+                        <span className="truncate text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--fw-text-muted)]">
+                          {b.homeName}
                         </span>
                       </div>
 
@@ -206,18 +199,16 @@ export default function FixturesAndPerformers({ tournaments, performers }: Props
                       </div>
 
                       <div className="flex min-w-0 flex-1 items-center justify-center gap-3">
-                        <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--fw-text-muted)]">
-                          Opponent
+                        <span className="truncate text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--fw-text-muted)]">
+                          {b.opponentName}
                         </span>
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[var(--fw-border)] bg-[var(--fw-bg-surface)] text-[var(--fw-brand)] sm:h-14 sm:w-14">
-                          <Layers size={18} />
-                        </div>
+                        <SideAvatar isFalcon={false} avatarUrl={b.opponentLogoUrl} name={b.opponentName} />
                       </div>
                     </div>
 
                     <div className="mt-5 flex items-center justify-between gap-3 border-t border-[var(--fw-border)] pt-3">
                       <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--fw-text-secondary)]">
-                        {formatDate(t.startDate) ?? "Matchday"}
+                        {formatDate(b.matchDate) ?? "Matchday"}
                       </div>
                       <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--fw-text-primary)]">
                         Match details →

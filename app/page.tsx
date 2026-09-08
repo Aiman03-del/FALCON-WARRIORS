@@ -10,7 +10,7 @@ import LatestNews from "./components/LatestNews";
 import RecentResults from "./components/RecentResults";
 import StatsBar from "./components/StatsBar";
 import { getAssociatedCommunities } from "./lib/queries/communities";
-import { getAchievements, getGallery, getLatestNews, getRecentResults, getRunningTournaments, getStats, getTopPerformers } from "./lib/queries/home";
+import { getAchievements, getGallery, getLatestNews, getNextBattles, getRecentResults, getStats, getTopPerformers } from "./lib/queries/home";
 export const revalidate = 60;
 export const metadata: Metadata = {
   title: "Falcon Warriors | Home - Elite eFootball Club",
@@ -22,11 +22,11 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const [stats, results, runningTournaments, performers, achievements, news, gallery, communities] =
+  const [stats, results, nextBattles, performers, achievements, news, gallery, communities] =
     await Promise.all([
       getStats(),
       getRecentResults(),
-      getRunningTournaments(),
+      getNextBattles(),
       getTopPerformers(),
       getAchievements(),
       getLatestNews(),
@@ -40,7 +40,7 @@ export default async function Home() {
       <StatsBar stats={stats} />
       <AssociatedCommunities communities={communities} />
       <RecentResults results={results} />
-      <FixturesAndPerformers tournaments={runningTournaments} performers={performers} />
+      <FixturesAndPerformers battles={nextBattles} performers={performers} />
       <AchievementsTicker achievements={achievements} />
       <LatestNews news={news} />
       <Gallery items={gallery} />
