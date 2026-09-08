@@ -396,7 +396,7 @@ export async function getGallery() {
 
 export async function getNextBattles(limit = 3) {
   try {
-    const pending = await getUnifiedMatches({ status: "pending" });
+    const pending = await getUnifiedMatches({ status: "upcoming" });
     return pending
       .sort((a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime())
       .slice(0, limit);
