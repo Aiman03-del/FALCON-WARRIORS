@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Footer from "../components/Footer";
 import LeaderboardTabs from "../components/LeaderboardTabs";
-import Navbar from "../components/Navbar";
 import PeriodPerformerCard from "../components/PeriodPerformerCard";
 import { getLeaderboardData } from "../lib/queries/leaderboards";
 
@@ -19,7 +18,6 @@ export default async function LeaderboardsPage() {
 
   return (
     <main>
-      <Navbar />
       <section className="mx-auto max-w-3xl px-6 py-14">
         <div className="section-divider" />
         <h1 className="font-display text-3xl font-bold uppercase tracking-wide">

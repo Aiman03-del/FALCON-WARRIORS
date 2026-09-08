@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Footer from "../components/Footer";
-import Navbar from "../components/Navbar";
 import PlayersTabs from "../components/PlayersTabs";
 import { getAllPlayers, getOfficialTournamentPlayers } from "../lib/queries/players";
 
@@ -17,8 +16,6 @@ export default async function PlayersPage() {
 
   return (
     <main className="bg-[var(--fw-bg-primary)] text-[var(--fw-text-primary)]">
-      <Navbar />
-
       <section className="relative overflow-hidden border-b border-[var(--fw-border)] bg-[var(--fw-bg-primary)]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(91,117,255,0.12),transparent_32%)]" />
 

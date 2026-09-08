@@ -1,5 +1,4 @@
 import Footer from "../components/Footer";
-import Navbar from "../components/Navbar";
 import SearchBar from "../components/SearchBar";
 import { MatchResultCard, NewsResultCard, PlayerResultCard } from "../components/SearchResultCard";
 import { globalSearch } from "../lib/queries/search";
@@ -18,7 +17,6 @@ export default async function SearchPage({
 
   return (
     <main>
-      <Navbar />
       <section className="mx-auto max-w-5xl px-6 py-14">
         <div className="section-divider" />
         <h1 className="font-display text-3xl font-bold uppercase tracking-wide">Search</h1>

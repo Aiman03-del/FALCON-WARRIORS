@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/app/lib/supabase/client";
-import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import BackLink from "@/app/components/BackLink";
 import { ArrowLeft, Calendar, Tag } from "lucide-react";
@@ -44,7 +43,6 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
 
   return (
     <main>
-      <Navbar />
       <article className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
         {/* Back */}
         <BackLink href="/news" label="All News" />

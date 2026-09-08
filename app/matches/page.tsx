@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import MatchResultRow from "@/app/components/MatchResultRow";
 import { Swords, Calendar, CheckCircle2, Clock } from "lucide-react";
@@ -61,7 +60,6 @@ export default async function MatchesPage({
 
   return (
     <main>
-      <Navbar />
       <section className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
         {/* Header */}
         <div className="section-divider" />

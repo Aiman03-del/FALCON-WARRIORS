@@ -3,6 +3,7 @@ import { Rajdhani, Inter } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "./providers/ToastProvider";
 import AccountStatusShell from "./components/AccountStatusShell";
+import Navbar from "@/app/components/Navbar";
 import ScrollNormalizer from "./components/ScrollNormalizer";
 import { getSiteSettings } from "@/app/lib/queries/siteSettings";
 
@@ -91,7 +92,10 @@ export default async function RootLayout({
       <body className={`${display.variable} ${body.variable} ${body.className} bg-background text-foreground antialiased`}>
         <ScrollNormalizer />
         <ToastProvider>
-          <AccountStatusShell>{children}</AccountStatusShell>
+          <AccountStatusShell>
+            <Navbar />
+            {children}
+          </AccountStatusShell>
         </ToastProvider>
       </body>
     </html>

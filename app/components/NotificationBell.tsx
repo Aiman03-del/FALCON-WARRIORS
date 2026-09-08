@@ -50,7 +50,7 @@ export default function NotificationBell({ playerId }: { playerId: string | null
     loadNotifications(playerId);
 
     const channel = supabase
-      .channel(`notifications-${playerId}`)
+      .channel(`notifications-${playerId}-${crypto.randomUUID()}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "notifications", filter: `recipient_id=eq.${playerId}` },

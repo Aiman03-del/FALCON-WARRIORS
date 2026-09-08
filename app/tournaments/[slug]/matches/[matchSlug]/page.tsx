@@ -1,4 +1,3 @@
-import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import PublicMatchBoard from "@/app/components/PublicMatchBoard";
 import InternalMatchBoard from "@/app/components/InternalMatchBoard";
@@ -20,7 +19,6 @@ export default async function PublicMatchDetailPage({
   if (match) {
     return (
       <main>
-        <Navbar />
         <section className="mx-auto max-w-3xl px-6 py-14">
           <Link
             href={`/tournaments/${slug}`}
@@ -59,7 +57,6 @@ export default async function PublicMatchDetailPage({
 
   return (
     <main>
-      <Navbar />
       <section className="mx-auto max-w-2xl px-6 py-14">
         <Link
           href={`/tournaments/${slug}`}

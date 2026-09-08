@@ -2,7 +2,6 @@ import BracketView from "@/app/components/BracketView";
 import ChampionBanner from "@/app/components/ChampionBanner";
 import Footer from "@/app/components/Footer";
 import JoinTournamentButton from "@/app/components/JoinTournamentButton";
-import Navbar from "@/app/components/Navbar";
 import PointsTable from "@/app/components/PointsTable";
 import PublicTournamentTabs, {
   type PublicTournamentTab,
@@ -124,7 +123,6 @@ export default async function TournamentDetailPage({
 
     return (
       <main>
-        <Navbar />
         <section className="mx-auto max-w-4xl px-6 py-14">
           <div className="section-divider" />
           <div className="flex flex-wrap items-center gap-3">
@@ -375,7 +373,6 @@ export default async function TournamentDetailPage({
 
   return (
     <main>
-      <Navbar />
       <section className="mx-auto max-w-4xl px-6 py-14">
         <div className="section-divider" />
         <div className="flex flex-wrap items-center gap-3">

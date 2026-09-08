@@ -393,7 +393,7 @@ export default function Navbar() {
                   className="absolute right-0 z-50 mt-2 w-52 rounded-xl border shadow-lg"
                   style={{
                     borderColor: 'var(--fw-border)',
-                    backgroundColor: 'var(--fw-bg-surface)',
+                    backgroundColor: 'var(--fw-bg-secondary)',
                   }}
                 >
                   <div
@@ -527,6 +527,7 @@ export default function Navbar() {
           className="hidden border-t px-3 sm:px-4 md:px-6 py-3 lg:block"
           style={{
             borderTopColor: 'var(--fw-border)',
+            backgroundColor: 'var(--fw-bg-secondary)',
           }}
         >
           <div className="mx-auto max-w-7xl">
@@ -557,7 +558,7 @@ export default function Navbar() {
             className="fixed right-0 top-16 bottom-0 z-40 w-full max-w-xs overflow-y-auto border-l lg:hidden"
             style={{
               borderLeftColor: 'var(--fw-border)',
-              backgroundColor: 'var(--fw-bg-surface)',
+              backgroundColor: 'var(--fw-bg-secondary)',
             }}
           >
             <div className="flex flex-col gap-1 p-4">

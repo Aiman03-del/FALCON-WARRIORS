@@ -4,7 +4,6 @@ import { MapPin, Briefcase, GraduationCap, Star, Trophy, Pencil } from "lucide-r
 import { getPlayerBySlug } from "@/app/lib/queries/players";
 import { getPlayerForm } from "@/app/lib/queries/playerForm";
 import { getPlayerBallonDorHistory } from "@/app/lib/queries/ballonDor";
-import Navbar from "@/app/components/Navbar";
 import PlayerStatsGrid from "@/app/components/PlayerStatsGrid";
 import RecentFormStrip from "@/app/components/RecentFormStrip";
 import Footer from "@/app/components/Footer";
@@ -72,7 +71,6 @@ export default async function PlayerProfilePage({
 
   return (
     <main>
-      <Navbar />
       <section className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
         {/* Back link */}
         <BackLink href="/players" label="Back to Roster" />

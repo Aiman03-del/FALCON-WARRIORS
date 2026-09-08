@@ -4,7 +4,6 @@ import Image from "next/image";
 import { Pencil, MapPin, Briefcase, GraduationCap, Star } from "lucide-react";
 import { getMyProfile } from "../lib/queries/profile";
 import { getPlayerForm } from "@/app/lib/queries/playerForm";
-import Navbar from "../components/Navbar";
 import PlayerStatsGrid from "../components/PlayerStatsGrid";
 import RecentFormStrip from "@/app/components/RecentFormStrip";
 import Footer from "../components/Footer";
@@ -29,7 +28,6 @@ export default async function MyProfilePage() {
 
   return (
     <main>
-      <Navbar />
       <section className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
         {/* Profile Header */}
         <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start sm:justify-between">

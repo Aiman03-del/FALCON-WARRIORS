@@ -3,7 +3,6 @@ import Link from "next/link";
 import { getMatchDetail } from "@/app/lib/queries/matchDetail";
 import { getPublicMatchDetail } from "@/app/lib/queries/tournaments";
 import { getPlayerH2H, getClubH2H } from "@/app/lib/queries/h2h";
-import Navbar from "@/app/components/Navbar";
 import PublicMatchBoard from "@/app/components/PublicMatchBoard";
 import InternalMatchBoard from "@/app/components/InternalMatchBoard";
 import H2HSummary from "@/app/components/H2HSummary";
@@ -55,7 +54,6 @@ export default async function MatchDetailPage({
 
   return (
     <main>
-      <Navbar />
       <section className="mx-auto max-w-2xl px-6 py-14">
         <Link href="/matches" className="mb-6 inline-block text-sm font-medium text-muted hover:text-white">
           ← Back to Matches

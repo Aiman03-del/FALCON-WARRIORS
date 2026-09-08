@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { Trophy, Star } from "lucide-react";
 import { getBallonDorData } from "../lib/queries/ballonDor";
-import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
 export default async function BallonDorPage() {
@@ -10,7 +9,6 @@ export default async function BallonDorPage() {
 
   return (
     <main>
-      <Navbar />
       <section className="mx-auto max-w-4xl px-6 py-14">
         <div className="section-divider" />
         <h1 className="font-display text-3xl font-bold uppercase tracking-wide">

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { createClient } from "@/app/lib/supabase/client";
-import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import TournamentStatusBadge from "@/app/components/TournamentStatusBadge";
 import { Trophy, Calendar, Layers } from "lucide-react";
@@ -52,7 +51,6 @@ export default async function TournamentsPage({
 
   return (
     <>
-      <Navbar />
       <section className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
         {/* Header */}
         <div className="section-divider" />

@@ -7,7 +7,6 @@ import Footer from "./components/Footer";
 import Gallery from "./components/Gallery";
 import Hero from "./components/Hero";
 import LatestNews from "./components/LatestNews";
-import Navbar from "./components/Navbar";
 import RecentResults from "./components/RecentResults";
 import StatsBar from "./components/StatsBar";
 import { getAssociatedCommunities } from "./lib/queries/communities";
@@ -37,7 +36,6 @@ export default async function Home() {
 
   return (
     <main>
-      <Navbar />
       <Hero />
       <StatsBar stats={stats} />
       <AssociatedCommunities communities={communities} />
