@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 
-export type PublicTournamentTab = "overview" | "standings" | "fixtures" | "bracket" | "squad";
+export type PublicTournamentTab = "overview" | "standings" | "fixtures" | "bracket" | "squad" | "team";
 
 export default function PublicTournamentTabs({
   tournamentSlug,
@@ -16,6 +16,7 @@ export default function PublicTournamentTabs({
   fixturesContent,
   bracketContent,
   squadContent,
+  teamContent,
 }: {
   tournamentSlug: string;
   activeTab: PublicTournamentTab;
@@ -28,6 +29,7 @@ export default function PublicTournamentTabs({
   fixturesContent: React.ReactNode;
   bracketContent: React.ReactNode;
   squadContent: React.ReactNode;
+  teamContent?: React.ReactNode;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -78,6 +80,11 @@ export default function PublicTournamentTabs({
             Squad
           </button>
         )}
+        {teamContent && (
+          <button type="button" onClick={() => setTab("team")} className={tabClass("team")}>
+            Team Management
+          </button>
+        )}
       </div>
 
       <div className="mt-6">
@@ -86,6 +93,7 @@ export default function PublicTournamentTabs({
         {activeTab === "fixtures" && showFixtures && fixturesContent}
         {activeTab === "bracket" && showBracket && bracketContent}
         {activeTab === "squad" && showSquad && squadContent}
+        {activeTab === "team" && teamContent}
       </div>
     </div>
   );

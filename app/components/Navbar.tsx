@@ -10,6 +10,7 @@ import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import FillButton from "./FillButton";
 import SearchBar from "@/app/components/SearchBar";
+import NotificationBell from "@/app/components/NotificationBell";
 import Skeleton from "./Skeleton";
 import { getSiteSettings } from "@/app/lib/queries/siteSettings";
 import { createClient } from "../lib/supabase/client";
@@ -86,6 +87,7 @@ function NavLinks({
 }
 
 type ProfileInfo = {
+  id: string;
   username: string;
   role: string;
   slug?: string | null;
@@ -181,13 +183,14 @@ export default function Navbar() {
         supabase.from("profiles").select("role").eq("id", user.id).single(),
         supabase
           .from("player_details")
-          .select("slug, efootball_username")
+          .select("id, slug, efootball_username")
           .eq("profile_id", user.id)
           .single(),
       ]);
 
       if (isMounted) {
         setProfile({
+          id: playerRow?.id ?? "",
           username: playerRow?.efootball_username ?? "Player",
           role: profileRow?.role ?? "player",
           slug: playerRow?.slug ?? null,
@@ -352,6 +355,8 @@ export default function Navbar() {
           >
             <Search size={15} />
           </button>
+
+          {profile && <NotificationBell playerId={profile.id || null} />}
 
           {loading ? (
             <Skeleton width="4.5rem" height="2rem" className="hidden rounded-lg sm:block" />
@@ -572,6 +577,14 @@ export default function Navbar() {
                   <div className="h-10 w-full animate-pulse rounded-lg" style={{ backgroundColor: 'var(--fw-bg-secondary)' }} />
                 ) : profile ? (
                   <div className="flex flex-col gap-2">
+                    <div
+                      className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium"
+                      style={{ color: 'var(--fw-text-secondary)' }}
+                    >
+                      <span>Notifications</span>
+                      <NotificationBell playerId={profile.id || null} />
+                    </div>
+
                     {(profile.role === "admin" || profile.role === "moderator") && (
                       <Link
                         href="/dashboard"

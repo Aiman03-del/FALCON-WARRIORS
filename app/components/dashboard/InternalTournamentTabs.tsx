@@ -6,6 +6,7 @@ export type InternalTournamentTab =
   | "standings"
   | "bracket"
   | "participants"
+  | "teams"
   | "edit";
 
 export default function InternalTournamentTabs({
@@ -16,6 +17,7 @@ export default function InternalTournamentTabs({
   standingsContent,
   bracketContent,
   participantsContent,
+  teamsContent,
   editContent,
 }: {
   tournamentId: string;
@@ -25,6 +27,7 @@ export default function InternalTournamentTabs({
   standingsContent: React.ReactNode;
   bracketContent: React.ReactNode;
   participantsContent: React.ReactNode;
+  teamsContent?: React.ReactNode;
   editContent: React.ReactNode;
 }) {
   const router = useRouter();
@@ -64,6 +67,11 @@ export default function InternalTournamentTabs({
         <button type="button" onClick={() => setTab("participants")} className={tabClass("participants")}>
           Participants
         </button>
+        {teamsContent && (
+          <button type="button" onClick={() => setTab("teams")} className={tabClass("teams")}>
+            Teams
+          </button>
+        )}
         <button type="button" onClick={() => setTab("edit")} className={tabClass("edit")}>
           Edit
         </button>
@@ -73,6 +81,7 @@ export default function InternalTournamentTabs({
         {activeTab === "standings" && showStandings && standingsContent}
         {activeTab === "bracket" && bracketContent}
         {activeTab === "participants" && participantsContent}
+        {activeTab === "teams" && teamsContent}
         {activeTab === "edit" && editContent}
       </div>
     </div>

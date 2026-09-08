@@ -105,6 +105,7 @@ export type TournamentDetailData = {
     third_place_match?: boolean | null;
     is_team_tournament?: boolean | null;
     team_size?: number | null;
+    teams_locked?: boolean | null;
   };
   participants: TournamentParticipant[];
   matches: TournamentMatch[];
@@ -118,7 +119,7 @@ export async function getTournamentDetail(slug: string): Promise<TournamentDetai
   const { data: tournament, error } = await supabase
     .from("tournaments")
     .select(
-      "id, slug, name, type, format, status, start_date, end_date, max_participants, registration_deadline, group_count, qualifiers_per_group, playoff_size, third_place_match, is_team_tournament, team_size"
+      "id, slug, name, type, format, status, start_date, end_date, max_participants, registration_deadline, group_count, qualifiers_per_group, playoff_size, third_place_match, is_team_tournament, team_size, teams_locked"
     )
     .eq("slug", slug)
     .single();

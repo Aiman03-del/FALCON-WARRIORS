@@ -13,6 +13,7 @@ import ExternalTournamentInfo from "@/app/components/ExternalTournamentInfo";
 import TournamentMatchesDisplay from "@/app/components/TournamentMatchesDisplay";
 import OfficialMatchList from "@/app/components/OfficialMatchList";
 import TeamFormationManager from "@/app/components/TeamFormationManager";
+import TeamManagementTab from "@/app/components/TeamManagementTab";
 import {
   getMyJoinStatus,
   getTournamentDetail,
@@ -24,7 +25,8 @@ import {
 import { rankStandings } from "@/app/lib/fixtures/tiebreakers";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getTournamentTeams } from "@/app/lib/queries/teams";
+import { getMyTeamInfo, getRecruitablePlayers, getTournamentTeams } from "@/app/lib/queries/teams";
+import { createClient } from "@/app/lib/supabase/server";
 
 type JoinedPlayer = {
   id: string;
@@ -98,6 +100,7 @@ function parseTab(tabParam: string | undefined): PublicTournamentTab {
   if (tabParam === "fixtures") return "fixtures";
   if (tabParam === "bracket") return "bracket";
   if (tabParam === "squad") return "squad";
+  if (tabParam === "team") return "team";
   return "overview";
 }
 
@@ -168,6 +171,10 @@ export default async function TournamentDetailPage({
   const teams = tournament.is_team_tournament ? await getTournamentTeams(tournament.id) : [];
   const myPlayerId = "playerId" in joinStatus ? joinStatus.playerId ?? null : null;
   const isApprovedParticipant = "myRequestStatus" in joinStatus && joinStatus.myRequestStatus === "approved";
+  const myTeamInfo =
+    tournament.is_team_tournament && myPlayerId ? await getMyTeamInfo(tournament.id, myPlayerId) : null;
+  const recruitablePlayers =
+    myTeamInfo?.isCaptain ? await getRecruitablePlayers(tournament.id, myTeamInfo.teamId) : [];
 
   const knockoutMatches = matches.filter((m) => m.stage === "knockout" || m.stage == null);
   const bracketMatches = knockoutMatches.filter((m) => !m.is_third_place);
@@ -351,6 +358,21 @@ export default async function TournamentDetailPage({
 
   const squadContent = <TournamentSquadList squad={squad} />;
 
+  const teamContent =
+    myTeamInfo?.isCaptain ? (
+      <TeamManagementTab
+        tournamentId={tournament.id}
+        teamId={myTeamInfo.teamId}
+        teamSize={tournament.team_size ?? 2}
+        teamName={myTeamInfo.teamName}
+        teamLogoUrl={myTeamInfo.logoUrl}
+        members={myTeamInfo.members}
+        recruitablePlayers={recruitablePlayers}
+        sentInvites={myTeamInfo.sentInvites}
+        isLocked={!!tournament.teams_locked}
+      />
+    ) : undefined;
+
   return (
     <main>
       <Navbar />
@@ -400,7 +422,7 @@ export default async function TournamentDetailPage({
           />
         </div>
 
-        {tournament.is_team_tournament && (
+        {tournament.is_team_tournament && !myTeamInfo && (
           <div className="mt-8 border-t border-border pt-8">
             <TeamFormationManager
               tournamentId={tournament.id}
@@ -424,6 +446,7 @@ export default async function TournamentDetailPage({
           fixturesContent={fixturesContent}
           bracketContent={bracketContent}
           squadContent={squadContent}
+          teamContent={teamContent}
         />
       </section>
       <Footer />

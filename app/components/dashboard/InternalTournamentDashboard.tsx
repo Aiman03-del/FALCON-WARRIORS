@@ -34,14 +34,12 @@ export default async function InternalTournamentDashboard({
   const { data: tournament } = await supabase
     .from("tournaments")
     .select(
-      "id, slug, name, type, format, double_round, two_leg_knockout, grand_final_reset, swiss_rounds, status, start_date, end_date, max_participants, registration_deadline, bye_method, group_count, qualifiers_per_group, playoff_size, third_place_match, is_team_tournament, team_size"
+      "id, slug, name, type, format, double_round, two_leg_knockout, grand_final_reset, swiss_rounds, status, start_date, end_date, max_participants, registration_deadline, bye_method, group_count, qualifiers_per_group, playoff_size, third_place_match, is_team_tournament, team_size, teams_locked"
     )
     .eq("id", tournamentId)
     .single();
 
   if (!tournament) return null;
-
-  const teams = tournament.is_team_tournament ? await getTournamentTeams(tournamentId) : [];
 
   const { data: participantsRaw } = await supabase
     .from("tournament_participants")
@@ -382,6 +380,11 @@ export default async function InternalTournamentDashboard({
       ? "bracket"
       : activeTab;
 
+  const teams = tournament.is_team_tournament ? await getTournamentTeams(tournament.id) : [];
+  const approvedParticipantsForTeams = (participantsRaw ?? []).filter(
+    (p: any) => p.status === "approved"
+  ) as { player_id: string; player_details?: any }[];
+
   return (
     <InternalTournamentTabs
       tournamentId={tournamentId}
@@ -391,29 +394,27 @@ export default async function InternalTournamentDashboard({
       standingsContent={standingsContent}
       bracketContent={bracketContent}
       participantsContent={
-        <>
-          <ParticipantsManager
-            tournamentId={tournamentId}
-            participants={(participantsRaw ?? []) as any}
-            allPlayers={allPlayers ?? []}
-            maxParticipants={tournament.max_participants}
+        <ParticipantsManager
+          tournamentId={tournamentId}
+          participants={(participantsRaw ?? []) as any}
+          allPlayers={allPlayers ?? []}
+          maxParticipants={tournament.max_participants}
+          isTeamTournament={tournament.is_team_tournament}
+        />
+      }
+      teamsContent={
+        tournament.is_team_tournament ? (
+          <AdminTeamManager
+            tournamentId={tournament.id}
+            teamSize={tournament.team_size ?? 2}
+            teams={teams}
+            approvedParticipants={approvedParticipantsForTeams.map((p) => ({
+              player_id: p.player_id,
+              player: Array.isArray(p.player_details) ? p.player_details[0] : p.player_details,
+            }))}
+            teamsLocked={tournament.teams_locked}
           />
-          {tournament.is_team_tournament && (
-            <div className="mt-8 border-t border-border pt-8">
-              <AdminTeamManager
-                tournamentId={tournamentId}
-                teamSize={tournament.team_size ?? 2}
-                teams={teams}
-                approvedParticipants={(approvedParticipantsRaw ?? []).map((participant: any) => ({
-                  player_id: participant.player_id,
-                  player: Array.isArray(participant.player_details)
-                    ? participant.player_details[0]
-                    : participant.player_details,
-                }))}
-              />
-            </div>
-          )}
-        </>
+        ) : undefined
       }
       editContent={
         <TournamentForm mode="edit" tournamentId={tournament.id} initial={tournament} embedded />

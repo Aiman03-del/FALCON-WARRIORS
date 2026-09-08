@@ -8,11 +8,13 @@ import ConfirmActionButton from "@/app/components/ConfirmActionButton";
 import { ConfirmDialog } from "@/app/components/ConfirmDialog";
 import { MultiSelectField } from "@/app/components/SelectField.multi";
 import FillButton from "@/app/components/FillButton";
+import { approveParticipant, createSoloTeamsForPlayers } from "@/app/lib/actions/tournamentTeams";
 
 type PlayerOption = { id: string; efootball_username: string; real_name?: string | null };
 
 type Participant = {
   id: string;
+  player_id: string;
   points: number;
   status: string;
   matches_played: number;
@@ -51,11 +53,13 @@ export default function ParticipantsManager({
   participants,
   allPlayers,
   maxParticipants,
+  isTeamTournament = false,
 }: {
   tournamentId: string;
   participants: Participant[];
   allPlayers: PlayerOption[];
   maxParticipants: number | null;
+  isTeamTournament?: boolean;
 }) {
   const supabase = createClient();
   const router = useRouter();
@@ -86,7 +90,20 @@ export default function ParticipantsManager({
       }
     }
     setLoading(true);
-    await supabase.from("tournament_participants").update({ status }).eq("id", participantId);
+    if (status === "approved" && isTeamTournament) {
+      const participant = participants.find((item) => item.id === participantId);
+      if (participant) {
+        const result = await approveParticipant(tournamentId, participantId, participant.player_id);
+        if (!result.ok) {
+          setInfoModalMessage(result.error);
+          setInfoModalOpen(true);
+          setLoading(false);
+          return;
+        }
+      }
+    } else {
+      await supabase.from("tournament_participants").update({ status }).eq("id", participantId);
+    }
     setLoading(false);
     router.refresh();
   }
@@ -117,6 +134,14 @@ export default function ParticipantsManager({
         status: "approved",
       }))
     );
+
+    if (isTeamTournament && playersToAdd.length > 0) {
+      const result = await createSoloTeamsForPlayers(tournamentId, playersToAdd);
+      if (!result.ok) {
+        setInfoModalMessage(result.error);
+        setInfoModalOpen(true);
+      }
+    }
 
     setLoading(false);
     setSelectedPlayers([]);
