@@ -14,7 +14,7 @@ export default async function PublicMatchDetailPage({
 }) {
   const { slug, matchSlug } = await params;
 
-  // আগে "matches" টেবিলে (অফিসিয়াল/ক্লাব ম্যাচ) খোঁজা হচ্ছে
+  // first lookup is in the "matches" table (official/club matches)
   const match = await getPublicMatchDetail(matchSlug);
 
   if (match) {
@@ -37,7 +37,7 @@ export default async function PublicMatchDetailPage({
     );
   }
 
-  // না পেলে "tournament_matches" টেবিলে (ইন্টারনাল ১ভি১ ব্র্যাকেট ম্যাচ) খোঁজা হচ্ছে
+  // if not found, lookup in the "tournament_matches" table (internal 1v1 bracket matches)
   const internalMatch = await getInternalTournamentMatchDetail(matchSlug);
 
   if (!internalMatch) notFound();

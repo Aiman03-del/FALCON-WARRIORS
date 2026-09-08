@@ -8,8 +8,8 @@ export async function recalcStandings(supabase: SupabaseClient, tournamentId: st
     .eq("id", tournamentId)
     .single();
 
-  // খাঁটি Knockout ফরম্যাটে সব ম্যাচই "knockout" stage-এর — তাই সেগুলোও পয়েন্ট
-  // টেবিলে গোনা দরকার। গ্রুপ/লিগ+প্লেঅফের মতো ফরম্যাটে আগের মতোই নকআউট বাদ থাকবে।
+  // In a pure knockout format, all matches are in the "knockout" stage — therefore they also need to be counted
+  // in the points table. In formats like group/league + playoff, knockout matches remain excluded as before.
   const includeKnockout = tournamentRow?.format === "knockout";
 
   const { data: participants, error: participantsError } = await supabase

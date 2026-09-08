@@ -33,7 +33,7 @@ export default function AddBallonDorNomineeForm({
   }));
 
   async function insertNominees(playerIds: string[]) {
-    // এই বছরের যাদের আগে থেকেই নমিনেট করা আছে, তাদের বাদ দিয়ে বাকিদের অ্যাড করে
+    // adds the remaining nominees for this year while excluding those already nominated earlier
     const { data: existing } = await supabase
       .from("ballon_dor_nominees")
       .select("player_id")

@@ -410,7 +410,7 @@ export default function ChampionModal({
 
           {/* =================================================
               GIANT BACKGROUND CHAMPION
-              শুধু এই CHAMPION থাকবে
+              Only this CHAMPION will remain
           ================================================= */}
 
           <div className="pointer-events-none absolute left-1/2 top-[205px] z-[1] -translate-x-1/2 whitespace-nowrap text-[68px] font-black uppercase tracking-[-0.055em] text-transparent opacity-[0.13] [-webkit-text-stroke:1px_#D4AF37]">

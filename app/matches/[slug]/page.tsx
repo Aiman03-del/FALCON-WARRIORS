@@ -49,8 +49,8 @@ export default async function MatchDetailPage({
     ? await getClubH2H(match.opponent_name, match.id)
     : null;
 
-  // অফিসিয়াল ম্যাচে টুর্নামেন্ট পেজের মতোই একদম একই বোর্ড দেখাতে, একই কোয়েরি
-  // (getPublicMatchDetail) ও একই কম্পোনেন্ট (PublicMatchBoard) রিইউজ করা হচ্ছে
+  // To display official matches in the same board as the tournament page, the same query
+  // (getPublicMatchDetail) and the same component (PublicMatchBoard) are reused here
   const publicBoardData = !isInternal && match.slug ? await getPublicMatchDetail(match.slug) : null;
 
   return (

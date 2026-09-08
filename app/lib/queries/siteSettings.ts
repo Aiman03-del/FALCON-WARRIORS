@@ -7,7 +7,7 @@ export type SiteSettings = {
   location: string;
   presidentName: string;
   managerName: string;
-  themeKey: string; // 👈 নতুন
+  themeKey: string; // new
 };
 
 const DEFAULTS: SiteSettings = {
@@ -17,12 +17,12 @@ const DEFAULTS: SiteSettings = {
   location: "Global",
   presidentName: "TBA",
   managerName: "TBA",
-  themeKey: "indigo", // 👈 নতুন
+  themeKey: "indigo", // new
 };
 
-// এই ফাংশন ইচ্ছাকৃতভাবে ব্রাউজার ক্লায়েন্ট দিয়ে বানানো (anon key) — কারণ
-// লোগো/ফেভিকন পুরোপুরি পাবলিক ডাটা, তাই সার্ভার/ক্লায়েন্ট দুই জায়গাতেই একইভাবে
-// (কোনো cookie/session ছাড়াই) কল করা যায়।
+// This function is intentionally created with the browser client (anon key) — because
+// the logo/favicon data is fully public, it can be called the same way from both server and client
+// without requiring any cookie/session.
 export async function getSiteSettings(): Promise<SiteSettings> {
   try {
     const supabase = createClient();
@@ -41,7 +41,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       location: data.location || DEFAULTS.location,
       presidentName: data.president_name || DEFAULTS.presidentName,
       managerName: data.manager_name || DEFAULTS.managerName,
-      themeKey: data.theme_key || DEFAULTS.themeKey, // 👈 নতুন
+      themeKey: data.theme_key || DEFAULTS.themeKey, // new
     };
   } catch {
     return DEFAULTS;

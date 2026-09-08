@@ -30,7 +30,7 @@ function singleWinnerId(m: BracketMatchRow): string | null {
   return null;
 }
 
-/** টাইয়ের বিজয়ী: ১ লেগ হলে normal, ২ লেগ হলে aggregate + away-goals rule */
+/** Winner of the tie: if 1 leg, normal result; if 2 legs, aggregate + away-goals rule */
 export function tieWinnerId(tie: Tie): string | null {
   const { legs } = tie;
   if (legs.length === 1) return singleWinnerId(legs[0]);
@@ -51,20 +51,20 @@ export function tieWinnerId(tie: Tie): string | null {
   if (aggA > aggB) return teamA;
   if (aggB > aggA) return teamB;
 
-  // aggregate সমান — away goals rule
-  const awayGoalsA = leg2.player1_score; // A leg2-তে away
-  const awayGoalsB = leg1.player2_score; // B leg1-তে away
+  // aggregate tied — away goals rule
+  const awayGoalsA = leg2.player1_score; // A is away in leg2
+  const awayGoalsB = leg1.player2_score; // B is away in leg1
   if (awayGoalsA > awayGoalsB) return teamA;
   if (awayGoalsB > awayGoalsA) return teamB;
 
-  return null; // এখনো টাই — অ্যাডমিনকে ম্যানুয়ালি পেনাল্টি ফলাফল বসাতে হবে
+  return null; // still tied — admin must manually enter the penalty result
 }
 
 export function tieIsDone(tie: Tie): boolean {
   return tie.legs.every((m) => m.status === "completed" || m.status === "bye");
 }
 
-/** UI-তে দেখানোর জন্য "৩ - ২ (aggregate)" স্ট্রিং */
+/** String shown in the UI for "3 - 2 (aggregate)" */
 export function aggregateLabel(tie: Tie): string | null {
   if (tie.legs.length === 1) return null;
   const [leg1, leg2] = tie.legs;

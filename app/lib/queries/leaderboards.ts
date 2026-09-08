@@ -457,7 +457,7 @@ export async function getTopByPoints(
       points: s.wins * 3 + s.draws,
       winRate: s.matches > 0 ? Math.round((s.wins / s.matches) * 100) : 0,
     }))
-    // পয়েন্ট অনুযায়ী সাজানো — সমান পয়েন্ট হলে বেশি গোল যার, সে উপরে
+    // sorted by points — if points are tied, the player with more goals ranks higher
     .sort((a, b) => b.points - a.points || b.goals - a.goals)
     .slice(0, limit)
     .map((s) => ({

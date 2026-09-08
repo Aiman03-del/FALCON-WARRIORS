@@ -12,7 +12,7 @@ function pairKey(a: string, b: string): string {
   return [a, b].sort().join("::");
 }
 
-/** এই টুর্নামেন্টে কোন কোন জোড়া ইতিমধ্যে খেলে ফেলেছে (rematch এড়াতে) */
+/** Which pairs have already played in this tournament (to avoid rematches) */
 export function getPlayedPairs(matches: SwissMatchRow[]): Set<string> {
   const set = new Set<string>();
   for (const m of matches) {
@@ -21,7 +21,7 @@ export function getPlayedPairs(matches: SwissMatchRow[]): Set<string> {
   return set;
 }
 
-/** পেয়ারিং-এর জন্য ব্যবহৃত স্কোর — bye-কে পূর্ণ জয় হিসেবে ধরা হয় (স্ট্যান্ডিং টেবিলের থেকে আলাদা হতে পারে) */
+/** Scores used for pairing — a bye is treated as a full win (may differ from the standings table) */
 export function computeSwissScores(participantIds: string[], matches: SwissMatchRow[]): Record<string, number> {
   const scores: Record<string, number> = {};
   for (const id of participantIds) scores[id] = 0;
@@ -53,7 +53,7 @@ function shuffle<T>(arr: T[]): T[] {
   return copy;
 }
 
-/** Round 1 — কোনো স্কোর নেই তাই র‍্যান্ডম পেয়ারিং */
+/** Round 1 — no scores yet, so pair players randomly */
 export function generateSwissRound1(participants: ParticipantForDraw[]): MatchDraft[] {
   const shuffled = shuffle(participants);
   const matches: MatchDraft[] = [];
@@ -72,8 +72,8 @@ export function generateSwissRound1(participants: ParticipantForDraw[]): MatchDr
 }
 
 /**
- * পরের রাউন্ড — পয়েন্ট অনুযায়ী সাজিয়ে কাছাকাছি পয়েন্টধারীদের জোড়া, rematch এড়িয়ে।
- * গ্রিডি পদ্ধতি: সাজানো লিস্টে যাকে প্রথম না-খেলা প্রতিপক্ষ পাওয়া যায় তার সাথে জোড়া বানানো হয়।
+ * Next round — sort by points and pair players with similar scores, avoiding rematches.
+ * Grid method: pair each player in the sorted list with the first unplayed opponent they can find.
  */
 export function generateSwissNextRound(
   participants: ParticipantForDraw[],
@@ -82,10 +82,10 @@ export function generateSwissNextRound(
   round: number,
   alreadyByedIds: Set<string> = new Set()
 ): MatchDraft[] {
-  // পয়েন্ট অনুযায়ী descending সর্ট, সমান পয়েন্টে র‍্যান্ডম টাইব্রেক
+  // sort by points descending, with a random tiebreak when scores are equal
   const sorted = shuffle(participants).sort((a, b) => (scores[b.id] ?? 0) - (scores[a.id] ?? 0));
 
-  // বিজোড় হলে সবচেয়ে কম-পয়েন্টধারী (যে আগে bye পায়নি) bye পাবে
+  // if odd, the lowest-ranked player who has not already received a bye gets the bye
   let byePlayer: ParticipantForDraw | null = null;
   let pool = [...sorted];
   if (pool.length % 2 !== 0) {
@@ -96,7 +96,7 @@ export function generateSwissNextRound(
         break;
       }
     }
-    if (!byePlayer) { byePlayer = pool.pop() ?? null; } // সবাই আগে bye পেলে বাধ্য হয়ে শেষজনকে দেওয়া
+    if (!byePlayer) { byePlayer = pool.pop() ?? null; } // if everyone already got a bye, the last player is forced to take one
   }
 
   const matches: MatchDraft[] = [];
@@ -106,7 +106,7 @@ export function generateSwissNextRound(
   while (unpaired.length > 0) {
     const current = unpaired.shift()!;
     let opponentIndex = unpaired.findIndex((p) => !playedPairs.has(pairKey(current.id, p.id)));
-    if (opponentIndex === -1) opponentIndex = 0; // সবার সাথেই আগে খেলা হয়ে গেলে বাধ্য হয়ে rematch
+    if (opponentIndex === -1) opponentIndex = 0; // if everyone has already played, a rematch is forced
 
     const opponent = unpaired.splice(opponentIndex, 1)[0];
     if (opponent) {

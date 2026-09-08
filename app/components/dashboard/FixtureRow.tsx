@@ -23,8 +23,8 @@ type Match = {
   player2_score: number | null;
   status: string;
   is_third_place?: boolean;
-  leg?: number | null;        // নতুন
-  aggregateLabel?: string | null; // নতুন — parent থেকে গণনা করে পাঠাবেন
+  leg?: number | null;        // new
+  aggregateLabel?: string | null; // new — computed by the parent and passed down
 };
 
 export default function FixtureRow({

@@ -9,7 +9,7 @@ type Props = {
   value?: string;
   onUploaded: (url: string) => void;
   label?: string;
-  circular?: boolean; // নতুন — true হলে গোল অ্যাভাটার স্টাইলে দেখাবে
+  circular?: boolean; // new — if true, render in a circular avatar style
 };
 
 export default function ImageUploadInput({

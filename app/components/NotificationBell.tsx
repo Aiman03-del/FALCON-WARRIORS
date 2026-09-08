@@ -15,6 +15,7 @@ type Notification = {
   related_invite_id: string | null;
   is_read: boolean;
   created_at: string;
+  invite_status: string | null;
 };
 
 export default function NotificationBell({ playerId }: { playerId: string | null }) {
@@ -29,13 +30,19 @@ export default function NotificationBell({ playerId }: { playerId: string | null
   async function loadNotifications(pid: string) {
     const { data } = await supabase
       .from("notifications")
-      .select("id, type, title, body, related_invite_id, is_read, created_at")
+      .select("id, type, title, body, related_invite_id, is_read, created_at, team_invites(status)")
       .eq("recipient_id", pid)
       .order("created_at", { ascending: false })
       .limit(20);
 
-    setNotifications(data ?? []);
-    setUnreadCount((data ?? []).filter((notification) => !notification.is_read).length);
+    const mapped = (data ?? []).map((notification) => {
+      const invite = notification.team_invites as unknown as { status: string } | { status: string }[] | null;
+      const inviteStatus = Array.isArray(invite) ? invite[0]?.status ?? null : invite?.status ?? null;
+      return { ...notification, invite_status: inviteStatus } as Notification;
+    });
+
+    setNotifications(mapped);
+    setUnreadCount(mapped.filter((notification) => !notification.is_read).length);
   }
 
   useEffect(() => {
@@ -47,7 +54,10 @@ export default function NotificationBell({ playerId }: { playerId: string | null
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "notifications", filter: `recipient_id=eq.${playerId}` },
-        () => loadNotifications(playerId)
+        () => {
+          loadNotifications(playerId);
+          router.refresh();
+        }
       )
       .subscribe();
 
@@ -83,6 +93,23 @@ export default function NotificationBell({ playerId }: { playerId: string | null
     const result = await respondToTeamInvite(notification.related_invite_id, accept);
     setLoadingId(null);
     if (!result.ok) return window.alert(result.error);
+
+    // Immediately reflect the response in this notification so the
+    // Accept/Decline buttons disappear without waiting on a realtime event
+    // (the realtime subscription below only listens for new INSERTs).
+    setNotifications((previous) =>
+      previous.map((n) =>
+        n.id === notification.id ? { ...n, invite_status: accept ? "accepted" : "rejected" } : n
+      )
+    );
+
+    // On accept, take the player straight to the tournament page.
+    if (accept && result.tournamentSlug) {
+      setOpen(false);
+      router.push(`/tournaments/${result.tournamentSlug}`);
+      return;
+    }
+
     router.refresh();
   }
 
@@ -107,12 +134,21 @@ export default function NotificationBell({ playerId }: { playerId: string | null
               <div key={notification.id} className="mb-1 rounded-lg p-3 hover:bg-white/5">
                 <p className="text-sm font-semibold">{notification.title}</p>
                 {notification.body && <p className="mt-0.5 text-xs text-muted">{notification.body}</p>}
-                {notification.type === "team_invite" && (
-                  <div className="mt-2 flex gap-2">
-                    <button onClick={() => handleInviteAction(notification, true)} disabled={loadingId === notification.id} className="flex items-center gap-1 rounded-md bg-indigo/20 px-2 py-1 text-xs font-semibold text-indigo-light"><Check size={12} /> Accept</button>
-                    <button onClick={() => handleInviteAction(notification, false)} disabled={loadingId === notification.id} className="flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 text-xs font-semibold"><X size={12} /> Decline</button>
-                  </div>
-                )}
+                {notification.type === "team_invite" &&
+                  (notification.invite_status === "pending" ? (
+                    <div className="mt-2 flex gap-2">
+                      <button onClick={() => handleInviteAction(notification, true)} disabled={loadingId === notification.id} className="flex items-center gap-1 rounded-md bg-indigo/20 px-2 py-1 text-xs font-semibold text-indigo-light"><Check size={12} /> Accept</button>
+                      <button onClick={() => handleInviteAction(notification, false)} disabled={loadingId === notification.id} className="flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 text-xs font-semibold"><X size={12} /> Decline</button>
+                    </div>
+                  ) : (
+                    notification.invite_status && (
+                      <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-muted">
+                        {notification.invite_status === "accepted" && "Accepted"}
+                        {notification.invite_status === "rejected" && "Declined"}
+                        {notification.invite_status === "cancelled" && "Cancelled"}
+                      </p>
+                    )
+                  ))}
                 <p className="mt-1 text-[10px] text-muted/60">{new Date(notification.created_at).toLocaleString()}</p>
               </div>
             ))}

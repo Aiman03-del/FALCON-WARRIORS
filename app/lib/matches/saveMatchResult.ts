@@ -36,7 +36,7 @@ export async function saveMatchResult(
       }
       winnerId = penalty1 > penalty2 ? player1Id : player2Id;
     } else {
-      winnerId = null; // লিগ/গ্রুপ স্টেজে ড্র বৈধ
+      winnerId = null; // draws are valid in league/group stages
     }
   } else {
     winnerId = score1 > score2 ? player1Id : player2Id;
@@ -45,9 +45,9 @@ export async function saveMatchResult(
   const finalPenalty1 = isKnockoutStage && score1 === score2 ? penalty1 : null;
   const finalPenalty2 = isKnockoutStage && score1 === score2 ? penalty2 : null;
 
-  // "preview-" আইডি মানে এই ম্যাচটা এখনো ডাটাবেজে তৈরিই হয়নি (এটা শুধু ব্র্যাকেটে
-  // "কে কে খেলবে" দেখানোর জন্য প্রিভিউ) — স্কোর বসিয়ে সেভ করার সাথে সাথেই এখানে
-  // আসল ম্যাচ রো তৈরি করে দেওয়া হচ্ছে। এতে আলাদা কোনো "Generate Round" বাটন লাগে না।
+  // A "preview-" ID means this match has not yet been created in the database (it is only a preview to show
+  // who will play in the bracket). As soon as a score is saved, the actual match row is created here. No separate
+  // "Generate Round" button is needed.
   const isPreview = matchId.startsWith("preview-") || matchId.startsWith("projected-");
 
   if (isPreview) {
@@ -55,7 +55,7 @@ export async function saveMatchResult(
       throw new Error("Missing round/match order — cannot create the next-round match.");
     }
 
-    // একই স্লটে রেস কন্ডিশনে ডুপ্লিকেট রো এড়াতে আগে চেক করা হচ্ছে
+    // a duplicate row is checked first to avoid race conditions in the same slot
     const { data: existingRow } = await supabase
       .from("tournament_matches")
       .select("id")

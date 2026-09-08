@@ -95,8 +95,8 @@ export default function ProfileEditForm({
       return;
     }
 
-    // যদি অ্যাডমিন অন্য কারো প্রোফাইল এডিট করে, targetProfileId হবে সেই ইউজারের নিজস্ব profile_id।
-    // নিজের প্রোফাইল এডিট করলে targetProfileId === user.id
+    // If an admin edits someone else's profile, targetProfileId will be that user's own profile_id.
+    // If editing your own profile, targetProfileId === user.id
     const targetProfileId = player.profile_id || user.id;
     const isOwnProfile = targetProfileId === user.id;
 
@@ -113,7 +113,7 @@ export default function ProfileEditForm({
       avatar_url: avatarUrl || null,
     };
 
-    // নিজের প্রোফাইল হলেই auth user_metadata আপডেট হবে (অন্য কারো auth মেটাডেটা ক্লায়েন্ট থেকে বদলানো যায় না)
+    // auth user_metadata is only updated when editing your own profile (another user's auth metadata cannot be changed from the client)
     if (isOwnProfile) {
       const { error: updateUserError } = await supabase.auth.updateUser({
         data: payload,

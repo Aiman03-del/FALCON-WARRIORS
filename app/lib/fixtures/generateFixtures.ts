@@ -12,7 +12,7 @@ export type MatchDraft = {
   status: "scheduled" | "bye";
   group_name?: string | null;
   leg?: number;
-  tie_id?: string | null; // নতুন
+  tie_id?: string | null; // new
 };
 export type GroupAssignment = {
   group_name: string;

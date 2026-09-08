@@ -31,10 +31,10 @@ export function emptyStandingStats(): StandingStats {
 
 /**
  * Derive standings stats from completed matches.
- * options.includeKnockout — খাঁটি (pure) Knockout ফরম্যাটে সব ম্যাচই "knockout" stage-এর হয়,
- * তাই সেখানে এই ম্যাচগুলোও গোনা দরকার। কিন্তু group_knockout / league_playoff-এর মতো
- * hybrid ফরম্যাটে গ্রুপ/লিগ স্টেজ পয়েন্ট টেবিলে নকআউট ম্যাচ গোনা ঠিক না — সেক্ষেত্রে
- * এটা false (ডিফল্ট) রাখতে হবে।
+ * options.includeKnockout — in a pure knockout format, all matches belong to the "knockout" stage,
+ * so these matches must also be counted. But in hybrid formats such as group_knockout / league_playoff,
+ * counting knockout matches in the group/league standings is incorrect — in that case,
+ * this should remain false (the default).
  */
 export function computeStandingsFromMatches(
   participantIds: string[],

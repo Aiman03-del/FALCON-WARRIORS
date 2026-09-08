@@ -31,7 +31,7 @@ export function useFormSubmit() {
       await onSuccess?.(result);
     } catch (error) {
       const err = error instanceof Error ? error : new Error(errorMessage);
-      addToast(getFriendlyErrorMessage(err, errorMessage), "error"); // exact error আর দেখাবে না
+      addToast(getFriendlyErrorMessage(err, errorMessage), "error"); // do not show the exact error to the user
       onError?.(err);
     } finally {
       setIsLoading(false);

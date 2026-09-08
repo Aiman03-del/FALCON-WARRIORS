@@ -1,9 +1,9 @@
 /**
- * যেকোনো error থেকে exact/raw মেসেজ ইউজারকে দেখানো হয় না।
- * আসল error শুধু console-এ লগ হয় (debugging-এর জন্য), ইউজার শুধু একটা পরিষ্কার generic মেসেজ দেখে।
+ * Exact/raw error messages are not shown to the user from any error.
+ * The real error is only logged to the console for debugging; the user sees a clean generic message instead.
  */
 export function getFriendlyErrorMessage(error: unknown, fallback = "Something went wrong. Please try again.") {
-  // ডেভেলপারদের জন্য আসল error console-এ থেকে যাবে
+  // the original error will remain in the console for developers
   console.error("[App Error]:", error);
   return fallback;
 }

@@ -22,8 +22,8 @@ export default async function ManageMatchPage({
     .single();
 
   if (!match) {
-    // matches টেবিলে না পেলে, এটা হয়তো একটা unofficial (tournament_matches) ম্যাচ —
-    // সেক্ষেত্রে id হিসেবে param এসেছে, slug হিসেবে না
+    // If no row is found in the matches table, this is likely an unofficial (tournament_matches) match —
+    // in that case the param is passed as id rather than slug
     const { data: internalMatch } = await supabase
       .from("tournament_matches")
       .select("id, tournament_id, tournaments!inner(slug)")
@@ -76,7 +76,7 @@ export default async function ManageMatchPage({
     falcon_username: pd?.real_name?.trim() || pd?.efootball_username || "Unknown",
     falcon_avatar_url: pd?.avatar_url ?? null,
     opponent_label: b.opponent_label ?? "Opponent",
-    opponent_logo_url: b.opponent_logo_url ?? null, // ?? null যোগ করা হলো
+    opponent_logo_url: b.opponent_logo_url ?? null, // added ?? null guard
     falcon_score: b.falcon_score,
     opponent_score: b.opponent_score,
   };

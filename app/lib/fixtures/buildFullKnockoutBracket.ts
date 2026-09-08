@@ -14,8 +14,8 @@ export type BracketMatchRow = {
   is_third_place?: boolean | null;
   player1?: unknown;
   player2?: unknown;
-  leg?: number | null;      // নতুন
-  tie_id?: string | null;   // নতুন
+  leg?: number | null;      // new
+  tie_id?: string | null;   // new
 };
 
 function winnerIdOf(m: BracketMatchRow): string | null {
@@ -68,8 +68,8 @@ export function buildFullKnockoutBracket(matches: BracketMatchRow[]): BracketMat
     const matchCount = Math.ceil(prevTies.length / 2);
     const roundTies: Tie[] = [];
 
-    // আগের রাউন্ডের সব ম্যাচ (বায় বাদে) শেষ না হওয়া পর্যন্ত এই রাউন্ডে কারো নাম
-    // দেখানো হবে না — যতক্ষণ না পুরো রাউন্ড কমপ্লিট হচ্ছে ততক্ষণ সব স্লট TBD থাকবে।
+    // No names are shown in this round until all previous-round matches (except byes) are finished —
+    // while the round is still incomplete, all slots remain TBD.
     const prevRoundFullyDone = prevTies.every((t) => tieIsDone(t));
 
     for (let order = 1; order <= matchCount; order++) {
@@ -84,8 +84,8 @@ export function buildFullKnockoutBracket(matches: BracketMatchRow[]): BracketMat
       const p1Id = prevRoundFullyDone && feeder1 ? tieWinnerId(feeder1) : null;
       const p2Id = prevRoundFullyDone && feeder2 ? tieWinnerId(feeder2) : null;
 
-      // "bye" স্ট্যাটাস শুধু তখনই বসবে যখন প্রতিপক্ষের কোনো ফিডার ম্যাচই কাঠামোগতভাবে
-      // নেই (আসল বায়) — প্রতিপক্ষ এখনো "অনির্ধারিত" থাকলে সেটা bye নয়, TBD।
+      // The "bye" status is only assigned when the opponent truly has no feeder match structurally
+      // (a real bye) — if the opponent is still "undecided", it is not a bye, it is TBD.
       const isGenuineBye = !!p1Id && !p2Id && !feeder2;
 
       roundTies.push({

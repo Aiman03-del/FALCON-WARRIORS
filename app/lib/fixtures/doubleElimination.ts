@@ -13,10 +13,10 @@ export function generateWinnersNextRound(winners: ParticipantForDraw[], nextRoun
 }
 
 /**
- * Losers Bracket round — তিনটা কেস:
- *  - pool খালি              -> নতুন WB losers-দের একে অপরের সাথে পেয়ার করা (LB round 1 স্টাইল)
- *  - pool.length === newLosers.length -> "merge" round: pool[i] বনাম newLosers[i]
- *  - newLosers.length === 0 -> "consolidation" round: শুধু pool-কে নিজেদের মধ্যে অর্ধেক করে দেওয়া
+ * Losers Bracket round — three cases:
+ *  - pool empty              -> pair the new WB losers against each other (LB round 1 style)
+ *  - pool.length === newLosers.length -> "merge" round: pool[i] vs newLosers[i]
+ *  - newLosers.length === 0 -> "consolidation" round: split the pool in half and match them internally
  */
 export function generateLosersRound(
   pool: ParticipantForDraw[],
@@ -45,7 +45,7 @@ export function generateLosersRound(
   for (let i = 0; i < n; i++) {
     matches.push({ round, match_order: order++, player1_id: pool[i].id, player2_id: newLosers[i].id, status: "scheduled", bracket_side: "losers" });
   }
-  // অসম সংখ্যা হলে (non-power-of-2 field) বাকিরা bye পাবে
+  // if the number is odd (non-power-of-2 field), the remaining players receive a bye
   for (const p of [...pool.slice(n), ...newLosers.slice(n)]) {
     matches.push({ round, match_order: order++, player1_id: p.id, player2_id: null, status: "bye", bracket_side: "losers" });
   }

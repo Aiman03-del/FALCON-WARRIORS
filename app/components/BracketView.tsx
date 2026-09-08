@@ -69,7 +69,7 @@ async function waitForImages(node: HTMLElement) {
   );
 }
 
-/** প্রক্সি/অপ্টিমাইজেশন লেয়ার এড়াতে সরাসরি <img> — এতে ব্র্যাকেট এক্সপোর্টে ভুল ছবি আসার সমস্যা হয় না */
+/** Use a direct <img> to avoid proxy/optimization layer issues; this prevents incorrect images from appearing in bracket exports */
 function PlayerAvatar({ info, isBye }: { info: PlayerInfo; isBye?: boolean }) {
   if (isBye) {
     return <div style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }} className="shrink-0 rounded-full bg-surface-2" />;
@@ -254,11 +254,11 @@ function MatchBox({
     }
   }
 
-  // বক্সের বাইরে ফোকাস গেলে (অন্য বক্সে ক্লিক করলে বা বাইরে ক্লিক করলে) — দুইটা স্কোরই থাকলে অটো-সেভ,
-  // নকআউট ড্র হলে আগে পেনাল্টি চাওয়া হবে, ভ্যালিড পেনাল্টি না দিলে সেভ হবে না।
+  // When focus leaves the box (click another box or click outside) — if both scores exist, autosave.
+  // In a knockout draw, penalties are requested first; without valid penalties, the save is blocked.
   function handleContainerBlur(e: React.FocusEvent<HTMLDivElement>) {
     const next = e.relatedTarget as Node | null;
-    if (boxRef.current && next && boxRef.current.contains(next)) return; // s1 থেকে s2 তে ট্যাব — এখনো একই বক্সে
+    if (boxRef.current && next && boxRef.current.contains(next)) return; // tab from s1 to s2 — still in the same box
 
     if (s1 === "" || s2 === "") {
       resetToStored();
@@ -270,11 +270,11 @@ function MatchBox({
 
     if (mode === "knockout" && isDraw) {
       if (!needsPenalty) {
-        setNeedsPenalty(true); // বক্স খোলাই থাকবে, পেনাল্টি ইনপুট দেখানো হবে
+        setNeedsPenalty(true); // keep the box open and show the penalty input
         return;
       }
       if (pen1 === "" || pen2 === "" || Number(pen1) === Number(pen2)) {
-        return; // ভ্যালিড পেনাল্টি স্কোর না দেওয়া পর্যন্ত সেভ হবে না, বক্সও বন্ধ হবে না
+        return; // do not save until valid penalty scores are provided; the box stays open
       }
       commitSave(s1, s2, pen1, pen2);
       return;

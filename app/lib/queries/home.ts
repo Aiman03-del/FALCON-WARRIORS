@@ -1,9 +1,9 @@
-// এই ফাইলের queries গুলো ইচ্ছাকৃতভাবে browser client (anon key) দিয়ে বানানো —
-// কারণ হোমপেইজের এই সব ডেটা (stats, results, tournaments, news, gallery) সম্পূর্ণ
-// পাবলিক এবং কোনো cookie/session লাগে না, তাই সার্ভার/ক্লায়েন্ট দুই জায়গাতেই
-// একইভাবে কল করা যায় (দেখুন siteSettings.ts-এর একই প্যাটার্ন)। এটা bug না —
-// user-নির্ভর কোনো query (auth.getUser() ইত্যাদি) এখানে যোগ করার দরকার হলে
-// অবশ্যই server client (../supabase/server) ব্যবহার করবেন।
+// These queries are intentionally built with the browser client (anon key) —
+// because all of this homepage data (stats, results, tournaments, news, gallery) is fully public
+// and does not require a cookie/session, it can be called the same way from both server and client
+// (see the same pattern in siteSettings.ts). This is not a bug —
+// if a user-dependent query (such as auth.getUser()) ever needs to be added here,
+// the server client (../supabase/server) must be used instead.
 import { createClient } from "../supabase/client";
 import { getTopByPoints } from "./leaderboards";
 import { opponentDisplayName } from "../utils/displayNames";
@@ -19,8 +19,8 @@ export async function getStats() {
       { data: officialCompleted },
       { count: internalCompletedCount },
     ] = await Promise.all([
-      // শুধু active মেম্বারদেরই "Members" হিসেবে গোনা হচ্ছে —
-      // pending/suspended ইউজাররা বাদ (membership_status pattern অন্য জায়গায়ও ব্যবহৃত, যেমন PeriodPerformerCard.tsx)
+      // only active members are counted as "Members" —
+      // pending/suspended users are excluded (the membership_status pattern is also used elsewhere, such as PeriodPerformerCard.tsx)
       supabase
         .from("player_details")
         .select("*", { count: "exact", head: true })
@@ -31,8 +31,8 @@ export async function getStats() {
       supabase.from("tournament_matches").select("*", { count: "exact", head: true }).eq("status", "completed"),
     ]);
 
-    // শুধু official club matches দিয়েই win rate হিসাব করা হচ্ছে,
-    // কারণ internal (player vs player) ম্যাচে ক্লাবের জয়-পরাজয়ের ধারণা প্রযোজ্য না।
+    // win rate is calculated only from official club matches,
+    // because the concept of club wins/losses does not apply to internal (player-vs-player) matches.
     const officialWins = (officialCompleted ?? []).filter(
       (m) => (m.score_home ?? 0) > (m.score_away ?? 0)
     ).length;

@@ -21,7 +21,7 @@ type Props = {
   tournamentId: string;
   format: string;
   doubleRound: boolean;
-  twoLegKnockout?: boolean; // নতুন
+  twoLegKnockout?: boolean; // new
   participants: { id: string; username: string; seed?: number | null }[];
   alreadyGenerated: boolean;
   groupCount?: number | null;

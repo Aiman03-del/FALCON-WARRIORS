@@ -34,7 +34,7 @@ export default function StatsBar({ stats }: StatsBarProps) {
     () => {
       const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-      // reduceMotion হলে কিছুই animate করার দরকার নেই — SSR থেকেই সঠিক ভ্যালু দেখানো আছে
+      // if reduceMotion is enabled, no animation is needed — the correct value is already displayed from SSR
       if (reduceMotion) {
         gsap.set(".stat-card", { opacity: 1, y: 0 });
         return;
@@ -61,8 +61,8 @@ export default function StatsBar({ stats }: StatsBarProps) {
         const el = valueRefs.current[i];
         if (!el) return;
 
-        // fromTo ব্যবহার করা হচ্ছে যাতে SSR/no-JS এ দেখানো আসল ভ্যালু
-        // animation শুরুর আগ পর্যন্ত অক্ষত থাকে, শুধু animation চলাকালীন 0 থেকে গুনে ওঠে
+        // fromTo is used so the actual value remains visible during SSR/no-JS
+        // remains intact before animation begins; only during animation does it count from 0 upward
         const counter = { val: 0 };
         tl.fromTo(
           counter,

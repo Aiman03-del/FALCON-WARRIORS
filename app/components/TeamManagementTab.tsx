@@ -100,7 +100,7 @@ export default function TeamManagementTab({
     <div>
       {isLocked && (
         <p className="mb-4 rounded-lg bg-white/10 p-3 text-xs text-muted">
-          টুর্নামেন্ট লকড — টিমে আর কোনো পরিবর্তন করা যাবে না।
+          Tournament locked — no further changes can be made to the team.
         </p>
       )}
 
@@ -186,7 +186,7 @@ export default function TeamManagementTab({
 
       {!canInvite && !isLocked && (
         <p className="mb-4 rounded-lg bg-gold/10 p-3 text-xs text-gold">
-          রিকোয়েস্ট পাঠানোর আগে টিমের নাম আর লোগো সেভ করুন।
+          Save the team name and logo before sending a request.
         </p>
       )}
 

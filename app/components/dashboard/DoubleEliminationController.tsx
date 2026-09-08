@@ -64,7 +64,7 @@ export default function DoubleEliminationController({
   const lbSurvivors = lbRoundMatches.map(winnerIdOf).filter((id): id is string => !!id);
   const lbChampionId = lbRoundDone && lb.length > 0 && lbSurvivors.length === 1 ? lbSurvivors[0] : null;
 
-  // WB round-এর মধ্যে যেসব লুজার এখনো LB-তে ঢোকেনি
+  // losers in the WB round that have not yet entered the LB
   const mergedLBIds = new Set(lb.flatMap((m) => [m.player1_id, m.player2_id]).filter(Boolean) as string[]);
   const unmergedLosers = wb
     .filter((m) => m.status === "completed")
@@ -155,7 +155,7 @@ export default function DoubleEliminationController({
     finally { setLoading(false); }
   }
 
-  // চ্যাম্পিয়ন নির্ধারণ
+  // determine champions
   let overallChampionId: string | null = null;
   if (gfGame2 && gfGame2.status === "completed") overallChampionId = winnerIdOf(gfGame2);
   else if (gfGame1 && gfGame1.status === "completed" && winnerIdOf(gfGame1) === wbChampionId) overallChampionId = wbChampionId;

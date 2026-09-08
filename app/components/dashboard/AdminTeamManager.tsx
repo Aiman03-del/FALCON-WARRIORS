@@ -108,7 +108,7 @@ export default function AdminTeamManager({
 
       {teamsLocked && (
         <p className="mb-4 rounded-lg bg-white/10 p-3 text-xs text-muted">
-          টিম লকড আছে — participant-রা এখন leave/join/invite করতে পারবে না। Admin-এর ম্যানুয়াল পরিবর্তন এখনও চলবে।
+          Teams are locked — participants can no longer leave/join/invite. Manual admin changes still remain active.
         </p>
       )}
 

@@ -76,7 +76,7 @@ export default function StartNewRoundForm({
       return;
     }
 
-    // শুধু বেঞ্চে না থাকা প্লেয়ারদের নিয়ে squad battle তৈরি হবে
+    // create squad battles using only players who are not on the bench
     await ensureSquadBattles(supabase, newMatch.id, playingSquad);
 
     setLoading(false);

@@ -58,7 +58,11 @@ export async function respondToTeamInvite(inviteId: string, accept: boolean) {
   const supabase = await createClient();
   const playerId = await getCurrentPlayerId(supabase);
   if (!playerId) return { ok: false as const, error: "Unauthorized" };
-  const { data: invite } = await supabase.from("team_invites").select("invited_by, team_id, tournament_id").eq("id", inviteId).single();
+  const { data: invite } = await supabase
+    .from("team_invites")
+    .select("invited_by, team_id, tournament_id, tournaments(slug)")
+    .eq("id", inviteId)
+    .single();
   if (!invite) return { ok: false as const, error: "Invite not found." };
   const admin = createAdminClient();
   const { data, error } = await admin.rpc("respond_to_team_invite", { p_invite_id: inviteId, p_player_id: playerId, p_accept: accept });
@@ -68,5 +72,7 @@ export async function respondToTeamInvite(inviteId: string, accept: boolean) {
   await admin.from("notifications").insert({ recipient_id: invite.invited_by, type: accept ? "invite_accepted" : "invite_rejected", title: accept ? "Your invite was accepted" : "Your invite was declined", related_tournament_id: invite.tournament_id });
   revalidatePath("/dashboard/tournaments");
   revalidatePath("/tournaments");
-  return { ok: true as const, accepted: result.accepted };
+  const tournamentRel = invite.tournaments as unknown as { slug: string } | { slug: string }[] | null;
+  const tournamentSlug = Array.isArray(tournamentRel) ? tournamentRel[0]?.slug ?? null : tournamentRel?.slug ?? null;
+  return { ok: true as const, accepted: result.accepted, tournamentSlug };
 }

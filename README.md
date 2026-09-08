@@ -114,7 +114,7 @@ FALCON-WARRIORS/
 - [ ] Set up GitHub Actions CI (lint + build on push)
 - [ ] Add a `LICENSE` file
 - [ ] Add dark/light theme toggle
-- [ ] Add i18n support (English / বাংলা)
+- [ ] Add i18n support (English / Bangla)
 - [ ] Add pagination for large player/match lists
 
 ## 🤝 Contributing

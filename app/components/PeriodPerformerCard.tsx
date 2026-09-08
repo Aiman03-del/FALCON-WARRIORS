@@ -139,7 +139,7 @@ export default function PeriodPerformerCard() {
       if (externalMatches && externalMatches.length > 0) {
         const externalIds = externalMatches.map((match) => match.id);
 
-        // পুরনো সিস্টেম — match_squad + match_goal_entries (কিছু পুরনো ম্যাচ এখনো এভাবে সেভ থাকতে পারে)
+        // legacy system — match_squad + match_goal_entries (some older matches may still be stored this way)
         const { data: squadRows } = await supabase
           .from("match_squad")
           .select("match_id, player_id")
@@ -170,8 +170,7 @@ export default function PeriodPerformerCard() {
           }
         }
 
-        // নতুন/আসল সিস্টেম — match_squad_battles (CurrentRoundBoard থেকে সেভ হয়, প্রতি
-        // প্লেয়ারের নিজস্ব ব্যাটল স্কোর, জয়-হার এখান থেকেই আসল হিসাব হওয়া উচিত)
+        // new/real system — match_squad_battles (saved from CurrentRoundBoard; each player's own battle score, wins/losses should be calculated from here)
         const { data: battles } = await supabase
           .from("match_squad_battles")
           .select("match_id, falcon_player_id, falcon_score, opponent_score")

@@ -27,7 +27,7 @@ export default function NextRoundGenerator({
   tournamentStatus,
   byeMethod = "seed",
   thirdPlaceMatch = false,
-  twoLegKnockout = false, // নতুন
+  twoLegKnockout = false, // new
 }: {
   tournamentId: string;
   matches: Match[];
@@ -112,7 +112,7 @@ export default function NextRoundGenerator({
       tie_id: d.tie_id ?? null,
     }));
 
-    // থার্ড প্লেস ম্যাচ — সবসময় সিঙ্গেল-লেগ (২-লেগ চালু থাকলেও)
+    // third-place match — always single-leg (even when two-leg is enabled)
     if (thirdPlaceMatch && winners.length === 2 && roundTies.length === 2) {
       const losers = roundTies
         .filter((t) => tieIsDone(t))

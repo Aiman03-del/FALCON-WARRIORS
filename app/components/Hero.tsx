@@ -12,8 +12,7 @@ async function getCurrentUserProfileHref() {
 
     if (!user) return null;
 
-    // Navbar-এর profileHref লজিকের সাথে সামঞ্জস্যপূর্ণ রাখতে player slug থাকলে
-    // /players/[slug]-এ পাঠানো হচ্ছে, না থাকলে fallback হিসেবে /profile
+    // Keep this aligned with the Navbar profileHref logic: use /players/[slug] when a player slug exists, otherwise fallback to /profile
     const { data: playerRow } = await supabase
       .from("player_details")
       .select("slug")
@@ -23,7 +22,7 @@ async function getCurrentUserProfileHref() {
     return playerRow?.slug ? `/players/${playerRow.slug}` : "/profile";
   } catch (error) {
     console.error("[Hero] failed to check auth session:", error);
-    return null; // fail-safe: ধরে নেওয়া হবে ইউজার লগইন করেনি, guest CTA দেখাবে
+    return null; // fail-safe: assume the user is not logged in and show the guest CTA
   }
 }
 

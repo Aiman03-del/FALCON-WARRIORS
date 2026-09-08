@@ -30,7 +30,7 @@ type Props = {
   battles: Battle[];
 };
 
-// একটা MOTM entry — হয় Falcon player (scorer_id আছে) অথবা Opponent (opponent_label আছে)
+// One MOTM entry — either a Falcon player (has scorer_id) or an opponent (has opponent_label)
 type MotmEntry = {
   key: string; // unique key for React
   scorer_id: string | null;
@@ -356,7 +356,7 @@ export default function CurrentRoundBoard({
       .update({ status: "completed", score_home: totalFalcon, score_away: totalOpponent })
       .eq("id", matchId);
 
-    // MOTM — আগেরগুলো মুছে নতুন insert
+    // MOTM — delete previous entries and insert a new one
     await supabase
       .from("match_events")
       .delete()
